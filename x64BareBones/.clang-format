@@ -1,0 +1,24 @@
+BasedOnStyle: llvm
+UseTab: Never
+IndentWidth: 8
+ColumnLimit: 80
+
+AlignConsecutiveAssignments:
+  Enabled:         true
+  AcrossEmptyLines: false
+  AcrossComments:  false
+  AlignCompound:   false
+  AlignFunctionDeclarations: false
+  AlignFunctionPointers: false
+  PadOperators:    true
+
+BraceWrapping:
+  AfterStruct: true
+  AfterUnion: true
+  IndentBraces: false
+
+AllowShortBlocksOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
