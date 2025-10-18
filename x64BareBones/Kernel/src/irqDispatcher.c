@@ -1,15 +1,16 @@
 #include <naiveConsole.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 static void int_20();
 
-void irqDispatcher(uint64_t irq) {
-        switch (irq) {
-        case 0:
-                int_20();
-                break;
-        }
+typedef void (*interruption_signature(void));
+
+inline void irqDispatcher(uint64_t irq, void * algo) {
+        static interruption_signature interruption_routines[];
+        interruption_routines[20] = int_20;
         return;
 }
 
