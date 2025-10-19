@@ -10,12 +10,12 @@
 
 #include <idtLoader.h>
 
-extern void _irq00Handler(void);
-extern void _irq01Handler(void);
-extern void _irq02Handler(void);
-extern void _irq03Handler(void);
-extern void _irq04Handler(void);
-extern void _irq05Handler(void);
+void _irq00Handler(void);
+void _irq01Handler(void);
+void _irq02Handler(void);
+void _irq03Handler(void);
+void _irq04Handler(void);
+void _irq05Handler(void);
 
 void _exception0Handler(void);
 

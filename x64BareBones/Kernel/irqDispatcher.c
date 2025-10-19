@@ -6,10 +6,11 @@
 
 static void int_20();
 
-typedef void (*interruption_signature(void));
+typedef void (*interruption_signature)(void);
 
-inline void irqDispatcher(uint64_t irq, void * algo) {
-        static interruption_signature interruption_routines[];
+void irqDispatcher(uint64_t irq) {
+        interruption_signature interruption_routines[256];
+
         interruption_routines[20] = int_20;
         return;
 }
