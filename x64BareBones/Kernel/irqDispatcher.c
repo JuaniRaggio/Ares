@@ -5,13 +5,18 @@
 #include <time.h>
 
 static void int_20();
+// static void kbd_handler();
 
 typedef void (*interruption_signature)(void);
 
 void irqDispatcher(uint64_t irq) {
+        
         interruption_signature interruption_routines[256];
-
-        interruption_routines[20] = int_20;
+        // = {
+        //         timer_handler,
+        //         // kbd_handler,
+        // };
+        interruption_routines[20] = timer_handler;
         return;
 }
 
