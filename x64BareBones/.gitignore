@@ -1,6 +1,7 @@
 #Binary Files
 *.bin
 *.sys
+.bash_history
 
 #The images
 *.img
