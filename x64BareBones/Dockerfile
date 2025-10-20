@@ -9,4 +9,4 @@ RUN apt install -y \
       binutils-x86-64-linux-gnu \
       qemu-utils
 
-WORKDIR /src
+WORKDIR /root
