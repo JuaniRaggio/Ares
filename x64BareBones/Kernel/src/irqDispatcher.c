@@ -16,7 +16,7 @@ void irqDispatcher(uint64_t irq) {
         //         timer_handler,
         //         // kbd_handler,
         // };
-        interruption_routines[20] = timer_handler;
+        // interruption_routines[20] = timer_handler;
         return;
 }
 
