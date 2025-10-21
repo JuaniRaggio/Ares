@@ -1,3 +1,8 @@
 #!/bin/bash
-qemu-system-x86_64 -hda Image/x64BareBonesImage.qcow2 -m 512 
-#qemu-system-x86_64 -display gtk -m 2048 -hda Image/x64BareBonesImage.qcow2
+
+# Flag para debuggear
+if [ "$1" == "-d" ]; then
+    qemu-system-x86_64 -s -S -hda Image/x64BareBonesImage.qcow2 -m 512 
+else
+    qemu-system-x86_64 -hda Image/x64BareBonesImage.qcow2 -m 512
+fi 
