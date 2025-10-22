@@ -100,7 +100,7 @@ int main() {
         ncPrint("[Finished]");
         ncNewline();
 
-        // Lo hago asi porque sabemos que no va a cambiar el formato, simepre
+        // Lo hago asi porque sabemos que no va a cambiar el formato, siempre
         // van a ser dos posiciones para las horas y dos para los minutos a
         // menos de que seas un enfermo mental
         char buffer[TIME_FMT_LENGTH];

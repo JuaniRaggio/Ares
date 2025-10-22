@@ -3,10 +3,9 @@
 global sys_exit
 
 ; exit code in rdi
-
 sys_exit:
     mov rax, rdi
-    cli
+    cli                 ; disable interruptions
 .hang:
     hlt                 ; stops the CPU
     jmp .hang
