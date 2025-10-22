@@ -15,6 +15,12 @@ void ncPrint(const char *string) {
                 ncPrintChar(string[i], BLACK_WHITE);
 }
 
+void ncPrintCharNoColor(char character) {
+	*currentVideo = character;
+	currentVideo += 2;
+}
+
+
 void ncPrintChar(char character, uint8_t color) {
         *currentVideo       = character;
         *(currentVideo + 1) = color;

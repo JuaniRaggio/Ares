@@ -1,6 +1,7 @@
 GLOBAL cpuVendor
 GLOBAL get_current_minutes
 GLOBAL get_current_hour
+GLOBAL get_input
 
 section .text
 	
@@ -54,3 +55,7 @@ get_current_hour:
     movzx rax, al           ; Lo copio en el registro de convencion para return
     ret
 
+get_input:
+    xor rax, rax
+    in al, 0x60
+    ret

@@ -78,7 +78,8 @@ void *initializeKernelBinary() {
 #define TIME_FMT_LENGTH 6
 
 int main() {
-        load_idt();
+        load_idt(); //Cargar la idt
+        
         ncPrint("[Kernel Main]");
         ncNewline();
         ncPrint("  Sample code module at 0x");
@@ -111,6 +112,8 @@ int main() {
         buffer[4]   = time.minutes % 10 + '0';
         buffer[5]   = 0;
         printLn(buffer, BLACK_WHITE);
+
+        while(1);
 
         return 0;
 }

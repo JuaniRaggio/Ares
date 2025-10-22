@@ -4,6 +4,8 @@ CONTAINER_NAME="ARES"
 IMAGE_NAME="agodio/itba-so:1.0"
 PROJECT_DIR="$(pwd)"
 
+# make clean
+
 # En esta version es necesario tener pre-compilada la Toolchain
 cd ./Toolchain && make clean && make && cd ..
 
@@ -12,10 +14,10 @@ echo "[*] Construyendo imagen Docker..."
 sudo docker build -t $IMAGE_NAME .
 
 # Si ya existe el contenedor, eliminarlo 
-if [ "$(sudo docker ps -aq -f name=$CONTAINER_NAME)" ]; then
-  echo "[*] Eliminando contenedor anterior..."
-  sudo docker rm -f $CONTAINER_NAME > /dev/null 2>&1
-fi
+#if [ "$(sudo docker ps -aq -f name=$CONTAINER_NAME)" ]; then
+#  echo "[*] Eliminando contenedor anterior..."
+#  sudo docker rm -f $CONTAINER_NAME > /dev/null 2>&1
+#fi
 
 # Iniciar el contenedor con el proyecto montado 
 echo "[*] Iniciando contenedor $CONTAINER_NAME..."

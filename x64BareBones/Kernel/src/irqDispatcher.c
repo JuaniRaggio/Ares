@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <keyboard.h>
 
 static void int_20();
 // static void kbd_handler();
@@ -10,17 +11,24 @@ static void int_20();
 typedef void (*interruption_signature)(void);
 
 void irqDispatcher(uint64_t irq) {
-        
-        interruption_signature interruption_routines[256];
-        // = {
-        //         timer_handler,
-        //         // kbd_handler,
-        // };
-        // interruption_routines[20] = timer_handler;
-        return;
+        if(irq == 0x00)
+        {
+                int_20();
+        }
+        if(irq == 0x01)
+        {
+                int_21();
+        }
 }
 
 void int_20() {
-        ncPrint("TIMERTICK ");
+        //ncPrint("TIMERTICK ");
         timer_handler();
+}
+
+void int_21() { 
+        char tecla = keyboard_handler();
+        if (tecla != 0) {
+                ncPrintCharNoColor(tecla);
+        }
 }
