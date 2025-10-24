@@ -1,56 +1,53 @@
 #include <keyboard.h>
 
-static ascii_table[] = {};
-
-char scan_to_ascii(uint8_t scan_code) 
-{
-    switch (scan_code) 
-	{
-        case 0x1E: return 'a';
-        case 0x30: return 'b';
-        case 0x2E: return 'c';
-        case 0x20: return 'd';
-        case 0x12: return 'e';
-        case 0x21: return 'f';
-        case 0x22: return 'g';
-        case 0x23: return 'h';
-        case 0x17: return 'i';
-        case 0x24: return 'j';
-        case 0x25: return 'k';
-        case 0x26: return 'l';
-        case 0x32: return 'm';
-        case 0x31: return 'n';
-        case 0x18: return 'o';
-        case 0x19: return 'p';
-        case 0x10: return 'q';
-        case 0x13: return 'r';
-        case 0x1F: return 's';
-        case 0x14: return 't';
-        case 0x16: return 'u';
-        case 0x2F: return 'v';
-        case 0x11: return 'w';
-        case 0x2D: return 'x';
-        case 0x15: return 'y';
-        case 0x2C: return 'z';
-		case 0x02: return '1';
-		case 0x03: return '2';
-		case 0x04: return '3';
-		case 0x05: return '4';
-		case 0x06: return '5';
-		case 0x07: return '6';
-		case 0x08: return '7';
-		case 0x09: return '8';
-		case 0x0A: return '9';
-		case 0x0B: return '0';
-		case 0x39: return ' ';
-		case 0x0E: return ' ';
-        default: return 0;
-    }
-}
+static int shift_pressed = 0;
 
 char keyboard_handler() {
     uint8_t scan_code = get_input();
-    char toReturn = scan_to_ascii(scan_code);
-    return toReturn;
+    
+    // Si es un break code (tecla soltada)
+    if (scan_code & 0x80) {
+        uint8_t make_code = scan_code & 0x7F; // le saco el bit 7
+
+        if (make_code == 0x2A || make_code == 0x36) {
+            shift_pressed = 0; // se soltó Shift
+        }
+
+        return 0; // no imprimimos nada al soltar teclas
+    }
+
+    // Si es un make code (tecla presionada)
+    if (scan_code == 0x2A || scan_code == 0x36) {
+        shift_pressed = 1; // se presionó Shift
+        return 0;
+    }
+
+    char c;
+
+    // Convertir scancode a carácter
+    if(shift_pressed) {
+        c = ascii_shift_table[scan_code];
+    } else {
+        c = ascii_table[scan_code];
+    }
+    
+    return c;
+
 }
 
+//TODO:
+
+
+// void update_screen() {
+//     for (int i = 0; i < keyboard->read_pos-1; i++) {
+//         ncPrintChar(keyboard->buffer[i], BLACK_WHITE);
+//     }
+// }
+
+// void init_keyboard() {
+//     for(int i = 0; i < 256; i++) {
+//         keyboard->buffer[i] = 0;
+//     }
+//     keyboard->read_pos = 0;
+//     keyboard->shift = false;
+// }
