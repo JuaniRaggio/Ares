@@ -9,6 +9,13 @@ static uint8_t *currentVideo = (uint8_t *)0xB8000;
 static const uint32_t width  = 80;
 static const uint32_t height = 25;
 
+void ncPrintNoColor(const char *string) {
+        int i;
+        for (i = 0; string[i] != 0; i++)
+                ncPrintChar(string[i], BLACK_WHITE);
+}
+
+
 void ncPrint(const char *string, uint8_t color) {
         int i;
         for (i = 0; string[i] != 0; i++)
@@ -41,7 +48,7 @@ void ncPrintBin(uint64_t value) {
 
 void ncPrintBase(uint64_t value, uint32_t base) {
         uintToBase(value, buffer, base);
-        ncPrint(buffer);
+        ncPrint(buffer, BLACK_WHITE);
 }
 
 void ncClear() {

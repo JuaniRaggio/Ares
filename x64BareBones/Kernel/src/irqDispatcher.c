@@ -6,6 +6,7 @@
 #include <keyboard.h>
 
 static void int_20();
+void int_21();
 // static void kbd_handler();
 
 typedef void (*interruption_signature)(void);

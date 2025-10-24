@@ -34,42 +34,42 @@ void *getStackBase() {
 void *initializeKernelBinary() {
         char buffer[10];
 
-        ncPrint("[x64BareBones]");
+        ncPrintNoColor("[x64BareBones]");
         ncNewline();
 
-        ncPrint("CPU Vendor:");
-        ncPrint(cpuVendor(buffer));
+        ncPrintNoColor("CPU Vendor:");
+        ncPrintNoColor(cpuVendor(buffer));
         ncNewline();
 
-        ncPrint("[Loading modules]");
+        ncPrintNoColor("[Loading modules]");
         ncNewline();
         void *moduleAddresses[] = {sampleCodeModuleAddress,
                                    sampleDataModuleAddress};
 
         loadModules(&endOfKernelBinary, moduleAddresses);
-        ncPrint("[Done]");
+        ncPrintNoColor("[Done]");
         ncNewline();
         ncNewline();
 
-        ncPrint("[Initializing kernel's binary]");
+        ncPrintNoColor("[Initializing kernel's binary]");
         ncNewline();
 
         clearBSS(&bss, &endOfKernel - &bss);
 
-        ncPrint("  text: 0x");
+        ncPrintNoColor("  text: 0x");
         ncPrintHex((uint64_t)&text);
         ncNewline();
-        ncPrint("  rodata: 0x");
+        ncPrintNoColor("  rodata: 0x");
         ncPrintHex((uint64_t)&rodata);
         ncNewline();
-        ncPrint("  data: 0x");
+        ncPrintNoColor("  data: 0x");
         ncPrintHex((uint64_t)&data);
         ncNewline();
-        ncPrint("  bss: 0x");
+        ncPrintNoColor("  bss: 0x");
         ncPrintHex((uint64_t)&bss);
         ncNewline();
 
-        ncPrint("[Done]");
+        ncPrintNoColor("[Done]");
         ncNewline();
         ncNewline();
         return getStackBase();
@@ -80,24 +80,24 @@ void *initializeKernelBinary() {
 int main() {
         load_idt(); //Cargar la idt
         
-        ncPrint("[Kernel Main]");
+        ncPrintNoColor("[Kernel Main]");
         ncNewline();
-        ncPrint("  Sample code module at 0x");
+        ncPrintNoColor("  Sample code module at 0x");
         ncPrintHex((uint64_t)sampleCodeModuleAddress);
         ncNewline();
-        ncPrint("  Calling the sample code module returned: ");
+        ncPrintNoColor("  Calling the sample code module returned: ");
         ncPrintHex(((EntryPoint)sampleCodeModuleAddress)());
         ncNewline();
         ncNewline();
 
-        ncPrint("  Sample data module at 0x");
+        ncPrintNoColor("  Sample data module at 0x");
         ncPrintHex((uint64_t)sampleDataModuleAddress);
         ncNewline();
-        ncPrint("  Sample data module contents: ");
-        ncPrint((char *)sampleDataModuleAddress);
+        ncPrintNoColor("  Sample data module contents: ");
+        ncPrintNoColor((char *)sampleDataModuleAddress);
         ncNewline();
 
-        ncPrint("[Finished]");
+        ncPrintNoColor("[Finished]");
         ncNewline();
 
         // Lo hago asi porque sabemos que no va a cambiar el formato, siempre
