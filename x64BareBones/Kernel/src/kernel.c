@@ -12,6 +12,7 @@
 #include "font_ubuntu_mono.h"
 
 #define ever (;;)
+#define TIME_FMT_LENGTH 6
 
 // ======================================================
 // Secciones del kernel y módulos
@@ -66,7 +67,6 @@ void *initializeKernelBinary() {
 // ======================================================
 
 int main() {
-<<<<<<< HEAD
     video_init();          // Inicializa el modo gráfico (o VGA)
     load_idt();            // Inicializa la IDT
 
@@ -114,7 +114,7 @@ int main() {
         char buffer[TIME_FMT_LENGTH];
         s_time time = get_current_time();
         buffer[0]   = time.hours / 10 + '0';
-        buffer[1]   = time.hours % 10 + '0';
+        buffer[1]   = (time.hours % 10 + '0');
         buffer[2]   = ':';
         buffer[3]   = time.minutes / 10 + '0';
         buffer[4]   = time.minutes % 10 + '0';
