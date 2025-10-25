@@ -8,7 +8,7 @@
 #ifndef INTERRUPS_H_
 #define INTERRUPS_H_
 
-#include <idtLoader.h>
+#include <arch/x86_64/idtLoader.h>
 
 void _int80Handler(void);
 

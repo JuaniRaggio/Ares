@@ -1,4 +1,4 @@
-#include <video_driver.h>
+#include <drivers/video_driver.h>
 
 struct vbe_mode_info_structure {
         uint16_t attributes; // deprecated, only bit 7 should be of interest to

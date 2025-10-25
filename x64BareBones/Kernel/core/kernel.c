@@ -1,7 +1,7 @@
-#include <video_driver.h>
-#include <idtLoader.h>
+#include <drivers/video_driver.h>
+#include <arch/x86_64/idtLoader.h>
 #include <lib.h>
-#include <moduleLoader.h>
+#include <core/moduleLoader.h>
 #include <naiveConsole.h>
 #include <stdint.h>
 #include <stdio.h>

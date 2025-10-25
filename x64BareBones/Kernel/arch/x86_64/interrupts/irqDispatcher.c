@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
-#include <keyboard_driver.h>
-#include "../include/colors.h"
+#include <drivers/time.h>
+#include <drivers/keyboard_driver.h>
+#include <colors.h>
 
 
 static void int_20();

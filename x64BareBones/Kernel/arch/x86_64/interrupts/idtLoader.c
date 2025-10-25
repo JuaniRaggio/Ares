@@ -1,9 +1,9 @@
 #include <defs.h>
-#include <idtLoader.h>
-#include <interrupts.h>
+#include <arch/x86_64/idtLoader.h>
+#include <arch/x86_64/interrupts.h>
 #include <stdint.h>
 
-#include <keyboard_driver.h>
+#include <drivers/keyboard_driver.h>
 
 #pragma pack(push) /* Push de la alineación actual */
 #pragma pack(1)    /* Alinear las siguiente estructuras a 1 byte */

@@ -2,3 +2,18 @@
 .vscode
 *.pdf
 
+# Build artifacts
+x64BareBones/Kernel/build/
+x64BareBones/Kernel/bin/
+*.o
+*.bin
+*.d
+*.img
+*.vmdk
+*.qcow2
+
+# Old directories (deprecated)
+x64BareBones/Kernel/src/
+x64BareBones/Kernel/asm/
+x64BareBones/Kernel/video/
+x64BareBones/Kernel/fonts/
