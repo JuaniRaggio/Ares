@@ -97,13 +97,10 @@ static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base) {
 
         p1 = buffer;
         p2 = p - 1;
-        char tmp;
-        while (p1 < p2) {
-                tmp = *p1;
+
+        for (char tmp = *p1; p1 < p2; ++p1, --p2, tmp = *p1) {
                 *p1 = *p2;
                 *p2 = tmp;
-                p1++;
-                p2--;
         }
 
         return digits;
