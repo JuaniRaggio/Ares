@@ -6,14 +6,15 @@
 #include <stdint.h>
 
 #define TABLE_SIZE 256
+#define NON_PRINTABLE 0
 
 typedef enum { off, shift, ctl, alt, available_modifiers } modifiers;
 
 // This table must be initialized matching the modifiers enum
-static unsigned char ascii_table[available_modifiers][TABLE_SIZE] = {
+static uint8_t ascii_table[available_modifiers][TABLE_SIZE] = {
     {
-        /* 0x00 */ 0,
-        /* 0x01 */ 0,    // Escape pressed (no ASCII)
+        /* 0x00 */ NON_PRINTABLE,
+        /* 0x01 */ NON_PRINTABLE,    // Escape pressed (no ASCII)
         /* 0x02 */ '1',  // 1 pressed
         /* 0x03 */ '2',  // 2 pressed
         /* 0x04 */ '3',  // 3 pressed
@@ -26,7 +27,7 @@ static unsigned char ascii_table[available_modifiers][TABLE_SIZE] = {
         /* 0x0B */ '0',  // 0 (zero) pressed
         /* 0x0C */ '-',  // – pressed
         /* 0x0D */ '=',  // = pressed
-        /* 0x0E */ 0,    // Backspace pressed (control char, optional)
+        /* 0x0E */ NON_PRINTABLE,    // Backspace pressed (control char, optional)
         /* 0x0F */ '\t', // Tab pressed
         /* 0x10 */ 'q',  // Q pressed
         /* 0x11 */ 'w',  // W pressed
@@ -41,7 +42,7 @@ static unsigned char ascii_table[available_modifiers][TABLE_SIZE] = {
         /* 0x1A */ '[',  // [ pressed
         /* 0x1B */ ']',  // ] pressed
         /* 0x1C */ '\n', // Enter pressed
-        /* 0x1D */ 0,    // Left Control pressed (no ASCII)
+        /* 0x1D */ NON_PRINTABLE,    // Left Control pressed (no ASCII)
         /* 0x1E */ 'a',  // A pressed
         /* 0x1F */ 's',  // S pressed
         /* 0x20 */ 'd',  // D pressed
@@ -54,7 +55,7 @@ static unsigned char ascii_table[available_modifiers][TABLE_SIZE] = {
         /* 0x27 */ ';',  // ; pressed
         /* 0x28 */ '\'', // ' (single quote) pressed
         /* 0x29 */ '`',  // ` (back tick) pressed
-        /* 0x2A */ 0,    // Left Shift pressed
+        /* 0x2A */ NON_PRINTABLE,    // Left Shift pressed
         /* 0x2B */ '\\', // \ pressed
         /* 0x2C */ 'z',  // Z pressed
         /* 0x2D */ 'x',  // X pressed
@@ -66,17 +67,17 @@ static unsigned char ascii_table[available_modifiers][TABLE_SIZE] = {
         /* 0x33 */ ',',  // , pressed
         /* 0x34 */ '.',  // . pressed
         /* 0x35 */ '/',  // / pressed
-        /* 0x36 */ 0,    // Right Shift pressed
+        /* 0x36 */ NON_PRINTABLE,    // Right Shift pressed
         /* 0x37 */ '*',  // (keypad) * pressed
-        /* 0x38 */ 0,    // Left Alt pressed
+        /* 0x38 */ NON_PRINTABLE,    // Left Alt pressed
         /* 0x39 */ ' ',  // space pressed
-        /* 0x3A */ 0,    // CapsLock pressed
-        /* 0x3B */ 0,    // F1 pressed
+        /* 0x3A */ NON_PRINTABLE,    // CapsLock pressed
+        /* 0x3B */ NON_PRINTABLE,    // F1 pressed
     },
     /* Shift‐pressed version: ASCII when Shift (o CapsLock) está activado */
     {
-        /* 0x00 */ 0,
-        /* 0x01 */ 0,
+        /* 0x00 */ NON_PRINTABLE,
+        /* 0x01 */ NON_PRINTABLE,
         /* 0x02 */ '!', // shift + 1 = !
         /* 0x03 */ '@', // shift + 2 = @
         /* 0x04 */ '#', // shift + 3 = #
@@ -89,7 +90,7 @@ static unsigned char ascii_table[available_modifiers][TABLE_SIZE] = {
         /* 0x0B */ ')', // shift + 0 = )
         /* 0x0C */ '_', // shift + - = _
         /* 0x0D */ '+', // shift + = = +
-        /* 0x0E */ 0,
+        /* 0x0E */ NON_PRINTABLE,
         /* 0x0F */ '\t',
         /* 0x10 */ 'Q',
         /* 0x11 */ 'W',
@@ -104,7 +105,7 @@ static unsigned char ascii_table[available_modifiers][TABLE_SIZE] = {
         /* 0x1A */ '{',
         /* 0x1B */ '}',
         /* 0x1C */ '\n',
-        /* 0x1D */ 0,
+        /* 0x1D */ NON_PRINTABLE,
         /* 0x1E */ 'A',
         /* 0x1F */ 'S',
         /* 0x20 */ 'D',
@@ -117,7 +118,7 @@ static unsigned char ascii_table[available_modifiers][TABLE_SIZE] = {
         /* 0x27 */ ':',
         /* 0x28 */ '\"',
         /* 0x29 */ '~',
-        /* 0x2A */ 0,
+        /* 0x2A */ NON_PRINTABLE,
         /* 0x2B */ '|',
         /* 0x2C */ 'Z',
         /* 0x2D */ 'X',
@@ -131,9 +132,12 @@ static unsigned char ascii_table[available_modifiers][TABLE_SIZE] = {
         /* 0x35 */ '?'  // NO funciona
     }};
 
-char keyboard_handler();
-void update_screen();
-void init_keyboard();
+uint8_t keyboard_handler();
+void update_buffer(uint8_t c);
+
+uint8_t buffer_has_next();
+uint8_t buffer_next();
+
 extern uint8_t get_input();
 
 #endif

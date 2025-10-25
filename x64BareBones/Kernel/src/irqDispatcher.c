@@ -30,17 +30,11 @@ void int_20() {
 }
 
 void int_21() { 
-        char caracter = keyboard_handler();
+        uint8_t c = keyboard_handler();
         
         //cheque que esta funcionando bien hasta aca
-        if(caracter != 0) {
-                ncPrintChar(caracter, BLACK_WHITE);
+        if(c != 0) {
+                update_buffer(c);
+                //ncPrintChar(caracter, BLACK_WHITE);
         }
-
-
-        //TODO: Encontrar una forma de inicializar el keyboard
-
-        // keyboard->buffer[keyboard->read_pos] = caracter;
-        // update_screen();
-        // keyboard->read_pos += 1;
 }
