@@ -5,15 +5,6 @@
 #include <stdbool.h>
 #include <naiveConsole.h>
 
-typedef struct {
-    char buffer[256];
-    int read_pos; 
-    // uint8_t write_pos;
-    bool shift;
-} keyboard_state_t;
-
-static keyboard_state_t* keyboard;
-
 /* Scan code set 1 (US QWERTY) “make” codes → ASCII (sin shift) */
 static unsigned char ascii_table[256] = {
     /* 0x00 */ 0,
@@ -135,7 +126,6 @@ static unsigned char ascii_shift_table[256] = {
     /* 0x34 */ '>', //NO funciona
     /* 0x35 */ '?'  //NO funciona
 };
-
 
 char keyboard_handler();
 void update_screen();

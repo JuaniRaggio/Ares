@@ -6,12 +6,15 @@ GLOBAL picSlaveMask
 GLOBAL haltcpu
 GLOBAL _hlt
 
+GLOBAL _int80Handler
+
 GLOBAL _irq00Handler
 GLOBAL _irq01Handler
 GLOBAL _irq02Handler
 GLOBAL _irq03Handler
 GLOBAL _irq04Handler
 GLOBAL _irq05Handler
+
 
 GLOBAL _exception0Handler
 
@@ -113,6 +116,9 @@ picSlaveMask:
     pop     rbp
     retn
 
+;Syscalls
+_int80Handler:
+;TODO:
 
 ;8254 Timer (Timer Tick)
 _irq00Handler:
