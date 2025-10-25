@@ -10,12 +10,12 @@
 cfg_smpinit:		db 1	; By default SMP is enabled. Set to 0 to disable.
 
 ; Cuando se tenga el driver de video, tenemos que cambiar vesa
-cfg_vesa:		db 0	; By default VESA is disabled. Set to 1 to enable.
+cfg_vesa:		db 1	; By default VESA is disabled. Set to 1 to enable.
 
 cfg_default:		db 0	; By default we don't need a config file so set to 0. If a config file is found set to 1.
 cfg_e820:		db 1	; By default E820 should be present. Pure64 will set this to 0 if not found/usable.
 cfg_mbr:		db 0	; Did we boot off of a disk with a proper MBR
-cfg_hdd:		db 0	; Was a bootable drive detected
+cfg_hdd:		db 1	; Was a bootable drive detected
 
 ; Memory locations
 E820Map:		equ 0x0000000000004000

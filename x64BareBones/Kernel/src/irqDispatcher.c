@@ -4,6 +4,8 @@
 #include <string.h>
 #include <time.h>
 #include <keyboard.h>
+#include "../include/colors.h"
+
 
 static void int_20();
 // static void kbd_handler();
@@ -22,7 +24,7 @@ void irqDispatcher(uint64_t irq) {
 }
 
 void int_20() {
-        //ncPrint("TIMERTICK ");                                                                                                                                                                                                                                                                                                
+        //ncPrintOld("TIMERTICK ");                                                                                                                                                                                                                                                                                                
         timer_handler();
 }
 

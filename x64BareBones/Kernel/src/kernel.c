@@ -1,3 +1,4 @@
+
 #include "video_driver.h"
 #include <idtLoader.h>
 #include <lib.h>
@@ -6,6 +7,13 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "video.h"
+#include "fontManager.h"
+#include "font_ubuntu_mono.h"
+
+// ======================================================
+// Secciones del kernel y módulos
+// ======================================================
 extern uint8_t text;
 extern uint8_t rodata;
 extern uint8_t data;
@@ -14,106 +22,89 @@ extern uint8_t endOfKernelBinary;
 extern uint8_t endOfKernel;
 
 static const uint64_t PageSize = 0x1000;
-
 static void *const sampleCodeModuleAddress = (void *)0x400000;
 static void *const sampleDataModuleAddress = (void *)0x500000;
 
 typedef int (*EntryPoint)();
 
+// ======================================================
+// Funciones auxiliares de inicialización
+// ======================================================
 void clearBSS(void *bssAddress, uint64_t bssSize) {
-        memset(bssAddress, 0, bssSize);
+    memset(bssAddress, 0, bssSize);
 }
 
 void *getStackBase() {
-        return (void *)((uint64_t)&endOfKernel +
-                        PageSize * 8 // The size of the stack itself, 32KiB
-                        - sizeof(uint64_t) // Begin at the top of the stack
-        );
+    return (void *)((uint64_t)&endOfKernel + PageSize * 8 - sizeof(uint64_t));
 }
 
 void *initializeKernelBinary() {
-        char buffer[10];
+    ncPrintOld("[x64BareBones]");
+    ncNewline();
 
-        ncPrint("[x64BareBones]");
-        ncNewline();
+    ncPrintOld("CPU Vendor:");
+    char buffer[10];
+    ncPrintOld(cpuVendor(buffer));
+    ncNewline();
 
-        ncPrint("CPU Vendor:");
-        ncPrint(cpuVendor(buffer));
-        ncNewline();
+    ncPrintOld("[Loading modules]");
+    ncNewline();
+    void *moduleAddresses[] = { sampleCodeModuleAddress, sampleDataModuleAddress };
+    loadModules(&endOfKernelBinary, moduleAddresses);
+    ncPrintOld("[Done]");
+    ncNewline();
+    ncNewline();
 
-        ncPrint("[Loading modules]");
-        ncNewline();
-        void *moduleAddresses[] = {sampleCodeModuleAddress,
-                                   sampleDataModuleAddress};
-
-        loadModules(&endOfKernelBinary, moduleAddresses);
-        ncPrint("[Done]");
-        ncNewline();
-        ncNewline();
-
-        ncPrint("[Initializing kernel's binary]");
-        ncNewline();
-
-        clearBSS(&bss, &endOfKernel - &bss);
-
-        ncPrint("  text: 0x");
-        ncPrintHex((uint64_t)&text);
-        ncNewline();
-        ncPrint("  rodata: 0x");
-        ncPrintHex((uint64_t)&rodata);
-        ncNewline();
-        ncPrint("  data: 0x");
-        ncPrintHex((uint64_t)&data);
-        ncNewline();
-        ncPrint("  bss: 0x");
-        ncPrintHex((uint64_t)&bss);
-        ncNewline();
-
-        ncPrint("[Done]");
-        ncNewline();
-        ncNewline();
-        return getStackBase();
+    clearBSS(&bss, &endOfKernel - &bss);
+    return getStackBase();
 }
 
-#define TIME_FMT_LENGTH 6
+// ======================================================
+// MAIN DEL KERNEL
+// ======================================================
 
 int main() {
-        load_idt(); //Cargar la idt
-        
-        ncPrint("[Kernel Main]");
-        ncNewline();
-        ncPrint("  Sample code module at 0x");
-        ncPrintHex((uint64_t)sampleCodeModuleAddress);
-        ncNewline();
-        ncPrint("  Calling the sample code module returned: ");
-        ncPrintHex(((EntryPoint)sampleCodeModuleAddress)());
-        ncNewline();
-        ncNewline();
+    video_init();          // Inicializa el modo gráfico (o VGA)
+    load_idt();            // Inicializa la IDT
 
-        ncPrint("  Sample data module at 0x");
-        ncPrintHex((uint64_t)sampleDataModuleAddress);
+    if (videoMode == 1) {
+        clearScreen(0x000000);  // Pantalla negra limpia
+        ncClear();              // Limpia buffer de texto del ncPrint
+
+        // Texto principal
+        const char *msg1 = "[MODO VIDEO ACTIVADO]";
+        const char *msg2 = "Kernel funcionando correctamente.";
+
+        bmp_font_t *font = &font_ubuntu_mono;  // usamos la fuente directamente
+        int msg1_len = strlen(msg1);
+        int msg2_len = strlen(msg2);
+
+        int startX1 = (screenWidth - msg1_len * font->width) / 2;
+        int startX2 = (screenWidth - msg2_len * font->width) / 2;
+        int startY = (screenHeight / 2) - font->height;
+
+        // Banner verde oscuro de fondo
+        for (int y = startY - 10; y < startY + 2 * font->height + 20; y++) {
+            for (int x = startX1 - 20; x < startX1 + msg1_len * font->width + 20; x++) {
+                drawPixel(x, y, 0x003300);
+            }
+        }
+
+        // Mensajes en pantalla
+        for (int i = 0; msg1[i]; i++)
+            drawChar(msg1[i], startX1 + i * font->width, startY, 0x00FF00, font);
+
+        for (int i = 0; msg2[i]; i++)
+            drawChar(msg2[i], startX2 + i * font->width, startY + font->height + 10, 0xCCCCCC, font);
+
+    } else {
+        ncPrintOld("[Fallo modo video, usando VGA]");
         ncNewline();
-        ncPrint("  Sample data module contents: ");
-        ncPrint((char *)sampleDataModuleAddress);
+        ncPrintOld("[Kernel Main]");
         ncNewline();
+    }
 
-        ncPrint("[Finished]");
-        ncNewline();
-
-        // Lo hago asi porque sabemos que no va a cambiar el formato, siempre
-        // van a ser dos posiciones para las horas y dos para los minutos a
-        // menos de que seas un enfermo mental
-        char buffer[TIME_FMT_LENGTH];
-        s_time time = get_current_time();
-        buffer[0]   = time.hours / 10 + '0';
-        buffer[1]   = time.hours % 10 + '0';
-        buffer[2]   = ':';
-        buffer[3]   = time.minutes / 10 + '0';
-        buffer[4]   = time.minutes % 10 + '0';
-        buffer[5]   = 0;
-        printLn(buffer, BLACK_WHITE);
-
-        while(1);
-
-        return 0;
+    while (1);
+    return 0;
 }
+

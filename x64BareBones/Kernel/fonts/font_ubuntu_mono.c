@@ -1,13 +1,6 @@
-// Bitmap font info struct def.
-typedef struct {
-	int width;
-	int height;
-	int nChars;
-} bmp_font_inf;
+#include "font.h"
 
-bmp_font_inf font_ubuntu_mono_inf = { 8, 17, 256 };
-
-const unsigned char font_ubuntu_mono_bmp[][17] = {
+static const unsigned char ubuntu_mono_bitmap[256][17] = {
 // 000 0x00 'uni0000'
 	{
 	0x00,	// --------
@@ -5128,4 +5121,12 @@ const unsigned char font_ubuntu_mono_bmp[][17] = {
 	0x04,	// --#-----
 	0x03	// ##------
 	}
+};
+
+bmp_font_t font_ubuntu_mono = {
+    .name = "Ubuntu Mono",
+    .width = 8,
+    .height = 17,
+    .nChars = 256,
+    .bitmap = ubuntu_mono_bitmap
 };

@@ -51,3 +51,39 @@ s_time get_current_time() {
         };
 }
 
+//----------------------//
+
+int strcmp(const char *s1, const char *s2) {
+    while (*s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+    }
+    return *(const unsigned char *)s1 - *(const unsigned char *)s2;
+}
+
+int strncmp(const char *s1, const char *s2, uint64_t n) {
+    while (n-- && *s1 && (*s1 == *s2)) {
+        s1++;
+        s2++;
+    }
+    if (n == (uint64_t)-1) return 0;  // iguales hasta n chars
+    return *(const unsigned char *)s1 - *(const unsigned char *)s2;
+}
+
+uint64_t strlen(const char *s) {
+    uint64_t len = 0;
+    while (*s++) len++;
+    return len;
+}
+
+char *strcpy(char *dest, const char *src) {
+    char *d = dest;
+    while ((*d++ = *src++));
+    return dest;
+}
+
+char *strncpy(char *dest, const char *src, uint64_t n) {
+    char *d = dest;
+    while (n-- && (*d++ = *src++));
+    return dest;
+}

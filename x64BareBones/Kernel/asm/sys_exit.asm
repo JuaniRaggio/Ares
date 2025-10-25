@@ -1,12 +1,11 @@
-; sys_exit.asm
-
+section .text
 global sys_exit
 
 ; exit code in rdi
 sys_exit:
     mov rax, rdi
-    cli                 ; disable interruptions
+    cli                 ; disable interrupts
 .hang:
-    hlt                 ; stops the CPU
+    hlt                 ; stop CPU
     jmp .hang
 
