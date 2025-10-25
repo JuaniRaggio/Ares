@@ -11,6 +11,8 @@
 #include "fontManager.h"
 #include "font_ubuntu_mono.h"
 
+#define ever (;;)
+
 // ======================================================
 // Secciones del kernel y módulos
 // ======================================================
@@ -64,6 +66,7 @@ void *initializeKernelBinary() {
 // ======================================================
 
 int main() {
+<<<<<<< HEAD
     video_init();          // Inicializa el modo gráfico (o VGA)
     load_idt();            // Inicializa la IDT
 
@@ -101,10 +104,24 @@ int main() {
         ncPrintOld("[Fallo modo video, usando VGA]");
         ncNewline();
         ncPrintOld("[Kernel Main]");
+
         ncNewline();
     }
 
-    while (1);
-    return 0;
+        // Lo hago asi porque sabemos que no va a cambiar el formato, siempre
+        // van a ser dos posiciones para las horas y dos para los minutos a
+        // menos de que seas un enfermo mental
+        char buffer[TIME_FMT_LENGTH];
+        s_time time = get_current_time();
+        buffer[0]   = time.hours / 10 + '0';
+        buffer[1]   = time.hours % 10 + '0';
+        buffer[2]   = ':';
+        buffer[3]   = time.minutes / 10 + '0';
+        buffer[4]   = time.minutes % 10 + '0';
+        buffer[5]   = 0;
+        printLn(buffer, BLACK_WHITE);
+        
+        for ever;
+        return 0;
 }
 

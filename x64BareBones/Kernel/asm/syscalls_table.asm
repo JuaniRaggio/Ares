@@ -1,5 +1,7 @@
 section .data
 global syscalls_table
+extern sys_exit
+extern sys_write
 
 extern sys_write
 extern sys_exit

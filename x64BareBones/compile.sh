@@ -11,8 +11,10 @@ cd ./Toolchain && make clean && make && cd ..
 echo "[*] Construyendo imagen Docker..."
 sudo docker build -t $IMAGE_NAME .
 
-# Si existe el contenedor ARES, eliminarlo silenciosamente
-sudo docker rm -f $CONTAINER_NAME 2>/dev/null
+if ! [ "$(sudo docker ps -q -f name=$CONTAINER_NAME)" ]; then
+  echo "[*] Eliminando contenedor anterior..."
+  sudo docker rm -f $CONTAINER_NAME > /dev/null 2>&1
+fi
 
 # Iniciar el contenedor con el proyecto montado 
 echo "[*] Iniciando contenedor $CONTAINER_NAME..."

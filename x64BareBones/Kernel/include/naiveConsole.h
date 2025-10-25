@@ -18,6 +18,9 @@ void ncPrintCharText(char character, uint8_t color);
 void ncPrintText(const char *string, uint8_t color);
 void ncPrintVideo(const char *string, uint8_t color);
 void ncNewline(void);
+
+void ncPrintNoColor(const char *string);
+
 void ncPrintDec(uint64_t value);
 void ncPrintHex(uint64_t value);
 void ncPrintBin(uint64_t value);

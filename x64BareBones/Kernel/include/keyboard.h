@@ -131,7 +131,9 @@ static unsigned char ascii_shift_table[256] = {
     /* 0x30 */ 'B',
     /* 0x31 */ 'N',
     /* 0x32 */ 'M',
-    /* 0x33 */ '<'
+    /* 0x33 */ '<',
+    /* 0x34 */ '>', //NO funciona
+    /* 0x35 */ '?'  //NO funciona
 };
 
 
