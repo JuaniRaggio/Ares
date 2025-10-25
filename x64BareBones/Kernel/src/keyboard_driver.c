@@ -26,21 +26,13 @@ char keyboard_handler() {
                 if (make_code == LSHIFT_CODE || make_code == RSHIFT_CODE) {
                         keyboard.modifiers = (uint8_t)off;
                 }
-
-                return 0; // no imprimimos nada al soltar teclas
-        } else if (scan_code == LSHIFT_CODE || scan_code == RSHIFT_CODE) {
+                goto end;
+        }
+        if (scan_code == LSHIFT_CODE || scan_code == RSHIFT_CODE) {
                 keyboard.modifiers = (uint8_t)shift; // se presionó Shift
-                return 0;
+                goto end;
         }
-
-        char c;
-
-        // Convertir scancode a carácter
-        if (shift_pressed) {
-                c = ascii_shift_table[scan_code];
-        } else {
-                c = ascii_table[scan_code];
-        }
-
-        return c;
+        return ascii_table[keyboard.modifiers][scan_code];
+end:
+        return 0;
 }
