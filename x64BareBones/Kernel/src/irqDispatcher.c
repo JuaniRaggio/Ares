@@ -35,6 +35,5 @@ void int_21() {
         //cheque que esta funcionando bien hasta aca
         if(c != 0) {
                 update_buffer(c);
-                //ncPrintChar(caracter, BLACK_WHITE);
         }
 }
