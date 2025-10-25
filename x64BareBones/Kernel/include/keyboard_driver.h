@@ -7,6 +7,9 @@
 
 #define TABLE_SIZE 256
 
+char keyboard_handler();
+extern uint8_t get_input();
+
 typedef enum { off, shift, ctl, alt, available_modifiers } modifiers;
 
 // This table must be initialized matching the modifiers enum
@@ -130,10 +133,5 @@ static unsigned char ascii_table[available_modifiers][TABLE_SIZE] = {
         /* 0x34 */ '>', // NO funciona
         /* 0x35 */ '?'  // NO funciona
     }};
-
-char keyboard_handler();
-void update_screen();
-void init_keyboard();
-extern uint8_t get_input();
 
 #endif
