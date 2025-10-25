@@ -14,11 +14,6 @@ extern syscalls_table
 ;  Punto de entrada cuando el usuario ejecuta SYSCALL
 ;  Convención de registros (x86_64):
 ;    RAX = número de syscall
-;    RDI = arg1
-;    RSI = arg2
-;    RDX = arg3
-;    RCX = dirección de retorno (automática)
-;    R11 = flags
 ; -------------------------------------------
 
 syscall_entry:
