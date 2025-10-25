@@ -1,15 +1,13 @@
-
-#include "video_driver.h"
+#include <video_driver.h>
 #include <idtLoader.h>
 #include <lib.h>
 #include <moduleLoader.h>
 #include <naiveConsole.h>
 #include <stdint.h>
 #include <stdio.h>
-
-#include "video.h"
-#include "fontManager.h"
-#include "font_ubuntu_mono.h"
+#include <video.h>
+#include <fontManager.h>
+#include <font_ubuntu_mono.h>
 
 #define ever (;;)
 #define TIME_FMT_LENGTH 6

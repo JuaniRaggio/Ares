@@ -1,1 +1,1 @@
--Iinclude
+-Iinclude -Ivideo -Ifonts -Iasm -Isrc

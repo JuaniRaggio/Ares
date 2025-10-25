@@ -10,6 +10,15 @@
 
 typedef enum { off, shift, ctl, alt, available_modifiers } modifiers;
 
+
+uint8_t keyboard_handler();
+void update_buffer(uint8_t c);
+
+uint8_t buffer_has_next();
+uint8_t buffer_next();
+
+extern uint8_t get_input();
+
 // This table must be initialized matching the modifiers enum
 static uint8_t ascii_table[available_modifiers][TABLE_SIZE] = {
     {
@@ -131,13 +140,5 @@ static uint8_t ascii_table[available_modifiers][TABLE_SIZE] = {
         /* 0x34 */ '>', // NO funciona
         /* 0x35 */ '?'  // NO funciona
     }};
-
-uint8_t keyboard_handler();
-void update_buffer(uint8_t c);
-
-uint8_t buffer_has_next();
-uint8_t buffer_next();
-
-extern uint8_t get_input();
 
 #endif
