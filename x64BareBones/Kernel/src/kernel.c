@@ -22,7 +22,7 @@ extern uint8_t endOfKernelBinary;
 extern uint8_t endOfKernel;
 
 static const uint64_t PageSize             = 0x1000;
-static void *const sampleCodeModuleAddress = (void *)0x400000;
+static void *const userCodeModuleAddress = (void *)0x400000;
 static void *const sampleDataModuleAddress = (void *)0x500000;
 
 typedef int (*EntryPoint)();
@@ -50,7 +50,7 @@ void *initializeKernelBinary() {
 
         ncPrintOld("[Loading modules]");
         ncNewline();
-        void *moduleAddresses[] = {sampleCodeModuleAddress,
+        void *moduleAddresses[] = {userCodeModuleAddress,
                                    sampleDataModuleAddress};
         loadModules(&endOfKernelBinary, moduleAddresses);
         ncPrintOld("[Done]");
@@ -108,10 +108,10 @@ int main() {
                 ncPrintOld("[Kernel Main]");
                 ncNewline();
                 ncPrintOld("  Sample code module at 0x");
-                ncPrintHex((uint64_t)sampleCodeModuleAddress);
+                ncPrintHex((uint64_t)userCodeModuleAddress);
                 ncNewline();
                 ncPrintOld("  Calling the sample code module returned: ");
-                ncPrintHex(((EntryPoint)sampleCodeModuleAddress)());
+                ncPrintHex(((EntryPoint)userCodeModuleAddress)());
                 ncNewline();
                 ncNewline();
 
