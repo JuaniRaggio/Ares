@@ -497,13 +497,13 @@ void process_bdf(t_settings settings) {
         // width_table = malloc(bdf_data.nChars * sizeof(*width_table));
         // if (width_table == NULL) {
         //	fprintf(stderr, "Malloc allocation failed (width_table
-        //var).\n"); 	exit(-1);
+        // var).\n"); 	exit(-1);
         //}
 
         // encoding_table = malloc(bdf_data.nChars * sizeof(*encoding_table));
         // if (encoding_table == NULL) {
         //	fprintf(stderr, "Malloc allocation failed (encoding_table
-        //var).\n"); 	exit(-1);
+        // var).\n"); 	exit(-1);
         // }
 
         bitmap = malloc(((bdf_data.bBox_width + 7) / 8) * bdf_data.bBox_height);

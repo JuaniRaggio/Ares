@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# Pre-push hook para aplicar clang-format automáticamente
+
+echo "Aplicando clang-format a archivos C/C++..."
+
+# Directorio base del código
+CODE_DIR="x64BareBones"
+
+# Encontrar todos los archivos .c y .h en el directorio x64BareBones
+FILES=$(find "$CODE_DIR" -type f \( -name "*.c" -o -name "*.h" \))
+
+# Contador de archivos formateados
+FORMATTED_COUNT=0
+
+# Aplicar clang-format a cada archivo
+for file in $FILES; do
+    if [ -f "$file" ]; then
+        # Aplicar clang-format in-place
+        clang-format -i "$file" 2>/dev/null
+
+        # Verificar si el archivo fue modificado
+        if git diff --quiet "$file"; then
+            : # No hay cambios
+        else
+            git add "$file"
+            FORMATTED_COUNT=$((FORMATTED_COUNT + 1))
+        fi
+    fi
+done
+
+if [ $FORMATTED_COUNT -gt 0 ]; then
+    echo "Se formatearon $FORMATTED_COUNT archivo(s) con clang-format"
+    echo "Los cambios han sido añadidos al staging area"
+else
+    echo "No se requirieron cambios de formato"
+fi
+
+echo "Hook pre-push completado exitosamente"
+
+exit 0
