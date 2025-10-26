@@ -8,7 +8,7 @@ void welcome_shell() {
 
 int shell(void) {
         uint8_t buffer[screen_size] = {0};
-        uint8_t running_shell = RUNNING;
+        uint8_t running_shell       = RUNNING;
         welcome_shell();
 
         while (running_shell) {
