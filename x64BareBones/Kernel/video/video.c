@@ -1,6 +1,6 @@
 
 #include <stddef.h>
-#include "video.h"
+#include <video.h>
 #include "../include/lib.h"
 #include "../include/colors.h"
 #include "../fonts/fontManager.h"
