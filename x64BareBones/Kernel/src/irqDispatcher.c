@@ -7,11 +7,14 @@
 #include "../include/colors.h"
 
 
-static void int_20();
-void int_21();
+void int_20(void);
+void int_21(void);
 // static void kbd_handler();
 
-typedef void (*interruption_signature)(void);
+//No se porque explota si descomento
+// typedef void (*interruption_signature)(void);
+
+// interruption_signature ints[] = {int_20, int_21};
 
 void irqDispatcher(uint64_t irq) {
         if(irq == 0x00)
@@ -24,15 +27,14 @@ void irqDispatcher(uint64_t irq) {
         }
 }
 
-void int_20() {
+void int_20(void) {
         //ncPrintOld("TIMERTICK ");                                                                                                                                                                                                                                                                                                
         timer_handler();
 }
 
-void int_21() { 
+void int_21(void) { 
         uint8_t c = keyboard_handler();
         
-        //cheque que esta funcionando bien hasta aca
         if(c != 0) {
                 update_buffer(c);
         }

@@ -20,6 +20,7 @@ GLOBAL _exception0Handler
 
 EXTERN irqDispatcher
 EXTERN exceptionDispatcher
+EXTERN syscallDispatcher
 
 SECTION .text
 
@@ -118,7 +119,17 @@ picSlaveMask:
 
 ;Syscalls
 _int80Handler:
-;TODO:
+	pushState              
+    
+	mov rdi, rax           ; numero de syscall en RAX
+    mov rsi, rbx           ; primer argumento en RBX
+    mov rdx, rcx           ; segundo argumento en RCX
+    
+	call syscallDispatcher 
+    
+	popState               
+    
+	iretq
 
 ;8254 Timer (Timer Tick)
 _irq00Handler:
