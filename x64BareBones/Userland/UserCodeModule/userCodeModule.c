@@ -1,4 +1,4 @@
-/* sampleCodeModule.c */
+/* userCodeModule.c */
 
 #include <stdio.h>
 
