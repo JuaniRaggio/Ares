@@ -1,10 +1,10 @@
 // naiveConsole.c
 
-#include "naiveConsole.h"
-#include "../fonts/fontManager.h"
-#include "../include/colors.h"
-#include "../video/video.h"
+#include <colors.h>
+#include <fontManager.h>
+#include <naiveConsole.h>
 #include <stdint.h>
+#include <video_driver.h>
 
 static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base);
 static uint8_t *const video = (uint8_t *)0xB8000;
