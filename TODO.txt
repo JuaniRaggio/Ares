@@ -1,5 +1,15 @@
-TODO's para el tp:
-int80Hander (Kernel/asm/lib.asm)
+===============================================================================
+Este archivo mantiene los tasks en progreso que vamos realizando
+===============================================================================
 
-Shell (Userland)
+In progress
+-------------------------------------------------------------------------------
+
+- [ ] Shell (Userland)
+
+
+Done tasks
+-------------------------------------------------------------------------------
+
+- [X] int80Hander (Kernel/asm/lib.asm)
 
