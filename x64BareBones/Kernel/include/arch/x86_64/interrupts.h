@@ -10,7 +10,7 @@
 
 #include <arch/x86_64/idtLoader.h>
 
-void _int80Handler(void);
+void _syscallHandler(void);
 
 void _irq00Handler(void);
 void _irq01Handler(void);

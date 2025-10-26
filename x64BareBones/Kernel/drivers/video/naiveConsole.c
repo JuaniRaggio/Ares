@@ -7,9 +7,23 @@
 #include <stdint.h>
 
 static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base);
+static uint8_t * const video = (uint8_t*)0xB8000;
+
 
 // temp. buffer to print num
 static char buffer[64] = {'0'};
+
+void ncPrintCount(const char * buf, uint8_t style, uint64_t count) {
+        for (int i = 0; i < count && currentVideo < limit; i++) {
+                currentVideo[0] = buf[i];
+		currentVideo[1] = style;
+		currentVideo += 2;
+	}
+        
+        if (currentVideo >= limit || currentVideo < video) {
+                currentVideo = video;
+        }
+}
 
 // principal function
 void ncPrint(const char *string, uint8_t color) {
