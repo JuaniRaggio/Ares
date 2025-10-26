@@ -8,4 +8,3 @@
 extern bmp_font_t font_ubuntu_mono;
 
 #endif
-

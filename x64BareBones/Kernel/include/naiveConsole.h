@@ -3,14 +3,15 @@
 #ifndef NAIVE_CONSOLE_H
 #define NAIVE_CONSOLE_H
 
-#include <stdint.h>
 #include <colors.h>
+#include <stdint.h>
 
-//TODO:
-//NO DEBERIA IR ACA, CAMBIAR
-static uint8_t * limit = (uint8_t*)0xB8FA0; // video + width * height * 2 - 1
+// TODO:
+// NO DEBERIA IR ACA, CAMBIAR
+static uint8_t *limit = (uint8_t *)0xB8FA0; // video + width * height * 2 - 1
 
-//temp. solution for older versions where ncPrint is declared with only one arg. 
+// temp. solution for older versions where ncPrint is declared with only one
+// arg.
 void ncPrintOld(const char *string);
 
 void ncPrint(const char *string, uint8_t color);
@@ -27,4 +28,3 @@ void ncPrintBase(uint64_t value, uint32_t base);
 void ncClear(void);
 
 #endif
-

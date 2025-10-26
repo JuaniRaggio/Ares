@@ -3,8 +3,8 @@
 
 typedef struct {
         uint8_t buffer[256];
-        uint8_t write_pos; //head
-        uint8_t read_pos;  //tail 
+        uint8_t write_pos; // head
+        uint8_t read_pos;  // tail
         uint8_t modifiers; // off, Shift, Ctrl, Alt
 } keyboard_state_t;
 
@@ -46,13 +46,13 @@ uint8_t buffer_has_next() {
 }
 
 uint8_t buffer_next() {
-        if(!buffer_has_next()) {
-                return 0; //No char in buffer
+        if (!buffer_has_next()) {
+                return 0; // No char in buffer
         }
 
         uint8_t aux = keyboard.buffer[keyboard.read_pos];
 
-        keyboard.read_pos = (keyboard.read_pos+1) & 0xff;
+        keyboard.read_pos = (keyboard.read_pos + 1) & 0xff;
 
         return aux;
 }

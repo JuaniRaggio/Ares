@@ -5,12 +5,12 @@
 
 #include <keyboard_driver.h>
 
-//Interruptions id
+// Interruptions id
 #define ID_TIMER_TICK 0x20
 #define ID_KEYBOARD 0x21
 #define ID_SYSCALL 0x80
 
-//Exceptions id
+// Exceptions id
 #define ID_DIVISION_BY_ZERO 0x00
 
 #pragma pack(push) /* Push de la alineación actual */
@@ -32,14 +32,14 @@ static void setup_IDT_entry(int index, uint64_t offset);
 
 void load_idt() {
 
-        //Interrupciones de software
+        // Interrupciones de software
         setup_IDT_entry(ID_TIMER_TICK, (uint64_t)&_irq00Handler);
         setup_IDT_entry(ID_KEYBOARD, (uint64_t)&_irq01Handler);
-        
-        //Interrupciones de hardware
+
+        // Interrupciones de hardware
         setup_IDT_entry(ID_SYSCALL, (uint64_t)&_syscallHandler);
 
-        //Excepciones
+        // Excepciones
         setup_IDT_entry(ID_DIVISION_BY_ZERO, (uint64_t)&_exception0Handler);
 
         // Solo interrupcion timer tick habilitadas

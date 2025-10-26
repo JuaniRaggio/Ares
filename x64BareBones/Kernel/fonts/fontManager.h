@@ -12,4 +12,3 @@ int setFontByName(const char *name);
 bmp_font_t *getFont(void);
 
 #endif
-

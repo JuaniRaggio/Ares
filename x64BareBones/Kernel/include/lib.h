@@ -4,11 +4,11 @@
 #define LIB_H
 
 #include <stdint.h>
-#include <sys/wait.h>  // lo dejás como estaba
+#include <sys/wait.h> // lo dejás como estaba
 
 typedef struct {
-    uint8_t hours;
-    uint8_t minutes;
+        uint8_t hours;
+        uint8_t minutes;
 } s_time;
 
 // Memoria
@@ -31,4 +31,3 @@ char *strcpy(char *dest, const char *src);
 char *strncpy(char *dest, const char *src, uint64_t n);
 
 #endif
-
