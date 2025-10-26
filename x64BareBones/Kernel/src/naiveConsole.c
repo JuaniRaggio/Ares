@@ -1,9 +1,9 @@
 // naiveConsole.c
 
-#include "naiveConsole.h"
-#include "../fonts/fontManager.h"
-#include "../include/colors.h"
-#include "../video/video.h"
+#include <naiveConsole.h>
+#include <fontManager.h>
+#include <colors.h>
+#include <video_driver.h>
 #include <stdint.h>
 
 static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base);

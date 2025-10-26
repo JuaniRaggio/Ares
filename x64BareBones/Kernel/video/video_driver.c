@@ -2,7 +2,7 @@
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
 #include <stddef.h>
-#include <video.h>
+#include <video_driver.h>
 
 // ------------------------------------------------------------
 // Estructura VBE (inicializada por Pure64 en 0x5C00)

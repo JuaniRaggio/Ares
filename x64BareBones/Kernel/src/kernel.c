@@ -6,7 +6,6 @@
 #include <naiveConsole.h>
 #include <stdint.h>
 #include <time.h>
-#include <video.h>
 #include <video_driver.h>
 
 #define ever (;;)
