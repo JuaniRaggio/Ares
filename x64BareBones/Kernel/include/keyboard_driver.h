@@ -8,7 +8,7 @@
 #define TABLE_SIZE 256
 #define NON_PRINTABLE 0
 
-typedef enum { off, shift, ctl, alt, available_modifiers } modifiers;
+typedef enum { off, shift, ctl, alt } modifiers;
 
 
 uint8_t keyboard_handler();
@@ -20,7 +20,7 @@ uint8_t buffer_next();
 extern uint8_t get_input();
 
 // This table must be initialized matching the modifiers enum
-static uint8_t ascii_table[available_modifiers][TABLE_SIZE] = {
+static uint8_t ascii_table[][TABLE_SIZE] = {
     {
         /* 0x00 */ NON_PRINTABLE,
         /* 0x01 */ NON_PRINTABLE,    // Escape pressed (no ASCII)

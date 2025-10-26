@@ -117,8 +117,6 @@ int main() {
         ncNewline();
 
         ncPrintOld("[Finished]");
-
-        sleep(30);
         ncClear();
     }
 

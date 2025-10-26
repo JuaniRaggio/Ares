@@ -11,20 +11,12 @@ void int_20(void);
 void int_21(void);
 // static void kbd_handler();
 
-//No se porque explota si descomento
-// typedef void (*interruption_signature)(void);
+typedef void (*interruption_signature)(void);
 
-// interruption_signature ints[] = {int_20, int_21};
+static interruption_signature ints[] = {int_20, int_21};
 
 void irqDispatcher(uint64_t irq) {
-        if(irq == 0x00)
-        {
-                int_20();
-        }
-        if(irq == 0x01)
-        {
-                int_21();
-        }
+        ints[irq]();
 }
 
 void int_20(void) {
@@ -36,6 +28,7 @@ void int_21(void) {
         uint8_t c = keyboard_handler();
         
         if(c != 0) {
+                //ncPrintCharText(c, BLACK_WHITE);
                 update_buffer(c);
         }
 }

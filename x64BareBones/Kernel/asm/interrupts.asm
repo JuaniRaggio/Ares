@@ -6,7 +6,7 @@ GLOBAL picSlaveMask
 GLOBAL haltcpu
 GLOBAL _hlt
 
-GLOBAL _int80Handler
+GLOBAL _syscallHandler
 
 GLOBAL _irq00Handler
 GLOBAL _irq01Handler
@@ -118,7 +118,7 @@ picSlaveMask:
     retn
 
 ;Syscalls
-_int80Handler:
+_syscallHandler:
 	pushState              
     
 	mov rdi, rax           ; numero de syscall en RAX

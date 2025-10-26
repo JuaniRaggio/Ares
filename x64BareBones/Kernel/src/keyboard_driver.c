@@ -5,7 +5,7 @@ typedef struct {
         uint8_t buffer[256];
         uint8_t write_pos; //head
         uint8_t read_pos;  //tail 
-        uint8_t modifiers; // Shift, Ctrl, Alt
+        uint8_t modifiers; // off, Shift, Ctrl, Alt
 } keyboard_state_t;
 
 static keyboard_state_t keyboard = {0};
@@ -26,10 +26,12 @@ uint8_t keyboard_handler() {
                 }
                 goto end;
         }
+        // MAKE_CODE -> Se presiono una tecla
         if (scan_code == LSHIFT_CODE || scan_code == RSHIFT_CODE) {
                 keyboard.modifiers = (uint8_t)shift; // se presionó Shift
                 goto end;
         }
+
         return ascii_table[keyboard.modifiers][scan_code];
 end:
         return 0;

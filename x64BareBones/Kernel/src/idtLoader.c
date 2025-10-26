@@ -37,7 +37,7 @@ void load_idt() {
         setup_IDT_entry(ID_KEYBOARD, (uint64_t)&_irq01Handler);
         
         //Interrupciones de hardware
-        setup_IDT_entry(ID_SYSCALL, (uint64_t)&_int80Handler);
+        setup_IDT_entry(ID_SYSCALL, (uint64_t)&_syscallHandler);
 
         //Excepciones
         setup_IDT_entry(ID_DIVISION_BY_ZERO, (uint64_t)&_exception0Handler);
