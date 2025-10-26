@@ -15,7 +15,7 @@ KERNEL := $(BIN_DIR)/kernel.bin
 
 # Archivos fuente
 C_SOURCES := $(shell find $(ARCH_DIR) $(DRIVERS_DIR) $(CORE_DIR) $(LIB_DIR) -name '*.c')
-ASM_SOURCES := $(shell find $(ARCH_DIR) -name '*.asm')
+ASM_SOURCES := $(shell find $(ARCH_DIR) asm -name '*.asm' ! -path '*/test/*')
 
 # Objetos en build directory
 C_OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(C_SOURCES))

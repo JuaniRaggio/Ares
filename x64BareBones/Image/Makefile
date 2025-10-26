@@ -13,7 +13,16 @@ USERLAND=../Userland/0000-sampleCodeModule.bin ../Userland/0001-sampleDataModule
 PACKEDKERNEL=packedKernel.bin
 IMGSIZE=6291456
 
-all: $(IMG) $(VMDK) $(QCOW2)
+# Default target: solo genera la imagen raw (funciona en Docker con Apple Silicon)
+all: $(IMG)
+
+# Target opcional para generar todos los formatos
+images: $(IMG) $(VMDK) $(QCOW2)
+
+# Targets individuales opcionales
+vmdk: $(VMDK)
+
+qcow2: $(QCOW2)
 
 $(KERNEL):
 	cd ../Kernel; make
@@ -33,4 +42,4 @@ $(QCOW2): $(IMG)
 clean:
 	rm -rf $(IMG) $(VMDK) $(QCOW2) *.bin
 
-.PHONY: all clean
+.PHONY: all images vmdk qcow2 clean
