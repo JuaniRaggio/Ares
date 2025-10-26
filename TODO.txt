@@ -6,6 +6,10 @@ In progress
 -------------------------------------------------------------------------------
 
 - [ ] Shell (Userland)
+        - [ ] _start de nuestro OS
+        - [ ] poder escribir y que se muestre en pantalla
+        - [ ] parser e interprete de comandos
+        - [ ] ejecucion de comandos
 
 
 Done tasks
