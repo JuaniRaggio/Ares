@@ -16,7 +16,7 @@
 #define GREEN_BLACK 0x20
 
 
-#define BLACK_WHITE ((BLACK << 4) | WHITE)
+//#define BLACK_WHITE ((BLACK << 4) | WHITE)
 
 #endif
 

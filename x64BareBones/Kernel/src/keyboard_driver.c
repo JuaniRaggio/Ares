@@ -46,7 +46,7 @@ uint8_t buffer_has_next() {
 }
 
 uint8_t buffer_next() {
-        if(!buffer_has_next) {
+        if(!buffer_has_next()) {
                 return 0; //No char in buffer
         }
 
