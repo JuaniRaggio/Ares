@@ -2,8 +2,8 @@
 #ifndef VIDEO_H
 #define VIDEO_H
 
-#include <font.h>
 #include <colors.h>
+#include <font.h>
 #include <stdint.h>
 
 // ----------------------
