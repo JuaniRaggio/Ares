@@ -4,10 +4,10 @@
 #include <moduleLoader.h>
 #include <naiveConsole.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <video.h>
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
+#include <time.h>
 
 #define ever (;;)
 #define TIME_FMT_LENGTH 6
@@ -99,11 +99,27 @@ int main() {
             drawChar(msg2[i], startX2 + i * font->width, startY + font->height + 10, 0xCCCCCC, font);
 
     } else {
-        ncPrintOld("[Fallo modo video, usando VGA]");
-        ncNewline();
         ncPrintOld("[Kernel Main]");
-
         ncNewline();
+        ncPrintOld("  Sample code module at 0x");
+        ncPrintHex((uint64_t)sampleCodeModuleAddress);
+        ncNewline();
+        ncPrintOld("  Calling the sample code module returned: ");
+        ncPrintHex(((EntryPoint)sampleCodeModuleAddress)());
+        ncNewline();
+        ncNewline();
+
+        ncPrintOld("  Sample data module at 0x");
+        ncPrintHex((uint64_t)sampleDataModuleAddress);
+        ncNewline();
+        ncPrintOld("  Sample data module contents: ");
+        ncPrintOld((char*)sampleDataModuleAddress);
+        ncNewline();
+
+        ncPrintOld("[Finished]");
+
+        sleep(30);
+        ncClear();
     }
 
         // Lo hago asi porque sabemos que no va a cambiar el formato, siempre
