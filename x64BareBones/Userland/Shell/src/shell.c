@@ -50,9 +50,10 @@ void show_prompt() {
 // Parse prompt
 
 void save_prompt() {
-        for (int i = 0; prompt[i] != 0; i++, lastest_prompt++) {
+        for (int i = 0; prompt[i] != 0; ++i) {
                 prompt_history[lastest_prompt][i] = prompt[i];
         }
+        ++lastest_prompt;
 }
 
 void shell_loop() {
