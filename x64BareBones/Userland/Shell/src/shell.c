@@ -9,6 +9,8 @@
 #define DEFAULT_PROMPT_S 100
 #define DEFAULT_HISTORY_S 10
 
+#define ever (;;)
+
 static const uint64_t screen_size        = TEXT_WIDTH * TEXT_HEIGHT;
 static const uint8_t *const input_prompt = " > ";
 
@@ -34,6 +36,7 @@ static shell_cursor cursor = {
 };
 
 void welcome_shell() {
+        //Imprimir un mensaje en pantalla que diga ARES
         return;
 }
 
@@ -57,7 +60,8 @@ void save_prompt() {
 }
 
 void shell_loop() {
-        for (uint8_t character, i = 0;;) {
+        uint8_t character, i = 0;
+        for ever {
                 if (buffer_has_next()) {
                         character = buffer_next();
                         drawChar(character, cursor.x++, cursor.y, font_color,
@@ -75,11 +79,12 @@ void shell_loop() {
 }
 
 void init_shell() {
+        //TODO
 }
 
 static uint8_t buffer[screen_size] = {0};
 
-int shell(void) {
+void shell(void) {
         welcome_shell();
         init_shell();
         shell_loop();

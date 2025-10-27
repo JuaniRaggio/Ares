@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <video_driver.h>
+#include <interrupts.h>
 
 #define ever (;;)
 #define TIME_FMT_LENGTH 6
@@ -23,7 +24,7 @@ extern uint8_t endOfKernel;
 
 static const uint64_t PageSize             = 0x1000;
 static void *const userCodeModuleAddress   = (void *)0x400000;
-static void *const sampleDataModuleAddress = (void *)0x500000;
+static void *const userDataModuleAddress = (void *)0x500000;
 
 typedef int (*EntryPoint)();
 
@@ -51,7 +52,7 @@ void *initializeKernelBinary() {
         ncPrintOld("[Loading modules]");
         ncNewline();
         void *moduleAddresses[] = {userCodeModuleAddress,
-                                   sampleDataModuleAddress};
+                                   userDataModuleAddress};
         loadModules(&endOfKernelBinary, moduleAddresses);
         ncPrintOld("[Done]");
         ncNewline();
@@ -105,27 +106,10 @@ int main() {
                                  startY + font->height + 10, 0xCCCCCC, font);
 
         } else {
-                ncPrintOld("[Kernel Main]");
+                ncPrintOld("[MODO TEXTO ACTIVADO]");
                 ncNewline();
-                ncPrintOld("  Sample code module at 0x");
-                ncPrintHex((uint64_t)userCodeModuleAddress);
+                ncPrintOld("Kernel funcionando correctamente.");
                 ncNewline();
-                ncPrintOld("  Calling the sample code module returned: ");
-                ncPrintHex(((EntryPoint)userCodeModuleAddress)());
-                ncNewline();
-                ncNewline();
-
-                ncPrintOld("  Sample data module at 0x");
-                ncPrintHex((uint64_t)sampleDataModuleAddress);
-                ncNewline();
-                ncPrintOld("  Sample data module contents: ");
-                ncPrintOld((char *)sampleDataModuleAddress);
-                ncNewline();
-
-                ncPrintOld("[Finished]");
-
-                sleep(3);
-                ncClear();
         }
 
         // Lo hago asi porque sabemos que no va a cambiar el formato, siempre
@@ -141,7 +125,10 @@ int main() {
         buffer[5]   = 0;
         printLn(buffer, BLACK_WHITE);
 
-        for
-                ever;
+
+        ((EntryPoint)userCodeModuleAddress)();
+        haltcpu();
+
+        //for ever;
         return 0;
 }

@@ -176,3 +176,8 @@ void drawTestPattern(void) {
                 }
         }
 }
+
+
+void drawCharDefault(char c, int x, int y, uint32_t color) {
+        drawChar(c, x, y, color, getFont());
+}
