@@ -46,7 +46,7 @@ extern uint8_t bytesPerPixel;
 // ----------------------
 void video_init(void);
 void drawPixel(int x, int y, uint32_t color);
-void drawChar(char c, int x, int y, uint32_t color, bmp_font_t *font);
+void drawChar(char c, int x, int y, uint32_t color, const bmp_font_t *font);
 uint32_t vgaToRGB(uint8_t color);
 
 void drawCharDefault(char c, int x, int y, uint32_t color) {

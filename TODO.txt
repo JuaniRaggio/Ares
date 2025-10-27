@@ -10,6 +10,7 @@ In progress
         - [ ] poder escribir y que se muestre en pantalla
         - [ ] parser e interprete de comandos
         - [ ] ejecucion de comandos
+        - [ ] pasarlo a ADT
 
 
 Done tasks

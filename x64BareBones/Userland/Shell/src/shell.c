@@ -1,8 +1,9 @@
-#include "configuration.h"
-#include "keyboard_driver.h"
-#include "video_driver.h"
+#include <configuration.h>
+#include <keyboard_driver.h>
 #include <shell.h>
+#include <stdbool.h>
 #include <stdint.h>
+#include <video_driver.h>
 
 static const uint64_t screen_size     = TEXT_WIDTH * TEXT_HEIGHT;
 static const char *const input_prompt = " > ";
@@ -13,14 +14,22 @@ typedef struct {
         uint8_t focused;
 } shell_cursor;
 
+static shell_cursor cursor = {
+    .shape   = block,
+    .x       = 0,
+    .y       = 0,
+    .focused = true,
+};
+
 void welcome_shell() {
         return;
 }
 
 void show_prompt() {
         for (int i = 0; input_prompt[i] != '\0'; ++i) {
-                drawChar(input_prompt[i], x, y, background_color, user_font);
+                drawChar(input_prompt[i], cursor.x++, cursor.y, background_color, user_font);
         }
+        cursor.y++;
 }
 
 // Read from keyboard driver
