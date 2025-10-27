@@ -1,18 +1,47 @@
+#include "configuration.h"
+#include "keyboard_driver.h"
+#include "video_driver.h"
 #include <shell.h>
+#include <stdint.h>
 
-const uint64_t screen_size = TEXT_WIDTH * TEXT_HEIGHT;
+static const uint64_t screen_size     = TEXT_WIDTH * TEXT_HEIGHT;
+static const char *const input_prompt = " > ";
+
+typedef struct {
+        cursor_shape shape;
+        uint8_t x, y;
+        uint8_t focused;
+} shell_cursor;
 
 void welcome_shell() {
         return;
 }
 
+void show_prompt() {
+        for (int i = 0; input_prompt[i] != '\0'; ++i) {
+                drawChar(input_prompt[i], x, y, background_color, user_font);
+        }
+}
+
+// Read from keyboard driver
+// Save prompt (from last input prompt till enter)
+// Parse prompt
+
+void shell_loop() {
+        for (;;) {
+                if (buffer_has_next()) {
+                        uint8_t character = buffer_next();
+                        drawChar(character, cursor.x++, cursor.y, font_color);
+                }
+        }
+}
+
+void init_shell() {}
+
 int shell(void) {
         uint8_t buffer[screen_size] = {0};
-        uint8_t running_shell       = RUNNING;
         welcome_shell();
-
-        while (running_shell) {
-        }
-
+        init_shell();
+        shell_loop();
         return 0;
 }

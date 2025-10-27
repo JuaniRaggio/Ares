@@ -4,9 +4,9 @@
 
 #include "fontManager.h"
 #include "font_ubuntu_mono.h"
-#include <naiveConsole.h>
 #include <colors.h>
 #include <font.h>
+#include <naiveConsole.h>
 #include <stdint.h>
 
 // ----------------------
