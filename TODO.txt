@@ -1,8 +1,9 @@
 ===============================================================================
 Este archivo mantiene:
+        - dudas para preguntarle a los profesores
+        - notas de tips importantes que hay que chequear antes de la entrega
         - tasks en progreso
         - tasks realizadas
-        - dudas para preguntarle a los profesores
 ===============================================================================
 
 Dudas para Fede
