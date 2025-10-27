@@ -5,7 +5,7 @@
 #include <font_ubuntu_mono.h>
 #include <stdint.h>
 
-typedef enum { block, hollow, line } cursor_shape;
+typedef enum { block, hollow, line, underline } cursor_shape;
 
 static const bmp_font_t *user_font = &font_ubuntu_mono;
 static uint32_t font_color         = WHITE;
