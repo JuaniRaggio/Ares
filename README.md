@@ -12,7 +12,7 @@ Este proyecto utiliza git hooks para mantener la consistencia del código. Para 
 
 Este comando configurará git para usar los hooks en el directorio `.githooks/`, que incluye:
 
-- **pre-push**: Aplica automáticamente `clang-format` a todos los archivos C/C++ antes de hacer push
+- **pre-commit**: Aplica automáticamente `clang-format` a todos los archivos C/C++ antes de hacer commit
 
 ### Requisitos
 
