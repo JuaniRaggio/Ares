@@ -36,7 +36,8 @@ void shell_loop() {
         }
 }
 
-void init_shell() {}
+void init_shell() {
+}
 
 int shell(void) {
         uint8_t buffer[screen_size] = {0};
