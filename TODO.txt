@@ -21,7 +21,6 @@ Chequear de cumplir estas cosas antes de hacer la version final para la entrega
 
 In progress
 -------------------------------------------------------------------------------
-
 - [ ] Shell (Userland)
         - [ ] _start de nuestro OS
         - [ ] poder escribir y que se muestre en pantalla
@@ -33,6 +32,5 @@ In progress
 
 Done tasks
 -------------------------------------------------------------------------------
-
 - [X] int80Hander (Kernel/asm/lib.asm)
 
