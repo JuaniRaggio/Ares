@@ -9,6 +9,8 @@ Dudas para Fede
 -------------------------------------------------------------------------------
 - [ ] Se puede usar el malloc de la stdlib?
         - [ ] En caso de que no se pueda, habria que implementar uno
+- [ ] Que tanto nos suma hacer un buen codigo modularizado con ADTs en terminos
+      de puntuacion en la entrega
 
 
 Notas pre-entrega
