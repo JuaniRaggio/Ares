@@ -1,6 +1,6 @@
-#include "parser.h"
 #include <configuration.h>
 #include <keyboard_driver.h>
+#include <parser.h>
 #include <shell.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -37,7 +37,7 @@ void welcome_shell() {
         return;
 }
 
-void show_prompt() {
+void show_input_prompt() {
         for (int i = 0; input_prompt[i] != '\0'; ++i, ++cursor.x) {
                 drawChar(input_prompt[i], cursor.x, cursor.y, background_color,
                          user_font);
@@ -68,6 +68,7 @@ void shell_loop() {
                                 if (analize_prompt(prompt))
                                         save_prompt();
                                 i = 0;
+                                show_input_prompt();
                         }
                 }
         }

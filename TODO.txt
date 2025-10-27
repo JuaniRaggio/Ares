@@ -10,6 +10,10 @@ Dudas para Fede
 - [ ] Se puede usar el malloc de la stdlib?
         - [ ] En caso de que no se pueda, habria que implementar uno
 
+IMPORTANTISIMO
+-------------------------------------------------------------------------------
+- [ ] Boton para ver registros
+
 In progress
 -------------------------------------------------------------------------------
 
