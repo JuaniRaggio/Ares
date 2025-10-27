@@ -2,6 +2,9 @@
 #ifndef VIDEO_H
 #define VIDEO_H
 
+#include "fontManager.h"
+#include "font_ubuntu_mono.h"
+#include <naiveConsole.h>
 #include <colors.h>
 #include <font.h>
 #include <stdint.h>
@@ -45,6 +48,10 @@ void video_init(void);
 void drawPixel(int x, int y, uint32_t color);
 void drawChar(char c, int x, int y, uint32_t color, bmp_font_t *font);
 uint32_t vgaToRGB(uint8_t color);
+
+void drawCharDefault(char c, int x, int y, uint32_t color) {
+        drawChar(c, x, y, color, getFont());
+}
 
 // ----------------------
 // FUNCIONES EXTRA (debug)

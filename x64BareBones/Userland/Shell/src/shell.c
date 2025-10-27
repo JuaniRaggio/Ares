@@ -3,6 +3,7 @@
 const uint64_t screen_size = TEXT_WIDTH * TEXT_HEIGHT;
 
 void welcome_shell() {
+        return;
 }
 
 int shell(void) {
@@ -11,7 +12,6 @@ int shell(void) {
         welcome_shell();
 
         while (running_shell) {
-                //
         }
 
         return 0;
