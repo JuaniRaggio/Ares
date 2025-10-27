@@ -10,9 +10,14 @@ Dudas para Fede
 - [ ] Se puede usar el malloc de la stdlib?
         - [ ] En caso de que no se pueda, habria que implementar uno
 
-IMPORTANTISIMO
+
+Notas pre-entrega
 -------------------------------------------------------------------------------
+Chequear de cumplir estas cosas antes de hacer la version final para la entrega
+- [ ] No usar funciones de la biblioteca estandar
+- [ ] Documentacion de funciones
 - [ ] Boton para ver registros
+
 
 In progress
 -------------------------------------------------------------------------------
