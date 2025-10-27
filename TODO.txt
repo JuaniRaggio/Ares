@@ -1,6 +1,14 @@
 ===============================================================================
-Este archivo mantiene los tasks en progreso que vamos realizando
+Este archivo mantiene:
+        - tasks en progreso
+        - tasks realizadas
+        - dudas para preguntarle a los profesores
 ===============================================================================
+
+Dudas para Fede
+-------------------------------------------------------------------------------
+- [ ] Se puede usar el malloc de la stdlib?
+        - [ ] En caso de que no se pueda, habria que implementar uno
 
 In progress
 -------------------------------------------------------------------------------
@@ -11,6 +19,7 @@ In progress
         - [ ] parser e interprete de comandos
         - [ ] ejecucion de comandos
         - [ ] pasarlo a ADT
+                - [ ] Necesitamos malloc implementado para esto?
 
 
 Done tasks
