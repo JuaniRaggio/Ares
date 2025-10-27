@@ -17,6 +17,7 @@ Chequear de cumplir estas cosas antes de hacer la version final para la entrega
 - [ ] No usar funciones de la biblioteca estandar
 - [ ] Documentacion de funciones
 - [ ] Boton para ver registros
+- [ ] Ver asciinema para el video de la demostracion
 
 
 In progress
