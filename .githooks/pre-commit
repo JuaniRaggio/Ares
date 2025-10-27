@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pre-push hook para aplicar clang-format automáticamente
+# Pre-commit hook para aplicar clang-format automáticamente
 
 echo "Aplicando clang-format a archivos C/C++..."
 
@@ -36,6 +36,6 @@ else
     echo "No se requirieron cambios de formato"
 fi
 
-echo "Hook pre-push completado exitosamente"
+echo "Hook pre-commit completado exitosamente"
 
 exit 0
