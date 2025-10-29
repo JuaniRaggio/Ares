@@ -27,7 +27,7 @@ void int_21(void) {
         uint8_t c = keyboard_handler();
 
         if (c != 0) {
-                // ncPrintCharText(c, BLACK_WHITE);
+                //ncPrintCharText(c, BLACK_WHITE);
                 update_buffer(c);
         }
 }

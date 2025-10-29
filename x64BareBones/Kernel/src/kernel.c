@@ -92,7 +92,7 @@ int main() {
                      y++) {
                         for (int x = startX1 - 20;
                              x < startX1 + msg1_len * font->width + 20; x++) {
-                                drawPixel(x, y, 0x003300);
+                                putPixel(x, y, 0x003300);
                         }
                 }
 
@@ -104,6 +104,8 @@ int main() {
                 for (int i = 0; msg2[i]; i++)
                         drawChar(msg2[i], startX2 + i * font->width,
                                  startY + font->height + 10, 0xCCCCCC, font);
+                                 
+                drawTestPattern();
 
         } else {
                 ncPrintOld("[MODO TEXTO ACTIVADO]");
@@ -127,8 +129,10 @@ int main() {
 
 
         ((EntryPoint)userCodeModuleAddress)();
+        //while(1);
         haltcpu();
 
         //for ever;
+        
         return 0;
 }

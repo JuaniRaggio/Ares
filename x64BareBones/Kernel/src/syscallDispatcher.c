@@ -11,18 +11,10 @@ void syscallDispatcher(uint64_t rax, uint64_t rbx, uint64_t rcx, uint64_t rdx) {
         }
 }
 
-uint64_t sys_write(uint32_t fd, const char *buf, uint64_t count) {
-        switch (fd) {
-        case STDOUT:
-                ncPrintCount(buf, 0x0F, count);
-                break;
-        case STDERR:
-                ncPrintCount(buf, 0x04, count);
-                break;
-
-        default:
-                break;
+void sys_write(uint32_t fd, const char *buf, uint64_t count) {
+        if(fd == STDOUT || fd == STDERR) {
+                for(int i = 0; i < count; i++) {
+                        //TODO:
+                }
         }
-
-        return 0;
 }

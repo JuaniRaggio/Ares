@@ -90,3 +90,8 @@ void shell(void) {
         shell_loop();
         return 0;
 }
+
+
+int main(void) {
+        shell();
+}

@@ -14,6 +14,7 @@
 #define WHITE 0xF
 #define BLACK_WHITE 0x0F
 #define GREEN_BLACK 0x20
+#define RED_WHITE 0x00FF0000
 
 // #define BLACK_WHITE ((BLACK << 4) | WHITE)
 

@@ -9,6 +9,6 @@
 
 void syscallDispatcher(uint64_t syscall_id, uint64_t arg1, uint64_t arg2,
                        uint64_t arg3);
-uint64_t sys_write(uint32_t fd, const char *buf, uint64_t count);
+void sys_write(uint32_t fd, const char *buf, uint64_t count);
 
 #endif

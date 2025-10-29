@@ -2,8 +2,10 @@
 #ifndef VIDEO_H
 #define VIDEO_H
 
-#include "fontManager.h"
-#include "font_ubuntu_mono.h"
+
+#include <fontManager.h>
+#include <font_ubuntu_mono.h>
+#include <stddef.h>
 #include <colors.h>
 #include <font.h>
 #include <naiveConsole.h>
@@ -45,9 +47,12 @@ extern uint8_t bytesPerPixel;
 // FUNCIONES DE VIDEO
 // ----------------------
 void video_init(void);
-void drawPixel(int x, int y, uint32_t color);
+void putPixel(uint64_t x, uint64_t y, uint32_t hexColor);
 void drawChar(char c, int x, int y, uint32_t color, const bmp_font_t *font);
 uint32_t vgaToRGB(uint8_t color);
+
+//TESTING
+static void putMultPixel(uint32_t hexColor, uint64_t x, uint64_t y, int mult);
 
 void drawCharDefault(char c, int x, int y, uint32_t color);
 
