@@ -1,9 +1,9 @@
 include ../Makefile.inc
 
 MODULE=0000-userCodeModule.bin
-SOURCES=$(wildcard [^_]*.c)
+SOURCES=$(wildcard [^_]*.c) $(wildcard src/*.c)
 
-INCLUDE_FLAGS=-I../Shell/include -I../../Kernel/include -I../include
+INCLUDE_FLAGS=-I../../Kernel/include -Iinclude
 
 all: $(MODULE)
 

@@ -9,18 +9,18 @@
 
 #define DEFAULT_PROMPT_S 100
 #define DEFAULT_HISTORY_S 10
+#define PROMPT_SIZE DEFAULT_PROMPT_S
+#define HISTORY_SIZE DEFAULT_HISTORY_S
+#define SCREEN_SIZE (TEXT_WIDTH * TEXT_HEIGHT)
 
 #define ever (;;)
 
-static const uint64_t screen_size        = TEXT_WIDTH * TEXT_HEIGHT;
-static const uint8_t *const input_prompt = " > ";
+static const char *const input_prompt = " > ";
 
-static const uint8_t prompt_size   = DEFAULT_PROMPT_S;
-static uint8_t prompt[prompt_size] = {0};
+static uint8_t prompt[PROMPT_SIZE] = {0};
 
-static const uint8_t history_size                        = DEFAULT_HISTORY_S;
 static uint8_t lastest_prompt                            = 0;
-static uint8_t prompt_history[history_size][prompt_size] = {0};
+static uint8_t prompt_history[HISTORY_SIZE][PROMPT_SIZE] = {0};
 
 typedef struct {
         cursor_shape shape;
@@ -84,15 +84,11 @@ void init_shell() {
         // TODO
 }
 
-static uint8_t buffer[screen_size] = {0};
+static uint8_t buffer[SCREEN_SIZE] = {0};
 
 void shell(void) {
         welcome_shell();
         init_shell();
         shell_loop();
-        return 0;
-}
-
-int main(void) {
-        shell();
+        // return 0;
 }
