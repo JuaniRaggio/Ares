@@ -27,8 +27,10 @@ DEPS := $(C_OBJECTS:.o=.d)
 
 # Flags de compilación con includes
 GCCFLAGS += -I$(INCLUDE_DIR)
+GCCFLAGS += -I$(INCLUDE_DIR)/arch/x86_64
+GCCFLAGS += -I$(INCLUDE_DIR)/core
+GCCFLAGS += -I$(INCLUDE_DIR)/drivers
 GCCFLAGS += -I$(DRIVERS_DIR)/video
-GCCFLAGS += -I$(DRIVERS_DIR)/video/fonts
 GCCFLAGS += -MMD -MP  # Generar dependencias automáticas
 
 # Colores para output

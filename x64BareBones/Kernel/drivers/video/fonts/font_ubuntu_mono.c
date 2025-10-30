@@ -1,4 +1,4 @@
-#include "font.h"
+#include <font.h>
 
 static const unsigned char ubuntu_mono_bitmap[256][17] = {
     // 000 0x00 'uni0000'

@@ -1,7 +1,7 @@
 // fontManager.c
 
-#include "fontManager.h"
-#include "font_ubuntu_mono.h"
+#include <fontManager.h>
+#include <font_ubuntu_mono.h>
 #include <lib.h>
 #include <stddef.h>
 #include <stdint.h>

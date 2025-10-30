@@ -1,10 +1,10 @@
-#include "../include/colors.h"
-#include <keyboard_driver.h>
+#include <colors.h>
+#include <drivers/keyboard_driver.h>
+#include <drivers/time.h>
 #include <naiveConsole.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 void int_20(void);
 void int_21(void);

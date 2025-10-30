@@ -3,7 +3,7 @@
 #ifndef FONT_MANAGER_H
 #define FONT_MANAGER_H
 
-#include "font.h"
+#include <font.h>
 
 void registerFont(bmp_font_t *font);
 bmp_font_t *findFont(const char *name);

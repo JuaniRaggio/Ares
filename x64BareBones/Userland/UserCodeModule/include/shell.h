@@ -1,9 +1,9 @@
 #ifndef __SHELL_H__
 #define __SHELL_H__
 
-#include <keyboard_driver.h>
+#include <drivers/keyboard_driver.h>
+#include <drivers/video_driver.h>
 #include <stdint.h>
-#include <video_driver.h>
 
 #define RUNNING 1
 

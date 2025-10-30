@@ -2,10 +2,10 @@
 #include <parser.h>
 #include <shell.h>
 
-#include <keyboard_driver.h>
+#include <drivers/keyboard_driver.h>
+#include <drivers/video_driver.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <video_driver.h>
 
 #define DEFAULT_PROMPT_S 100
 #define DEFAULT_HISTORY_S 10
