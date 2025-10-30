@@ -1,7 +1,8 @@
 #include <configuration.h>
-#include <keyboard_driver.h>
 #include <parser.h>
 #include <shell.h>
+
+#include <keyboard_driver.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <video_driver.h>

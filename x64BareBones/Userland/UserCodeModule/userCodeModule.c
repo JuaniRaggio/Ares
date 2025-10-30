@@ -4,6 +4,6 @@
 #include <shell.h>
 
 int main() {
-        //shell();
+        shell();
         //return 0;
 }

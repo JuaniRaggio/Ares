@@ -3,7 +3,7 @@ include ../Makefile.inc
 MODULE=0000-userCodeModule.bin
 SOURCES=$(wildcard [^_]*.c)
 
-INCLUDE_FLAGS=-I../Shell/include -I../../Kernel/include
+INCLUDE_FLAGS=-I../Shell/include -I../../Kernel/include -I../include
 
 all: $(MODULE)
 
