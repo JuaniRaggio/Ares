@@ -1,9 +1,9 @@
 /* userCodeModule.c */
 
-#include <stdio.h>
 #include <shell.h>
+#include <stdio.h>
 
 int main() {
         shell();
-        //return 0;
+        // return 0;
 }

@@ -1,6 +1,5 @@
 #include <video_driver.h>
 
-
 struct vbe_mode_info_structure {
         uint16_t attributes; // deprecated, only bit 7 should be of interest to
         // you, and it indicates the mode supports a linear
@@ -66,10 +65,11 @@ uint8_t bytesPerPixel = 4;
 // Inicialización del video
 // ------------------------------------------------------------
 void video_init(void) {
-        if (VBE_mode_info->framebuffer != 0 && VBE_mode_info->width > 0 && VBE_mode_info->height > 0) {
-                framebuffer   = (uint32_t *)(uint64_t)VBE_mode_info->framebuffer;
-                screenWidth   = VBE_mode_info->width;
-                screenHeight  = VBE_mode_info->height;
+        if (VBE_mode_info->framebuffer != 0 && VBE_mode_info->width > 0 &&
+            VBE_mode_info->height > 0) {
+                framebuffer  = (uint32_t *)(uint64_t)VBE_mode_info->framebuffer;
+                screenWidth  = VBE_mode_info->width;
+                screenHeight = VBE_mode_info->height;
                 bytesPerPixel = VBE_mode_info->bpp / 8;
                 videoMode     = 1;
         } else {
@@ -95,13 +95,12 @@ void putPixel(uint64_t x, uint64_t y, uint32_t hexColor) {
         framebuffer[offset + 2] = (hexColor >> 16) & 0xFF;
 }
 
-
 static void putMultPixel(uint32_t hexColor, uint64_t x, uint64_t y, int mult) {
-    for (int i = 0; i < mult; i++) {
-        for (int j = 0; j < mult; j++) {
-                        putPixel(hexColor, x+i, y+j);
+        for (int i = 0; i < mult; i++) {
+                for (int j = 0; j < mult; j++) {
+                        putPixel(hexColor, x + i, y + j);
+                }
         }
-    }
 }
 
 // ------------------------------------------------------------
@@ -111,10 +110,10 @@ void drawChar(char c, int x, int y, uint32_t color, const bmp_font_t *font) {
         if (font == NULL)
                 return;
 
-                const unsigned char *glyph = font->bitmap[(unsigned char)c];
-                for (int row = 0; row < font->height; row++) {
-                        unsigned char bits = glyph[row];
-                        for (int col = 0; col < font->width; col++) {
+        const unsigned char *glyph = font->bitmap[(unsigned char)c];
+        for (int row = 0; row < font->height; row++) {
+                unsigned char bits = glyph[row];
+                for (int col = 0; col < font->width; col++) {
                         if (bits & (1 << col)) {
                                 putPixel(x + col, y + row, color);
                         }
@@ -148,7 +147,7 @@ uint32_t vgaToRGB(uint8_t color) {
 // Limpia toda la pantalla con un color
 // ------------------------------------------------------------
 void clearScreen(uint32_t color) {
-        uint32_t pitch       = VBE_mode_info->pitch;
+        uint32_t pitch = VBE_mode_info->pitch;
 
         uint8_t *base = (uint8_t *)(uint64_t)VBE_mode_info->framebuffer;
 
@@ -166,8 +165,8 @@ void clearScreen(uint32_t color) {
 // Dibuja un patrón de prueba (degradé)
 // ------------------------------------------------------------
 void drawTestPattern(void) {
-        uint32_t pitch       = VBE_mode_info->pitch;
-        uint8_t *base        = (uint8_t *)(uint64_t)VBE_mode_info->framebuffer;
+        uint32_t pitch = VBE_mode_info->pitch;
+        uint8_t *base  = (uint8_t *)(uint64_t)VBE_mode_info->framebuffer;
 
         for (uint32_t y = 0; y < screenHeight; y++) {
                 for (uint32_t x = 0; x < screenWidth; x++) {
@@ -180,7 +179,6 @@ void drawTestPattern(void) {
                 }
         }
 }
-
 
 void drawCharDefault(char c, int x, int y, uint32_t color) {
         drawChar(c, x, y, color, getFont());

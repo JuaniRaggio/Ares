@@ -1,13 +1,13 @@
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
 #include <idtLoader.h>
+#include <interrupts.h>
 #include <lib.h>
 #include <moduleLoader.h>
 #include <naiveConsole.h>
 #include <stdint.h>
 #include <time.h>
 #include <video_driver.h>
-#include <interrupts.h>
 
 #define ever (;;)
 #define TIME_FMT_LENGTH 6
@@ -22,8 +22,8 @@ extern uint8_t bss;
 extern uint8_t endOfKernelBinary;
 extern uint8_t endOfKernel;
 
-static const uint64_t PageSize             = 0x1000;
-static void *const userCodeModuleAddress   = (void *)0x400000;
+static const uint64_t PageSize           = 0x1000;
+static void *const userCodeModuleAddress = (void *)0x400000;
 static void *const userDataModuleAddress = (void *)0x500000;
 
 typedef int (*EntryPoint)();
@@ -104,7 +104,7 @@ int main() {
                 for (int i = 0; msg2[i]; i++)
                         drawChar(msg2[i], startX2 + i * font->width,
                                  startY + font->height + 10, 0xCCCCCC, font);
-                                 
+
                 drawTestPattern();
 
         } else {
@@ -127,12 +127,11 @@ int main() {
         buffer[5]   = 0;
         printLn(buffer, BLACK_WHITE);
 
-
         ((EntryPoint)userCodeModuleAddress)();
-        //while(1);
+        // while(1);
         haltcpu();
 
-        //for ever;
-        
+        // for ever;
+
         return 0;
 }

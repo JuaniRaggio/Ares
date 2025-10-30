@@ -37,7 +37,7 @@ static shell_cursor cursor = {
 };
 
 void welcome_shell() {
-        //Imprimir un mensaje en pantalla que diga ARES
+        // Imprimir un mensaje en pantalla que diga ARES
         return;
 }
 
@@ -62,25 +62,26 @@ void save_prompt() {
 
 void shell_loop() {
         uint8_t character, i = 0;
-        for ever {
-                if (buffer_has_next()) {
-                        character = buffer_next();
-                        drawChar(character, cursor.x++, cursor.y, font_color,
-                                 user_font);
-                        prompt[i++] = character;
-                        if (character == '\n') {
-                                cursor.y++;
-                                if (analize_prompt(prompt))
-                                        save_prompt();
-                                i = 0;
-                                show_input_prompt();
+        for
+                ever {
+                        if (buffer_has_next()) {
+                                character = buffer_next();
+                                drawChar(character, cursor.x++, cursor.y,
+                                         font_color, user_font);
+                                prompt[i++] = character;
+                                if (character == '\n') {
+                                        cursor.y++;
+                                        if (analize_prompt(prompt))
+                                                save_prompt();
+                                        i = 0;
+                                        show_input_prompt();
+                                }
                         }
                 }
-        }
 }
 
 void init_shell() {
-        //TODO
+        // TODO
 }
 
 static uint8_t buffer[screen_size] = {0};
@@ -91,7 +92,6 @@ void shell(void) {
         shell_loop();
         return 0;
 }
-
 
 int main(void) {
         shell();

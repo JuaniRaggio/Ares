@@ -8,10 +8,7 @@ Este archivo mantiene:
 
 Dudas para Fede
 -------------------------------------------------------------------------------
-- [ ] Se puede usar el malloc de la stdlib?
-        - [ ] En caso de que no se pueda, habria que implementar uno
-- [ ] Que tanto nos suma hacer un buen codigo modularizado con ADTs en terminos
-      de puntuacion en la entrega
+- None
 
 
 Notas pre-entrega
@@ -37,4 +34,9 @@ In progress
 Done tasks
 -------------------------------------------------------------------------------
 - [X] int80Hander (Kernel/asm/lib.asm)
+- [X] Se puede usar el malloc de la stdlib?
+- [X] En caso de que no se pueda, habria que implementar uno
+- [X] Que tanto nos suma hacer un buen codigo modularizado con ADTs en terminos
+      de puntuacion en la entrega
+
 
