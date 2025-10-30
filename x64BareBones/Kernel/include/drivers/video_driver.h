@@ -1,14 +1,64 @@
-#ifndef __VIDEO_DRIVER_H__
-#define __VIDEO_DRIVER_H__
 
+#ifndef VIDEO_H
+#define VIDEO_H
+
+#include <colors.h>
+#include <font.h>
+#include <fontManager.h>
+#include <font_ubuntu_mono.h>
 #include <naiveConsole.h>
+#include <stddef.h>
 #include <stdint.h>
 
-// Highest 3 bits -> Background (in this case 2 -> Green)
-// Lowest 4 bits -> Foreground (in this case 0 -> Black)
-// #define BLACK_WHITE 0x0f
-// #define GREEN_BLACK 0x20
+// ----------------------
+// DIRECCIONES DE MEMORIA
+// ----------------------
+#define VIDEO_ADDR_GFX 0x000A0000
+#define VIDEO_ADDR_TEXT 0xB8000
 
-void printLn(const char *str, uint8_t color);
+// ----------------------
+// RESOLUCIÓN POR DEFECTO
+// ----------------------
+#define SCREEN_WIDTH 1024
+#define SCREEN_HEIGHT 768
+
+// ----------------------
+// MODO TEXTO
+// ----------------------
+#define TEXT_WIDTH 80
+#define TEXT_HEIGHT 25
+
+// ----------------------
+// VARIABLES GLOBALES
+// ----------------------
+extern uint8_t videoMode;      // 0 = texto, 1 = gráfico
+extern uint32_t *framebuffer;  // dirección base framebuffer gráfico
+extern uint8_t *videoTextBase; // dirección base modo texto
+extern uint8_t *currentVideo;  // puntero actual en modo texto
+extern int gfxCursorX, gfxCursorY;
+
+// Información de pantalla
+extern uint32_t screenWidth;
+extern uint32_t screenHeight;
+extern uint8_t bytesPerPixel;
+
+// ----------------------
+// FUNCIONES DE VIDEO
+// ----------------------
+void video_init(void);
+void putPixel(uint64_t x, uint64_t y, uint32_t hexColor);
+void drawChar(char c, int x, int y, uint32_t color, const bmp_font_t *font);
+uint32_t vgaToRGB(uint8_t color);
+
+// TESTING
+static void putMultPixel(uint32_t hexColor, uint64_t x, uint64_t y, int mult);
+
+void drawCharDefault(char c, int x, int y, uint32_t color);
+
+// ----------------------
+// FUNCIONES EXTRA (debug)
+// ----------------------
+void clearScreen(uint32_t color);
+void drawTestPattern(void);
 
 #endif

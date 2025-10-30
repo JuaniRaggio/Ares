@@ -1,44 +1,43 @@
 // fontManager.c
 
-#include <stdint.h>
-#include <stddef.h>
 #include "fontManager.h"
 #include "font_ubuntu_mono.h"
 #include <lib.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #define MAX_FONTS 8
 
 static bmp_font_t *registeredFonts[MAX_FONTS];
-static int fontCount = 0;
+static int fontCount           = 0;
 static bmp_font_t *currentFont = NULL;
 
 void registerFont(bmp_font_t *font) {
-    if (fontCount < MAX_FONTS)
-        registeredFonts[fontCount++] = font;
+        if (fontCount < MAX_FONTS)
+                registeredFonts[fontCount++] = font;
 }
 
 bmp_font_t *findFont(const char *name) {
-    for (int i = 0; i < fontCount; i++) {
-        if (strcmp(registeredFonts[i]->name, name) == 0)
-            return registeredFonts[i];
-    }
-    return NULL;
+        for (int i = 0; i < fontCount; i++) {
+                if (strcmp(registeredFonts[i]->name, name) == 0)
+                        return registeredFonts[i];
+        }
+        return NULL;
 }
 
 void setFont(bmp_font_t *font) {
-    currentFont = font;
+        currentFont = font;
 }
 
 int setFontByName(const char *name) {
-    bmp_font_t *font = findFont(name);
-    if (font) {
-        setFont(font);
-        return 1;
-    }
-    return 0;
+        bmp_font_t *font = findFont(name);
+        if (font) {
+                setFont(font);
+                return 1;
+        }
+        return 0;
 }
 
 bmp_font_t *getFont() {
-    return currentFont;
+        return currentFont;
 }
-

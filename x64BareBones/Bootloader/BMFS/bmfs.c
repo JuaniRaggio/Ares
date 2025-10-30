@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
         } else if (strcasecmp(s_write, command) == 0) {
                 write(filename);
         } else if (strcasecmp(s_delete, command) == 0) {
-                delete (filename);
+                delete(filename);
         } else {
                 printf("Unknown command\n");
         }

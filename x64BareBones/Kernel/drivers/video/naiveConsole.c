@@ -1,28 +1,22 @@
 // naiveConsole.c
 
-#include "naiveConsole.h"
-#include "../fonts/fontManager.h"
-#include "../include/colors.h"
-#include "../video/video.h"
+#include <colors.h>
+#include <fontManager.h>
+#include <naiveConsole.h>
 #include <stdint.h>
+#include <video_driver.h>
 
 static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base);
-static uint8_t * const video = (uint8_t*)0xB8000;
-
+static uint8_t *const video = (uint8_t *)0xB8000;
 
 // temp. buffer to print num
 static char buffer[64] = {'0'};
 
-void ncPrintCount(const char * buf, uint8_t style, uint64_t count) {
-        for (int i = 0; i < count && currentVideo < limit; i++) {
-                currentVideo[0] = buf[i];
-		currentVideo[1] = style;
-		currentVideo += 2;
-	}
-        
-        if (currentVideo >= limit || currentVideo < video) {
-                currentVideo = video;
+void printLn(const char *str, const uint8_t color) {
+        for (int i = 0; str[i] != 0; ++i) {
+                ncPrintChar(str[i], color);
         }
+        ncNewline();
 }
 
 // principal function

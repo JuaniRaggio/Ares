@@ -1,5 +1,42 @@
-TODO's para el tp:
-int80Hander (Kernel/asm/lib.asm)
+===============================================================================
+Este archivo mantiene:
+        - dudas para preguntarle a los profesores
+        - notas de tips importantes que hay que chequear antes de la entrega
+        - tasks en progreso
+        - tasks realizadas
+===============================================================================
 
-Shell (Userland)
+Dudas para Fede
+-------------------------------------------------------------------------------
+- None
+
+
+Notas pre-entrega
+-------------------------------------------------------------------------------
+Chequear de cumplir estas cosas antes de hacer la version final para la entrega
+- [ ] No usar funciones de la biblioteca estandar
+- [ ] Documentacion de funciones
+- [ ] Boton para ver registros
+- [ ] Ver asciinema para el video de la demostracion
+
+
+In progress
+-------------------------------------------------------------------------------
+- [ ] Shell (Userland)
+        - [ ] _start de nuestro OS
+        - [ ] poder escribir y que se muestre en pantalla
+        - [ ] parser e interprete de comandos
+        - [ ] ejecucion de comandos
+        - [ ] pasarlo a ADT
+                - [ ] Necesitamos malloc implementado para esto?
+
+
+Done tasks
+-------------------------------------------------------------------------------
+- [X] int80Hander (Kernel/asm/lib.asm)
+- [X] Se puede usar el malloc de la stdlib?
+- [X] En caso de que no se pueda, habria que implementar uno
+- [X] Que tanto nos suma hacer un buen codigo modularizado con ADTs en terminos
+      de puntuacion en la entrega
+
 

@@ -10,7 +10,6 @@
 
 typedef enum { off, shift, ctl, alt } modifiers;
 
-
 uint8_t keyboard_handler();
 void update_buffer(uint8_t c);
 
@@ -23,65 +22,65 @@ extern uint8_t get_input();
 static uint8_t ascii_table[][TABLE_SIZE] = {
     {
         /* 0x00 */ NON_PRINTABLE,
-        /* 0x01 */ NON_PRINTABLE,    // Escape pressed (no ASCII)
-        /* 0x02 */ '1',  // 1 pressed
-        /* 0x03 */ '2',  // 2 pressed
-        /* 0x04 */ '3',  // 3 pressed
-        /* 0x05 */ '4',  // 4 pressed
-        /* 0x06 */ '5',  // 5 pressed
-        /* 0x07 */ '6',  // 6 pressed
-        /* 0x08 */ '7',  // 7 pressed
-        /* 0x09 */ '8',  // 8 pressed
-        /* 0x0A */ '9',  // 9 pressed
-        /* 0x0B */ '0',  // 0 (zero) pressed
-        /* 0x0C */ '-',  // – pressed
-        /* 0x0D */ '=',  // = pressed
-        /* 0x0E */ NON_PRINTABLE,    // Backspace pressed (control char, optional)
-        /* 0x0F */ '\t', // Tab pressed
-        /* 0x10 */ 'q',  // Q pressed
-        /* 0x11 */ 'w',  // W pressed
-        /* 0x12 */ 'e',  // E pressed
-        /* 0x13 */ 'r',  // R pressed
-        /* 0x14 */ 't',  // T pressed
-        /* 0x15 */ 'y',  // Y pressed
-        /* 0x16 */ 'u',  // U pressed
-        /* 0x17 */ 'i',  // I pressed
-        /* 0x18 */ 'o',  // O pressed
-        /* 0x19 */ 'p',  // P pressed
-        /* 0x1A */ '[',  // [ pressed
-        /* 0x1B */ ']',  // ] pressed
-        /* 0x1C */ '\n', // Enter pressed
-        /* 0x1D */ NON_PRINTABLE,    // Left Control pressed (no ASCII)
-        /* 0x1E */ 'a',  // A pressed
-        /* 0x1F */ 's',  // S pressed
-        /* 0x20 */ 'd',  // D pressed
-        /* 0x21 */ 'f',  // F pressed
-        /* 0x22 */ 'g',  // G pressed
-        /* 0x23 */ 'h',  // H pressed
-        /* 0x24 */ 'j',  // J pressed
-        /* 0x25 */ 'k',  // K pressed
-        /* 0x26 */ 'l',  // L pressed
-        /* 0x27 */ ';',  // ; pressed
-        /* 0x28 */ '\'', // ' (single quote) pressed
-        /* 0x29 */ '`',  // ` (back tick) pressed
-        /* 0x2A */ NON_PRINTABLE,    // Left Shift pressed
-        /* 0x2B */ '\\', // \ pressed
-        /* 0x2C */ 'z',  // Z pressed
-        /* 0x2D */ 'x',  // X pressed
-        /* 0x2E */ 'c',  // C pressed
-        /* 0x2F */ 'v',  // V pressed
-        /* 0x30 */ 'b',  // B pressed
-        /* 0x31 */ 'n',  // N pressed
-        /* 0x32 */ 'm',  // M pressed
-        /* 0x33 */ ',',  // , pressed
-        /* 0x34 */ '.',  // . pressed
-        /* 0x35 */ '/',  // / pressed
-        /* 0x36 */ NON_PRINTABLE,    // Right Shift pressed
-        /* 0x37 */ '*',  // (keypad) * pressed
-        /* 0x38 */ NON_PRINTABLE,    // Left Alt pressed
-        /* 0x39 */ ' ',  // space pressed
-        /* 0x3A */ NON_PRINTABLE,    // CapsLock pressed
-        /* 0x3B */ NON_PRINTABLE,    // F1 pressed
+        /* 0x01 */ NON_PRINTABLE, // Escape pressed (no ASCII)
+        /* 0x02 */ '1',           // 1 pressed
+        /* 0x03 */ '2',           // 2 pressed
+        /* 0x04 */ '3',           // 3 pressed
+        /* 0x05 */ '4',           // 4 pressed
+        /* 0x06 */ '5',           // 5 pressed
+        /* 0x07 */ '6',           // 6 pressed
+        /* 0x08 */ '7',           // 7 pressed
+        /* 0x09 */ '8',           // 8 pressed
+        /* 0x0A */ '9',           // 9 pressed
+        /* 0x0B */ '0',           // 0 (zero) pressed
+        /* 0x0C */ '-',           // – pressed
+        /* 0x0D */ '=',           // = pressed
+        /* 0x0E */ NON_PRINTABLE, // Backspace pressed (control char, optional)
+        /* 0x0F */ '\t',          // Tab pressed
+        /* 0x10 */ 'q',           // Q pressed
+        /* 0x11 */ 'w',           // W pressed
+        /* 0x12 */ 'e',           // E pressed
+        /* 0x13 */ 'r',           // R pressed
+        /* 0x14 */ 't',           // T pressed
+        /* 0x15 */ 'y',           // Y pressed
+        /* 0x16 */ 'u',           // U pressed
+        /* 0x17 */ 'i',           // I pressed
+        /* 0x18 */ 'o',           // O pressed
+        /* 0x19 */ 'p',           // P pressed
+        /* 0x1A */ '[',           // [ pressed
+        /* 0x1B */ ']',           // ] pressed
+        /* 0x1C */ '\n',          // Enter pressed
+        /* 0x1D */ NON_PRINTABLE, // Left Control pressed (no ASCII)
+        /* 0x1E */ 'a',           // A pressed
+        /* 0x1F */ 's',           // S pressed
+        /* 0x20 */ 'd',           // D pressed
+        /* 0x21 */ 'f',           // F pressed
+        /* 0x22 */ 'g',           // G pressed
+        /* 0x23 */ 'h',           // H pressed
+        /* 0x24 */ 'j',           // J pressed
+        /* 0x25 */ 'k',           // K pressed
+        /* 0x26 */ 'l',           // L pressed
+        /* 0x27 */ ';',           // ; pressed
+        /* 0x28 */ '\'',          // ' (single quote) pressed
+        /* 0x29 */ '`',           // ` (back tick) pressed
+        /* 0x2A */ NON_PRINTABLE, // Left Shift pressed
+        /* 0x2B */ '\\',          // \ pressed
+        /* 0x2C */ 'z',           // Z pressed
+        /* 0x2D */ 'x',           // X pressed
+        /* 0x2E */ 'c',           // C pressed
+        /* 0x2F */ 'v',           // V pressed
+        /* 0x30 */ 'b',           // B pressed
+        /* 0x31 */ 'n',           // N pressed
+        /* 0x32 */ 'm',           // M pressed
+        /* 0x33 */ ',',           // , pressed
+        /* 0x34 */ '.',           // . pressed
+        /* 0x35 */ '/',           // / pressed
+        /* 0x36 */ NON_PRINTABLE, // Right Shift pressed
+        /* 0x37 */ '*',           // (keypad) * pressed
+        /* 0x38 */ NON_PRINTABLE, // Left Alt pressed
+        /* 0x39 */ ' ',           // space pressed
+        /* 0x3A */ NON_PRINTABLE, // CapsLock pressed
+        /* 0x3B */ NON_PRINTABLE, // F1 pressed
     },
     /* Shift‐pressed version: ASCII when Shift (o CapsLock) está activado */
     {

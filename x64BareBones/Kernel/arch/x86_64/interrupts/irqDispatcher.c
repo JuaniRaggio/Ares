@@ -1,11 +1,10 @@
+#include "../include/colors.h"
+#include <keyboard_driver.h>
 #include <naiveConsole.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <drivers/time.h>
-#include <drivers/keyboard_driver.h>
-#include <colors.h>
-
+#include <time.h>
 
 void int_20(void);
 void int_21(void);
@@ -20,15 +19,15 @@ void irqDispatcher(uint64_t irq) {
 }
 
 void int_20(void) {
-        //ncPrintOld("TIMERTICK ");                                                                                                                                                                                                                                                                                                
+        // ncPrintOld("TIMERTICK ");
         timer_handler();
 }
 
-void int_21(void) { 
+void int_21(void) {
         uint8_t c = keyboard_handler();
-        
-        if(c != 0) {
-                //ncPrintCharText(c, BLACK_WHITE);
+
+        if (c != 0) {
+                // ncPrintCharText(c, BLACK_WHITE);
                 update_buffer(c);
         }
 }

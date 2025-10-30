@@ -2,35 +2,35 @@
 #ifndef VIDEO_H
 #define VIDEO_H
 
-#include <stdint.h>
 #include "../fonts/font.h"
 #include "../include/colors.h"
+#include <stdint.h>
 
 // ----------------------
 // DIRECCIONES DE MEMORIA
 // ----------------------
-#define VIDEO_ADDR_GFX  0x000A0000
+#define VIDEO_ADDR_GFX 0x000A0000
 #define VIDEO_ADDR_TEXT 0xB8000
 
 // ----------------------
 // RESOLUCIÓN POR DEFECTO
 // ----------------------
-#define SCREEN_WIDTH  1024
+#define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 768
 
 // ----------------------
 // MODO TEXTO
 // ----------------------
-#define TEXT_WIDTH  80
+#define TEXT_WIDTH 80
 #define TEXT_HEIGHT 25
 
 // ----------------------
 // VARIABLES GLOBALES
 // ----------------------
-extern uint8_t videoMode;         // 0 = texto, 1 = gráfico
-extern uint32_t *framebuffer;     // dirección base framebuffer gráfico
-extern uint8_t *videoTextBase;    // dirección base modo texto
-extern uint8_t *currentVideo;     // puntero actual en modo texto
+extern uint8_t videoMode;      // 0 = texto, 1 = gráfico
+extern uint32_t *framebuffer;  // dirección base framebuffer gráfico
+extern uint8_t *videoTextBase; // dirección base modo texto
+extern uint8_t *currentVideo;  // puntero actual en modo texto
 extern int gfxCursorX, gfxCursorY;
 
 // Información de pantalla
@@ -53,4 +53,3 @@ void clearScreen(uint32_t color);
 void drawTestPattern(void);
 
 #endif
-
