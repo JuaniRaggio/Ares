@@ -27,7 +27,16 @@ qcow2: $(QCOW2)
 $(KERNEL):
 	cd ../Kernel; make
 
-$(PACKEDKERNEL): $(KERNEL) $(USERLAND)
+$(MP):
+	cd ../Toolchain; make all
+
+$(BMFS) $(MBR) $(PURE64):
+	cd ../Bootloader; make all
+
+$(USERLAND):
+	cd ../Userland; make all
+
+$(PACKEDKERNEL): $(MP) $(KERNEL) $(USERLAND)
 	$(MP) $(KERNEL) $(USERLAND) -o $(PACKEDKERNEL)
 
 $(IMG): $(BMFS) $(MBR) $(PURE64) $(PACKEDKERNEL)
