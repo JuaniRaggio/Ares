@@ -1,4 +1,4 @@
-# Kernel Makefile con compilación incremental
+# Kernel Makefile simplificado con orden de linkeo explícito
 include Makefile.inc
 
 # Directorios
@@ -13,14 +13,24 @@ BIN_DIR := bin
 # Archivos de salida
 KERNEL := $(BIN_DIR)/kernel.bin
 
-# Archivos fuente
-C_SOURCES := $(shell find $(ARCH_DIR) $(DRIVERS_DIR) $(CORE_DIR) $(LIB_DIR) -name '*.c')
-ASM_SOURCES := $(shell find $(ARCH_DIR) asm -name '*.asm' ! -path '*/test/*')
+# 1. LOADER - DEBE SER PRIMERO (punto de entrada)
+LOADER_SRC := $(ARCH_DIR)/boot/loader.asm
+LOADER_OBJ := $(BUILD_DIR)/$(ARCH_DIR)/boot/loader.o
 
-# Objetos en build directory
+# 2. ASM de interrupts (orden determinista)
+INTERRUPTS_ASM := $(ARCH_DIR)/interrupts/interrupts.asm
+INTERRUPTS_OBJ := $(BUILD_DIR)/$(ARCH_DIR)/interrupts/interrupts.o
+
+# 3. ASM de syscalls (orden alfabético explícito)
+SYSCALLS_ASM := asm/libasm.asm asm/sys_exit.asm asm/sys_write.asm asm/syscalls.asm asm/syscalls_table.asm
+SYSCALLS_OBJ := $(patsubst %.asm,$(BUILD_DIR)/%.o,$(SYSCALLS_ASM))
+
+# 4. Código C (todos juntos, orden no crítico)
+C_SOURCES := $(shell find $(ARCH_DIR) $(DRIVERS_DIR) $(CORE_DIR) $(LIB_DIR) -name '*.c')
 C_OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(C_SOURCES))
-ASM_OBJECTS := $(patsubst %.asm,$(BUILD_DIR)/%.o,$(ASM_SOURCES))
-ALL_OBJECTS := $(C_OBJECTS) $(ASM_OBJECTS)
+
+# Orden EXPLÍCITO de linkeo: Loader -> Interrupts ASM -> Syscalls ASM -> C code
+ALL_OBJECTS := $(LOADER_OBJ) $(INTERRUPTS_OBJ) $(SYSCALLS_OBJ) $(C_OBJECTS)
 
 # Archivos de dependencias automáticas
 DEPS := $(C_OBJECTS:.o=.d)
@@ -33,34 +43,40 @@ GCCFLAGS += -I$(INCLUDE_DIR)/drivers
 GCCFLAGS += -I$(DRIVERS_DIR)/video
 GCCFLAGS += -MMD -MP  # Generar dependencias automáticas
 
-# Colores para output
-COLOR_RESET := \033[0m
-COLOR_GREEN := \033[32m
-COLOR_YELLOW := \033[33m
-COLOR_BLUE := \033[34m
-
 # Target principal
 .PHONY: all clean info
 
 all: $(KERNEL)
-	@echo "$(COLOR_GREEN)✓ Kernel compilado exitosamente: $(KERNEL)$(COLOR_RESET)"
+	@echo "✓ Kernel compilado: $(KERNEL)"
 
-# Linkeo del kernel
+# Linkeo del kernel con orden explícito
 $(KERNEL): $(ALL_OBJECTS) | $(BIN_DIR)
-	@echo "$(COLOR_YELLOW)Linkeando kernel...$(COLOR_RESET)"
+	@echo "Linkeando kernel..."
 	@$(LD) $(LDFLAGS) -T kernel.ld -o $@ $(ALL_OBJECTS)
+
+# Compilación de loader (PRIMERO)
+$(LOADER_OBJ): $(LOADER_SRC) | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	@echo "ASM (loader) $<"
+	@$(ASM) $(ASMFLAGS) $< -o $@
+
+# Compilación de interrupts ASM
+$(INTERRUPTS_OBJ): $(INTERRUPTS_ASM) | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	@echo "ASM (interrupts) $<"
+	@$(ASM) $(ASMFLAGS) $< -o $@
+
+# Compilación de syscalls ASM
+$(BUILD_DIR)/asm/%.o: asm/%.asm | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	@echo "ASM (syscalls) $<"
+	@$(ASM) $(ASMFLAGS) $< -o $@
 
 # Compilación de archivos C
 $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	@echo "$(COLOR_BLUE)CC$(COLOR_RESET)  $<"
+	@echo "CC  $<"
 	@$(GCC) $(GCCFLAGS) -c $< -o $@
-
-# Compilación de archivos ASM
-$(BUILD_DIR)/%.o: %.asm | $(BUILD_DIR)
-	@mkdir -p $(dir $@)
-	@echo "$(COLOR_BLUE)ASM$(COLOR_RESET) $<"
-	@$(ASM) $(ASMFLAGS) $< -o $@
 
 # Crear directorios si no existen
 $(BUILD_DIR):
@@ -74,20 +90,20 @@ $(BIN_DIR):
 
 # Limpiar
 clean:
-	@echo "$(COLOR_YELLOW)Limpiando archivos de compilación...$(COLOR_RESET)"
+	@echo "Limpiando archivos de compilación..."
 	@rm -rf $(BUILD_DIR) $(BIN_DIR)
-	@echo "$(COLOR_GREEN)✓ Limpieza completa$(COLOR_RESET)"
+	@echo "✓ Limpieza completa"
 
 # Info del proyecto
 info:
+	@echo "Loader:       $(LOADER_SRC)"
+	@echo "Interrupts:   $(INTERRUPTS_ASM)"
+	@echo "Syscalls ASM: $(words $(SYSCALLS_ASM)) archivos"
 	@echo "Archivos C:   $(words $(C_SOURCES))"
-	@echo "Archivos ASM: $(words $(ASM_SOURCES))"
 	@echo "Total objetos: $(words $(ALL_OBJECTS))"
 	@echo ""
-	@echo "Estructura:"
-	@echo "  - Architecture: $(ARCH_DIR)"
-	@echo "  - Drivers:      $(DRIVERS_DIR)"
-	@echo "  - Core:         $(CORE_DIR)"
-	@echo "  - Library:      $(LIB_DIR)"
-	@echo "  - Build dir:    $(BUILD_DIR)"
-	@echo "  - Output:       $(KERNEL)"
+	@echo "Orden de linkeo:"
+	@echo "  1. $(LOADER_OBJ)"
+	@echo "  2. $(INTERRUPTS_OBJ)"
+	@echo "  3. $(SYSCALLS_OBJ)"
+	@echo "  4. [C objects...]"

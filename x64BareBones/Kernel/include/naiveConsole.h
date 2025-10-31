@@ -10,6 +10,8 @@
 // NO DEBERIA IR ACA, CAMBIAR
 static uint8_t *limit = (uint8_t *)0xB8FA0; // video + width * height * 2 - 1
 
+void printLn(const char *str, const uint8_t color);
+
 // temp. solution for older versions where ncPrint is declared with only one
 // arg.
 void ncPrintOld(const char *string);

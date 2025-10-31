@@ -4,7 +4,6 @@
 #define LIB_H
 
 #include <stdint.h>
-#include <sys/wait.h> // lo dejás como estaba
 
 typedef struct {
         uint8_t hours;

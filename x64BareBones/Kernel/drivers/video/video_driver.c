@@ -95,7 +95,7 @@ void putPixel(uint64_t x, uint64_t y, uint32_t hexColor) {
         framebuffer[offset + 2] = (hexColor >> 16) & 0xFF;
 }
 
-static void putMultPixel(uint32_t hexColor, uint64_t x, uint64_t y, int mult) {
+void putMultPixel(uint32_t hexColor, uint64_t x, uint64_t y, int mult) {
         for (int i = 0; i < mult; i++) {
                 for (int j = 0; j < mult; j++) {
                         putPixel(hexColor, x + i, y + j);

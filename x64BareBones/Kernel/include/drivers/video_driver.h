@@ -51,7 +51,7 @@ void drawChar(char c, int x, int y, uint32_t color, const bmp_font_t *font);
 uint32_t vgaToRGB(uint8_t color);
 
 // TESTING
-static void putMultPixel(uint32_t hexColor, uint64_t x, uint64_t y, int mult);
+void putMultPixel(uint32_t hexColor, uint64_t x, uint64_t y, int mult);
 
 void drawCharDefault(char c, int x, int y, uint32_t color);
 

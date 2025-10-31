@@ -2,6 +2,7 @@
 *.bin
 *.sys
 .bash_history
+.cache
 
 #The images
 *.img
