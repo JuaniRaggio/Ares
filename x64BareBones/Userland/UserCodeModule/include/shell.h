@@ -3,7 +3,7 @@
 
 #include <drivers/keyboard_driver.h>
 #include <drivers/video_driver.h>
-#include <stdint.h>
+#include <uint.h>
 
 #define RUNNING 1
 

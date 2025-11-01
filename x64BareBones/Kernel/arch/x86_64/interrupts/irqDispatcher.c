@@ -2,7 +2,7 @@
 #include <drivers/keyboard_driver.h>
 #include <drivers/time.h>
 #include <naiveConsole.h>
-#include <stdint.h>
+#include <uint.h>
 #include <stdlib.h>
 #include <string.h>
 

@@ -4,7 +4,7 @@
 #include <font_ubuntu_mono.h>
 #include <lib.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <uint.h>
 
 #define MAX_FONTS 8
 

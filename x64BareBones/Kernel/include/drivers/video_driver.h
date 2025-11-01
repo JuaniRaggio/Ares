@@ -8,7 +8,7 @@
 #include <font_ubuntu_mono.h>
 #include <naiveConsole.h>
 #include <stddef.h>
-#include <stdint.h>
+#include <uint.h>
 
 // ----------------------
 // DIRECCIONES DE MEMORIA

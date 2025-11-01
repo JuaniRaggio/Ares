@@ -3,7 +3,7 @@
 #include <colors.h>
 #include <font.h>
 #include <font_ubuntu_mono.h>
-#include <stdint.h>
+#include <uint.h>
 
 typedef enum { block, hollow, line, underline } cursor_shape;
 

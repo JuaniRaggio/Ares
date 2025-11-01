@@ -3,7 +3,7 @@
 #ifndef LIB_H
 #define LIB_H
 
-#include <stdint.h>
+#include <uint.h>
 
 typedef struct {
         uint8_t hours;

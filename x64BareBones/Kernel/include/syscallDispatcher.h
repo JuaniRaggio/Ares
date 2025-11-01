@@ -2,7 +2,7 @@
 #define _SYSCALL_DISPATCHER_H_
 
 #include <naiveConsole.h>
-#include <stdint.h>
+#include <uint.h>
 
 #define STDOUT 1
 #define STDERR 2

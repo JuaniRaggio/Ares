@@ -3,7 +3,7 @@
 #include <colors.h>
 #include <fontManager.h>
 #include <naiveConsole.h>
-#include <stdint.h>
+#include <uint.h>
 #include <video_driver.h>
 
 static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base);
