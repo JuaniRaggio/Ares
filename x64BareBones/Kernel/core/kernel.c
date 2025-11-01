@@ -20,6 +20,8 @@ extern uint8_t data;
 extern uint8_t bss;
 extern uint8_t endOfKernelBinary;
 extern uint8_t endOfKernel;
+extern void init_syscalls(void);
+
 
 static const uint64_t PageSize           = 0x1000;
 static void *const userCodeModuleAddress = (void *)0x400000;
@@ -68,6 +70,7 @@ void *initializeKernelBinary() {
 int main() {
         video_init(); // Inicializa el modo gráfico (o VGA)
         load_idt();   // Inicializa la IDT
+        init_syscalls();
 
         if (videoMode == 1) {
                 clearScreen(0x000000); // Pantalla negra limpia

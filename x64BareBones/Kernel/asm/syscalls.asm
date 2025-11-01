@@ -5,9 +5,10 @@ section .text
 
 global syscall_entry
 
+extern syscalls_table
+extern kernel_stack_top
 extern sys_write, sys_exit
 
-extern syscalls_table
 
 ; -------------------------------------------
 ; syscall_entry:
@@ -17,6 +18,7 @@ extern syscalls_table
 ; -------------------------------------------
 
 syscall_entry:
+    mov rsp, kernel_stack_top  ; use the kernel stack 
     swapgs                     
     push rdi                    
     push rsi

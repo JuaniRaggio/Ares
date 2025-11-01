@@ -9,6 +9,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <syscall.h>
+
 #define DEFAULT_PROMPT_S 100
 #define DEFAULT_HISTORY_S 10
 #define PROMPT_SIZE DEFAULT_PROMPT_S
@@ -50,6 +52,14 @@ static shell_attributes shell_status = {
             .focused = true,
         },
 };
+
+//======================================
+//para testear que funca, dsp borrar ;)
+void shell_main() {
+    const char *msg = "Hola desde la shell!\n";
+    syscall_write(1, msg, 21);
+}
+//======================================
 
 void welcome_shell() {
         // shell_printf(welcome_msg_shell);
