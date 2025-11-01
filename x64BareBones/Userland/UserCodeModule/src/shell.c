@@ -57,7 +57,7 @@ void welcome_shell() {
 // void shell_printf(const char *msg) {
 // }
 
-extern struct regs get_register_values();
+extern struct regs *get_register_values();
 
 static void print_registers(void) {
         static const char *const regNames[] = {

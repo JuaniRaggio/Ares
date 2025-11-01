@@ -1,8 +1,8 @@
 #include <argp.h>
-#include <uint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <uint.h>
 #include <unistd.h>
 
 #include "modulePacker.h"
