@@ -7,6 +7,9 @@
 
 #define RUNNING 1
 
+uint8_t get_y_cursor();
+uint8_t get_x_cursor();
+
 void shell_printf(const char *msg);
 void welcome_shell();
 int shell(void);
