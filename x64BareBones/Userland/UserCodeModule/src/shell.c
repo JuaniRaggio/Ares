@@ -109,11 +109,12 @@ void shell_loop() {
         for_ever {
                 if (buffer_has_next()) {
                         character = buffer_next();
-
                         drawChar(character, shell_status.cursor.x++,
                                  get_y_cursor(), font_color, user_font);
                         current_prompt()[i++] = character;
-                        if (character == '\n') {
+                        // Solucion facil para ejecutar una vez se llega
+                        // al final
+                        if (character == '\n' || i == PROMPT_SIZE - 1) {
                                 shell_status.cursor.y++;
                                 if (analize_prompt(current_prompt()))
                                         save_prompt();
