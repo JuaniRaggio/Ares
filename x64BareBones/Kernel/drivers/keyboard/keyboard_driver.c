@@ -1,5 +1,5 @@
 #include <drivers/keyboard_driver.h>
-#include <stdint.h>
+#include <uint.h>
 
 typedef struct {
         uint8_t buffer[256];

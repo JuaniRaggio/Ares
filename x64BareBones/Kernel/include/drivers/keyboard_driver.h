@@ -3,7 +3,7 @@
 
 #include <naiveConsole.h>
 #include <stdbool.h>
-#include <stdint.h>
+#include <uint.h>
 
 #define TABLE_SIZE 256
 #define NON_PRINTABLE 0

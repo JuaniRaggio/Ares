@@ -29,6 +29,7 @@ In progress
         - [ ] ejecucion de comandos
         - [ ] pasarlo a ADT
                 - [ ] Necesitamos malloc implementado para esto?
+- [X] Getter de los registros
 
 
 Done tasks

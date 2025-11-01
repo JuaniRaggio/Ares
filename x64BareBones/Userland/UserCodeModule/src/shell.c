@@ -1,13 +1,11 @@
-#include "syscallDispatcher.h"
 #include <configuration.h>
-#include <math.h>
 #include <parser.h>
 #include <shell.h>
 
 #include <drivers/keyboard_driver.h>
 #include <drivers/video_driver.h>
 #include <stdbool.h>
-#include <stdint.h>
+#include <uint.h>
 
 #include <syscall.h>
 
@@ -35,6 +33,7 @@ typedef struct {
 } prompt_data;
 
 typedef struct {
+        char buffer[SCREEN_SIZE];
         float magnification;
         float font_size;
         prompt_data prompts;
@@ -69,47 +68,50 @@ void welcome_shell() {
 // void shell_printf(const char *msg) {
 // }
 
-// struct que deberia estar en asm
-typedef struct {
-        uint64_t rip;
-        // Aca irian todos los registros
-        // uint64_t
-        // uint64_t
-        // uint64_t
-        // uint64_t
-        // uint64_t
-} regs;
-
-extern regs get_register_values();
-
 static void print_registers(void) {
-        static const char *const regNames[] = {
+        static const char *const reg_names[] = {
             "RIP", "RSP", "RAX", "RBX", "RCX", "RDX", "RBP", "RDI", "RSI",
             "R8",  "R9",  "R10", "R11", "R12", "R13", "R14", "R15"};
-        // Si o si llamariamos a una funcion de .asm
-        // inline __asm__ {
-        //         pushstate (En orden en el que se deseen los registros)
-        //         call syswrite
-        // }
+        void *snapshot = get_register_values();
+        for (int i = 0; reg_names[i]; i++) {
+                // Aca habria que hacer un print de reg_names[i] por un lado
+                // y de (uint64_t)(snapshot + 8*i) pero en hexa
+                // La otra opcion seria que el codigo de assembly haga los
+                // prints directamente
+        }
 }
 
 void show_input_prompt() {
+        // ===== TODO Esto deberiamos cambiarlo por un printf =====
         for (int i = 0; input_prompt[i] != '\0'; ++i, ++shell_status.cursor.x) {
-                drawChar(input_prompt[i], shell_status.cursor.x,
-                         shell_status.cursor.y, background_color, user_font);
+                drawChar(input_prompt[i], get_x_cursor(), get_y_cursor(),
+                         background_color, user_font);
         }
         shell_status.cursor.y++;
 }
 
-// Read from keyboard driver
-// Save prompt (from last input prompt till enter)
-// Parse prompt
+uint8_t get_y_cursor() {
+        return shell_status.cursor.y;
+}
+
+uint8_t get_x_cursor() {
+        return shell_status.cursor.x;
+}
+
+uint8_t lastest_prompt_idx() {
+        return shell_status.prompts.lastest_prompt_idx;
+}
+
+char *current_prompt() {
+        return shell_status.prompts.prompt;
+}
 
 void save_prompt() {
-        for (int i = 0; prompt[i] != 0; ++i) {
-                prompt_history[lastest_prompt][i] = prompt[i];
+        for (int i = 0; current_prompt()[i] != 0; ++i) {
+                shell_status.prompts.prompt_history[lastest_prompt_idx()][i] =
+                    shell_status.prompts.prompt[i];
         }
-        ++lastest_prompt;
+        ++shell_status.prompts.lastest_prompt_idx;
 }
 
 void shell_loop() {
@@ -118,11 +120,13 @@ void shell_loop() {
                 if (buffer_has_next()) {
                         character = buffer_next();
                         drawChar(character, shell_status.cursor.x++,
-                                 shell_status.cursor.y, font_color, user_font);
-                        prompt[i++] = character;
-                        if (character == '\n') {
+                                 get_y_cursor(), font_color, user_font);
+                        current_prompt()[i++] = character;
+                        // Solucion facil para ejecutar una vez se llega
+                        // al final
+                        if (character == '\n' || i == PROMPT_SIZE - 1) {
                                 shell_status.cursor.y++;
-                                if (analize_prompt(prompt))
+                                if (analize_prompt(current_prompt()))
                                         save_prompt();
                                 i = 0;
                                 show_input_prompt();
@@ -134,8 +138,6 @@ void shell_loop() {
 void init_shell() {
         // TODO
 }
-
-static uint8_t buffer[SCREEN_SIZE] = {0};
 
 int shell(void) {
         welcome_shell();
