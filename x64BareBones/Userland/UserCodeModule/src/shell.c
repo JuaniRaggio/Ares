@@ -31,6 +31,7 @@ typedef struct {
 } prompt_data;
 
 typedef struct {
+        char buffer[SCREEN_SIZE];
         float magnification;
         float font_size;
         prompt_data prompts;
@@ -57,15 +58,21 @@ void welcome_shell() {
 // void shell_printf(const char *msg) {
 // }
 
-extern struct regs *get_register_values();
-
 static void print_registers(void) {
-        static const char *const regNames[] = {
+        static const char *const reg_names[] = {
             "RIP", "RSP", "RAX", "RBX", "RCX", "RDX", "RBP", "RDI", "RSI",
             "R8",  "R9",  "R10", "R11", "R12", "R13", "R14", "R15"};
+        void *snapshot = get_register_values();
+        for (int i = 0; reg_names[i]; i++) {
+                // Aca habria que hacer un print de reg_names[i] por un lado
+                // y de (uint64_t)(snapshot + 8*i) pero en hexa
+                // La otra opcion seria que el codigo de assembly haga los
+                // prints directamente
+        }
 }
 
 void show_input_prompt() {
+        // ===== TODO Esto deberiamos cambiarlo por un printf =====
         for (int i = 0; input_prompt[i] != '\0'; ++i, ++shell_status.cursor.x) {
                 drawChar(input_prompt[i], get_x_cursor(), get_y_cursor(),
                          background_color, user_font);
@@ -102,12 +109,13 @@ void shell_loop() {
         for_ever {
                 if (buffer_has_next()) {
                         character = buffer_next();
+
                         drawChar(character, shell_status.cursor.x++,
                                  get_y_cursor(), font_color, user_font);
-                        shell_status.prompts.prompt[i++] = character;
+                        current_prompt()[i++] = character;
                         if (character == '\n') {
                                 shell_status.cursor.y++;
-                                if (analize_prompt(shell_status.prompts.prompt))
+                                if (analize_prompt(current_prompt()))
                                         save_prompt();
                                 i = 0;
                                 show_input_prompt();
@@ -119,8 +127,6 @@ void shell_loop() {
 void init_shell() {
         // TODO
 }
-
-static uint8_t buffer[SCREEN_SIZE] = {0};
 
 int shell(void) {
         welcome_shell();
