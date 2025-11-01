@@ -1,3 +1,4 @@
+#include "syscallDispatcher.h"
 #include <configuration.h>
 #include <math.h>
 #include <parser.h>
@@ -15,8 +16,8 @@
 #define SCREEN_SIZE (TEXT_WIDTH * TEXT_HEIGHT)
 #define for_ever for (;;)
 
-static const char *const input_prompt      = " > ";
 static const char *const welcome_msg_shell = "Welcome back!\n";
+static const char *const input_prompt      = " > ";
 
 typedef struct {
         cursor_shape shape;
@@ -33,6 +34,7 @@ typedef struct {
 
 typedef struct {
         float magnification;
+        float font_size;
         prompt_data prompts;
         shell_cursor cursor;
 } shell_attributes;
@@ -50,20 +52,35 @@ static shell_attributes shell_status = {
 };
 
 void welcome_shell() {
-        shell_printf(welcome_msg_shell);
+        // shell_printf(welcome_msg_shell);
         return;
 }
 
-void shell_printf(const char *msg) {
-}
+// void shell_printf(const char *msg) {
+// }
 
-extern const char *get_register_values();
+// struct que deberia estar en asm
+typedef struct {
+        uint64_t rip;
+        // Aca irian todos los registros
+        // uint64_t
+        // uint64_t
+        // uint64_t
+        // uint64_t
+        // uint64_t
+} regs;
+
+extern regs get_register_values();
 
 static void print_registers(void) {
         static const char *const regNames[] = {
             "RIP", "RSP", "RAX", "RBX", "RCX", "RDX", "RBP", "RDI", "RSI",
             "R8",  "R9",  "R10", "R11", "R12", "R13", "R14", "R15"};
-        shell_printf();
+        // Si o si llamariamos a una funcion de .asm
+        // inline __asm__ {
+        //         pushstate (En orden en el que se deseen los registros)
+        //         call syswrite
+        // }
 }
 
 void show_input_prompt() {
