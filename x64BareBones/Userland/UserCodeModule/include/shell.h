@@ -7,7 +7,8 @@
 
 #define RUNNING 1
 
+void shell_printf(const char *msg);
 void welcome_shell();
-void shell(void);
+int shell(void);
 
 #endif
