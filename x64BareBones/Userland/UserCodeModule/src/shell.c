@@ -1,6 +1,7 @@
 #include <configuration.h>
 #include <parser.h>
 #include <shell.h>
+#include <syscall.h>
 
 #include <drivers/keyboard_driver.h>
 #include <drivers/video_driver.h>

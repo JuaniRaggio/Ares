@@ -1,5 +1,7 @@
 #pragma once
-#include <stdint.h>
+
+// Esto no puede estar aca
+// #include <stdint.h>
 
 uint64_t _syscall3(uint64_t n, uint64_t a1, uint64_t a2, uint64_t a3);
 
