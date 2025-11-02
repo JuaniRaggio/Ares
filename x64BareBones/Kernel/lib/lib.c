@@ -1,5 +1,5 @@
 #include <lib.h>
-#include <uint.h>
+#include <stdint.h>
 
 void *memset(void *destination, uint32_t c, uint64_t length) {
         uint8_t chr = (uint8_t)c;

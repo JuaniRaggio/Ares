@@ -1,6 +1,6 @@
 #pragma once
 
-#include <uint.h>
+#include <stdint.h>
 
 static const char *commands[] = {"help", "registers", "tron", 0};
 

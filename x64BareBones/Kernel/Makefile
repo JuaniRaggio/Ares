@@ -22,7 +22,7 @@ INTERRUPTS_ASM := $(ARCH_DIR)/interrupts/interrupts.asm
 INTERRUPTS_OBJ := $(BUILD_DIR)/$(ARCH_DIR)/interrupts/interrupts.o
 
 # 3. ASM de syscalls (orden alfabético explícito)
-SYSCALLS_ASM := asm/libasm.asm asm/sys_exit.asm asm/sys_write.asm asm/syscalls.asm asm/syscalls_table.asm
+SYSCALLS_ASM := asm/libasm.asm asm/sys_exit.asm asm/sys_write.asm asm/syscalls.asm asm/syscalls_table.asm asm/init_syscalls.asm asm/kernel_stack.asm
 SYSCALLS_OBJ := $(patsubst %.asm,$(BUILD_DIR)/%.o,$(SYSCALLS_ASM))
 
 # 4. Código C (todos juntos, orden no crítico)

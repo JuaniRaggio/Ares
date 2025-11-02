@@ -4,7 +4,7 @@
 #define NAIVE_CONSOLE_H
 
 #include <colors.h>
-#include <uint.h>
+#include <stdint.h>
 
 // TODO:
 // NO DEBERIA IR ACA, CAMBIAR

@@ -1,5 +1,5 @@
 #include <argp.h>
-#include <uint.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>

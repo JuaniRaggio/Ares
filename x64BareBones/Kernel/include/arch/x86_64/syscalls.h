@@ -3,7 +3,7 @@
 #ifndef SYSCALLS_H
 #define SYSCALLS_H
 
-#include <uint.h>
+#include <stdint.h>
 
 #define STDIN 0
 #define STDOUT 1
