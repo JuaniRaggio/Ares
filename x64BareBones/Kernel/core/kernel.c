@@ -5,7 +5,6 @@
 #include <interrupts.h>
 #include <lib.h>
 #include <naiveConsole.h>
-#include <uint.h>
 #include <video_driver.h>
 
 #define ever (;;)

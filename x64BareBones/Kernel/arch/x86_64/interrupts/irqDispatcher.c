@@ -2,9 +2,6 @@
 #include <drivers/keyboard_driver.h>
 #include <drivers/time.h>
 #include <naiveConsole.h>
-#include <stdlib.h>
-#include <string.h>
-#include <uint.h>
 
 void int_20(void);
 void int_21(void);

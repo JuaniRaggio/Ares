@@ -3,14 +3,13 @@
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
 #include <lib.h>
-#include <stddef.h>
-#include <uint.h>
 
 #define MAX_FONTS 8
+#define NO_FONT 0
 
 static bmp_font_t *registeredFonts[MAX_FONTS];
 static int fontCount           = 0;
-static bmp_font_t *currentFont = NULL;
+static bmp_font_t *currentFont = NO_FONT;
 
 void registerFont(bmp_font_t *font) {
         if (fontCount < MAX_FONTS)
@@ -22,7 +21,7 @@ bmp_font_t *findFont(const char *name) {
                 if (strcmp(registeredFonts[i]->name, name) == 0)
                         return registeredFonts[i];
         }
-        return NULL;
+        return NO_FONT;
 }
 
 void setFont(bmp_font_t *font) {
