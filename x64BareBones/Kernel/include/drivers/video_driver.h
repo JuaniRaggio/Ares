@@ -1,4 +1,3 @@
-
 #ifndef VIDEO_H
 #define VIDEO_H
 
@@ -7,7 +6,6 @@
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
 #include <naiveConsole.h>
-#include <stddef.h>
 #include <stdint.h>
 
 // ----------------------
