@@ -12,8 +12,11 @@
 -mno-sse2
 -Wall
 -Wextra
+-Wno-unused-parameter
 -Iinclude
 -Ilibc/include
--I../../Kernel/include
--I../../Kernel/include/arch/x86_64
--I../../Kernel/include/drivers
+# RIGUROSO: NO incluir headers del kernel
+# Userland solo debe usar su propia libc y syscalls
+# -I../../Kernel/include
+# -I../../Kernel/include/arch/x86_64
+# -I../../Kernel/include/drivers
