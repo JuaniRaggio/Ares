@@ -18,48 +18,58 @@ extern sys_write, sys_exit
 ; -------------------------------------------
 
 syscall_entry:
-    mov rsp, kernel_stack_top  ; use the kernel stack 
-    swapgs                     
-    push rdi                    
-    push rsi
-    push rdx
-    push rcx
+    swapgs                      ; cambiar a datos del kernel
+    mov r15, rsp                ; guardar user RSP temporalmente en r15
+    mov rsp, kernel_stack_top   ; cambiar a kernel stack
+
+    ; Armar el stack frame
+    push r15                    ; guardar user RSP
+    push rcx                    ; guardar user RIP (dirección de retorno)
+    push r11                    ; guardar user RFLAGS
+
     push rbx
     push rbp
     push r12
     push r13
     push r14
-    push r15
 
-    ; syscall number is in RAX
+    ; Guardar argumentos de la syscall
+    push rdi                    ; arg1
+    push rsi                    ; arg2
+    push rdx                    ; arg3
+
+    ; syscall number está en RAX
     mov rbx, rax
 
+    ; Buscar la función en la tabla de syscalls
     lea rcx, [rel syscalls_table]
-
-    shl rbx, 3                  ; rbx * 3
+    shl rbx, 3                  ; rbx * 8 (cada puntero es 8 bytes)
     add rcx, rbx
 
     mov rbx, [rcx]
     test rbx, rbx
-    jz .unknown_syscall         
+    jz .unknown_syscall
 
+    ; Los argumentos ya están en RDI, RSI, RDX (no hace falta moverlos)
+    ; Llamar a la función de syscall
     call rbx
     jmp .done
 
 .unknown_syscall:
-    mov rax, -1                 ; not a valid syscall
+    mov rax, -1                 ; retornar error
     jmp .done
 
 .done:
-    pop r15
+    ; Restaurar registros en orden inverso
+    add rsp, 24                 ; descartar args guardados (rdi, rsi, rdx)
     pop r14
     pop r13
     pop r12
     pop rbp
     pop rbx
-    pop rcx
-    pop rdx
-    pop rsi
-    pop rdi
+    pop r11                     ; restaurar user RFLAGS
+    pop rcx                     ; restaurar user RIP
+    pop rsp                     ; restaurar user RSP
+
     swapgs
-    sysretq                     ; return to user mode
+    sysretq                     ; retornar a user mode

@@ -1,19 +1,19 @@
 /* userCodeModule.c */
 
-#include <shell.h>
-#include <syscall.h>
+#include <unistd.h>
 
 int main() {
-        // DEBUG: Verificar que llegamos a userland
-        const char *msg = "USERLAND: main() ejecutandose\n";
-        syscall_write(1, msg, 31);
+        // Mensaje de bienvenida
+        const char *msg = "USERLAND: Sistema iniciado correctamente\n";
+        write(STDOUT_FILENO, msg, 42);
 
-        // Temporalmente comentado - usa funciones del kernel que no estan
-        // linkeadas shell();
+        // TODO: Llamar a la shell cuando este lista
+        // shell();
 
-        // Infinite loop para ver el mensaje
-        while (1)
-                ;
+        // Por ahora, loop infinito
+        while (1) {
+                __asm__ volatile("hlt");
+        }
 
         return 0;
 }
