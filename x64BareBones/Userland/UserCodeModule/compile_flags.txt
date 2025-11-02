@@ -13,6 +13,7 @@
 -Wall
 -Wextra
 -Iinclude
+-Ilibc/include
 -I../../Kernel/include
 -I../../Kernel/include/arch/x86_64
 -I../../Kernel/include/drivers
