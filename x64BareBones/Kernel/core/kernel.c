@@ -105,8 +105,6 @@ int main() {
                         drawChar(msg2[i], startX2 + i * font->width,
                                  startY + font->height + 10, 0xCCCCCC, font);
 
-                drawTestPattern();
-
         } else {
                 ncPrintOld("[MODO TEXTO ACTIVADO]");
                 ncNewline();
