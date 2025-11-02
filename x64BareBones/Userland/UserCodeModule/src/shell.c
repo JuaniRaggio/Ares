@@ -1,6 +1,9 @@
+#include "colors.h"
+#include "naiveConsole.h"
 #include <configuration.h>
 #include <parser.h>
 #include <shell.h>
+#include <stdio.h>
 #include <syscall.h>
 
 #include <drivers/keyboard_driver.h>
@@ -44,21 +47,10 @@ static shell_attributes shell_status = {
         },
 };
 
-//======================================
-// para testear que funca, dsp borrar ;)
-void shell_main() {
-        const char *msg = "Hola desde la shell!\n";
-        syscall_write(1, msg, 21);
-}
-//======================================
-
 void welcome_shell() {
-        // shell_printf(welcome_msg_shell);
+        syscall_write(1, welcome_msg_shell, 14);
         return;
 }
-
-// void shell_printf(const char *msg) {
-// }
 
 static void print_registers(void) {
         static const char *const reg_names[] = {
@@ -111,8 +103,10 @@ void shell_loop() {
         for_ever {
                 if (buffer_has_next()) {
                         character = buffer_next();
-                        drawChar(character, shell_status.cursor.x++,
-                                 get_y_cursor(), font_color, user_font);
+                        // Actualizar cursor de la shell
+                        shell_status.cursor.x++;
+                        // Escribir el caracter usando syscall
+                        syscall_write(1, (const char *)&character, 1);
                         current_prompt()[i++] = character;
                         // Solucion facil para ejecutar una vez se llega
                         // al final
@@ -121,7 +115,8 @@ void shell_loop() {
                                 if (analize_prompt(current_prompt()))
                                         save_prompt();
                                 i = 0;
-                                show_input_prompt();
+                                // Mostrar prompt usando syscall
+                                syscall_write(1, input_prompt, 3); // " > "
                         }
                 }
         }

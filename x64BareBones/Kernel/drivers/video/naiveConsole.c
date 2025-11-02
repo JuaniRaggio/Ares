@@ -18,7 +18,6 @@ void printLn(const char *str, const uint8_t color) {
         ncNewline();
 }
 
-// principal function
 void ncPrint(const char *string, uint8_t color) {
         if (videoMode == 0)
                 ncPrintText(string, color);
@@ -26,12 +25,10 @@ void ncPrint(const char *string, uint8_t color) {
                 ncPrintVideo(string, color);
 }
 
-// Compatibilidad con versiones antiguas (llamadas con un solo parámetro)
 void ncPrintOld(const char *string) {
         ncPrint(string, WHITE);
 }
 
-// text mode (VGA)
 void ncPrintText(const char *string, uint8_t color) {
         for (int i = 0; string[i] != 0; i++)
                 ncPrintCharText(string[i], color);
@@ -56,7 +53,6 @@ void ncClear() {
         currentVideo = videoTextBase;
 }
 
-// visual mode
 void ncPrintVideo(const char *string, uint8_t color) {
         uint32_t rgb     = vgaToRGB(color);
         bmp_font_t *font = getFont();
@@ -64,20 +60,22 @@ void ncPrintVideo(const char *string, uint8_t color) {
         for (int i = 0; string[i] != 0; i++) {
                 drawChar(string[i], gfxCursorX, gfxCursorY, rgb, font);
                 gfxCursorX += font->width;
-                if (gfxCursorX + font->width >= SCREEN_WIDTH) {
+                if (gfxCursorX + font->width >= SCREEN_WIDTH ||
+                    string[i] == '\n') {
                         gfxCursorX = 0;
                         gfxCursorY += font->height;
                 }
         }
 }
 
-// num printing
 void ncPrintDec(uint64_t value) {
         ncPrintBase(value, 10);
 }
+
 void ncPrintHex(uint64_t value) {
         ncPrintBase(value, 16);
 }
+
 void ncPrintBin(uint64_t value) {
         ncPrintBase(value, 2);
 }
@@ -87,12 +85,10 @@ void ncPrintBase(uint64_t value, uint32_t base) {
         ncPrint(buffer, WHITE);
 }
 
-// num conversion
 static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base) {
         char *p = buffer;
         char *p1, *p2;
         uint32_t digits = 0;
-
         do {
                 uint32_t remainder = value % base;
                 *p++ =

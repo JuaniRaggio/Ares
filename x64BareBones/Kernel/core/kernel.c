@@ -1,3 +1,5 @@
+#include "colors.h"
+#include "time.h"
 #include <core/moduleLoader.h>
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
@@ -20,6 +22,8 @@ extern uint8_t bss;
 extern uint8_t endOfKernelBinary;
 extern uint8_t endOfKernel;
 extern void init_syscalls(void);
+extern void setup_user_segments(void);
+extern void jump_to_userland(void *entry_point);
 
 static const uint64_t PageSize           = 0x1000;
 static void *const userCodeModuleAddress = (void *)0x400000;
@@ -66,9 +70,11 @@ void *initializeKernelBinary() {
 // ======================================================
 
 int main() {
-        video_init(); // Inicializa el modo gráfico (o VGA)
-        load_idt();   // Inicializa la IDT
-        init_syscalls();
+        video_init();          // Inicializa el modo gráfico (o VGA)
+        load_idt();            // Inicializa la IDT
+        init_syscalls();       // Configura SYSCALL/SYSRET
+        setup_user_segments(); // Carga nueva GDT con segmentos de usuario
+                               // (antes de clearScreen)
 
         if (videoMode == 1) {
                 clearScreen(0x000000); // Pantalla negra limpia
@@ -104,7 +110,6 @@ int main() {
                 for (int i = 0; msg2[i]; i++)
                         drawChar(msg2[i], startX2 + i * font->width,
                                  startY + font->height + 10, 0xCCCCCC, font);
-
         } else {
                 ncPrintOld("[MODO TEXTO ACTIVADO]");
                 ncNewline();
@@ -125,9 +130,36 @@ int main() {
         buffer[5]   = 0;
         printLn(buffer, BLACK_WHITE);
 
+        clearScreen(0x000000); // Pantalla negra limpia
+        ncClear();             // Limpia buffer de texto del ncPrint
+
+        // Resetear cursor grafico
+        gfxCursorX = 0;
+        gfxCursorY = 0;
+
+        ncPrint("KERNEL: Video OK\n", WHITE);
+        ncPrint("KERNEL: GDT with user segments loaded\n", WHITE);
+
+        ncPrint("KERNEL: userCodeModuleAddress = 0x", WHITE);
+        ncPrintHex((uint64_t)userCodeModuleAddress);
+        ncPrint("\n", WHITE);
+
+        // Verificar los primeros bytes del modulo
+        ncPrint("KERNEL: Primeros 8 bytes: 0x", WHITE);
+        ncPrintHex(*(uint64_t *)userCodeModuleAddress);
+        ncPrint("\n", WHITE);
+
+        ncPrint(
+            "KERNEL: Llamando a userland (SIN cambiar a Ring 3 - TEST)...\n",
+            WHITE);
+        ncPrint("KERNEL: Punto inmediatamente antes del call...\n", WHITE);
+
         ((EntryPoint)userCodeModuleAddress)();
-        // while(1);
-        haltcpu();
+
+        // jump_to_userland(userCodeModuleAddress);
+
+        while (1)
+                haltcpu();
 
         // for ever;
 

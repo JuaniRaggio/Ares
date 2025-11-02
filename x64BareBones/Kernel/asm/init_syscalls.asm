@@ -25,7 +25,7 @@ init_syscalls:
     mov rax, syscall_entry
     mov rdx, rax                 ; copiar rax en rdx
     shr rdx, 32                  ; sacar la parte alta
-    mov eax, eax                 ; (no hace nada, pero mantiene la simetría)
+    nop
     wrmsr
 
     ; 4. FMASK: flags a limpiar al entrar al kernel
