@@ -5122,8 +5122,10 @@ static const unsigned char ubuntu_mono_bitmap[256][17] = {
         0x03  // ##------
     }};
 
-bmp_font_t font_ubuntu_mono = {.name   = "Ubuntu Mono",
-                               .width  = 8,
-                               .height = 17,
-                               .nChars = 256,
-                               .bitmap = ubuntu_mono_bitmap};
+bmp_font_t font_ubuntu_mono = {
+    .name   = "Ubuntu Mono",
+    .width  = 8,
+    .height = 17,
+    .nChars = 256,
+    .bitmap = ubuntu_mono_bitmap,
+};
