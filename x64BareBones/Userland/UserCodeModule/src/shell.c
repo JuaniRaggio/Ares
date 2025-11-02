@@ -4,14 +4,7 @@
 
 #include <drivers/keyboard_driver.h>
 #include <drivers/video_driver.h>
-#include <stdbool.h>
-#include <uint.h>
 
-#define DEFAULT_PROMPT_S 100
-#define DEFAULT_HISTORY_S 10
-#define PROMPT_SIZE DEFAULT_PROMPT_S
-#define HISTORY_SIZE DEFAULT_HISTORY_S
-#define SCREEN_SIZE (TEXT_WIDTH * TEXT_HEIGHT)
 #define for_ever for (;;)
 
 static const char *const welcome_msg_shell = "Welcome back!\n";

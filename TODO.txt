@@ -23,21 +23,21 @@ Chequear de cumplir estas cosas antes de hacer la version final para la entrega
 In progress
 -------------------------------------------------------------------------------
 - [ ] Shell (Userland)
-        - [ ] _start de nuestro OS
+        - [ ] _start de nuestro OS. Cuando arranque en modo video que empiece
+          en la terminal
         - [ ] poder escribir y que se muestre en pantalla
-        - [ ] parser e interprete de comandos
+        - [ ] interprete de comandos
         - [ ] ejecucion de comandos
-        - [ ] pasarlo a ADT
-                - [ ] Necesitamos malloc implementado para esto?
-- [X] Getter de los registros
+        - [ ] help de comandos
+        - [ ] terminar print_registers y mapearlo a un keybind
 
 
 Done tasks
 -------------------------------------------------------------------------------
+- [X] Getter de los registros
 - [X] int80Hander (Kernel/asm/lib.asm)
 - [X] Se puede usar el malloc de la stdlib?
 - [X] En caso de que no se pueda, habria que implementar uno
 - [X] Que tanto nos suma hacer un buen codigo modularizado con ADTs en terminos
       de puntuacion en la entrega
-
 
