@@ -1,7 +1,6 @@
 #include <arch/x86_64/idtLoader.h>
 #include <arch/x86_64/interrupts.h>
 #include <defs.h>
-#include <uint.h>
 
 #include <drivers/keyboard_driver.h>
 

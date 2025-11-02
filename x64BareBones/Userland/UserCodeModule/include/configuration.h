@@ -3,7 +3,7 @@
 #include <colors.h>
 #include <font.h>
 #include <font_ubuntu_mono.h>
-#include <uint.h>
+#include <stdint.h>
 
 #define DEFAULT_PROMPT_S 32
 #define DEFAULT_HISTORY_S 10
