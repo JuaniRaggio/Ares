@@ -7,13 +7,15 @@ x64BareBones/Kernel/build/
 x64BareBones/Kernel/bin/
 *.o
 *.bin
+*.sys
 *.d
 *.img
 *.vmdk
 *.qcow2
+.bash_history
+.cache
 
-# Old directories (deprecated)
-x64BareBones/Kernel/src/
-x64BareBones/Kernel/asm/
-x64BareBones/Kernel/video/
-x64BareBones/Kernel/fonts/
+#The images
+*.img
+*.qcow2
+*.vmdk
