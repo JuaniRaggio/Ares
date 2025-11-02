@@ -30,6 +30,7 @@ In progress
         - [ ] ejecucion de comandos
         - [ ] help de comandos
         - [ ] terminar print_registers y mapearlo a un keybind
+        - [ ] implementar printf de alguna forma
 
 
 Done tasks
