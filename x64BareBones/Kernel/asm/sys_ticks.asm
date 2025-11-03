@@ -1,0 +1,25 @@
+section .text
+global sys_get_ticks_wrapper
+global sys_get_seconds_wrapper
+extern sys_get_ticks
+extern sys_get_seconds
+
+sys_get_ticks_wrapper:
+    push rbp
+    mov rbp, rsp
+
+    call sys_get_ticks
+
+    mov rsp, rbp
+    pop rbp
+    ret
+
+sys_get_seconds_wrapper:
+    push rbp
+    mov rbp, rsp
+
+    call sys_get_seconds
+
+    mov rsp, rbp
+    pop rbp
+    ret
