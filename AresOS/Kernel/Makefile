@@ -22,14 +22,13 @@ INTERRUPTS_ASM := $(ARCH_DIR)/interrupts/interrupts.asm
 INTERRUPTS_OBJ := $(BUILD_DIR)/$(ARCH_DIR)/interrupts/interrupts.o
 
 # 3. ASM de syscalls (orden alfabético explícito)
-SYSCALLS_ASM := asm/libasm.asm asm/sys_exit.asm asm/sys_write.asm asm/sys_read.asm asm/sys_clear.asm asm/sys_ticks.asm asm/sys_misc.asm asm/syscalls.asm asm/syscalls_table.asm asm/init_syscalls.asm asm/kernel_stack.asm asm/jump_to_userland.asm asm/setup_user_segments.asm
+SYSCALLS_ASM := asm/libasm.asm asm/sys_exit.asm asm/sys_write.asm asm/sys_read.asm asm/sys_clear.asm asm/sys_ticks.asm asm/sys_misc.asm asm/syscalls.asm asm/syscalls_table.asm asm/init_syscalls.asm asm/kernel_stack.asm asm/setup_user_segments.asm asm/jump_to_userland.asm
 SYSCALLS_OBJ := $(patsubst %.asm,$(BUILD_DIR)/%.o,$(SYSCALLS_ASM))
 
 # 4. Código C (todos juntos, orden no crítico)
 C_SOURCES := $(shell find $(ARCH_DIR) $(DRIVERS_DIR) $(CORE_DIR) $(LIB_DIR) -name '*.c')
 C_OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(C_SOURCES))
 
-# Orden EXPLÍCITO de linkeo: Loader -> Interrupts ASM -> Syscalls ASM -> C code
 ALL_OBJECTS := $(LOADER_OBJ) $(INTERRUPTS_OBJ) $(SYSCALLS_OBJ) $(C_OBJECTS)
 
 # Archivos de dependencias automáticas

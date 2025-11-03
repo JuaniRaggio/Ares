@@ -1,7 +1,5 @@
 #include <drivers/video_driver.h>
 
-#define NULL ((void *)0)
-
 struct vbe_mode_info_structure {
         uint16_t attributes; // deprecated, only bit 7 should be of interest to
         // you, and it indicates the mode supports a linear

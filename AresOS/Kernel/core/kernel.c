@@ -1,5 +1,3 @@
-#include "colors.h"
-#include "time.h"
 #include <core/moduleLoader.h>
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
@@ -54,8 +52,10 @@ void *initializeKernelBinary() {
 
         ncPrintOld("[Loading modules]");
         ncNewline();
-        void *moduleAddresses[] = {userCodeModuleAddress,
-                                   userDataModuleAddress};
+        void *moduleAddresses[] = {
+            userCodeModuleAddress,
+            userDataModuleAddress,
+        };
         loadModules(&endOfKernelBinary, moduleAddresses);
         ncPrintOld("[Done]");
         ncNewline();
@@ -79,18 +79,17 @@ int main() {
         load_idt();            // Inicializa la IDT
         init_syscalls();       // Configura SYSCALL/SYSRET
         setup_user_segments(); // Carga nueva GDT con segmentos de usuario
-                               // (antes de clearScreen)
+        // (antes de clearScreen)
 
         if (videoMode == 1) {
                 clearScreen(0x000000); // Pantalla negra limpia
                 ncClear();             // Limpia buffer de texto del ncPrint
 
-                // Texto principal
                 const char *msg1 = "[MODO VIDEO ACTIVADO]";
                 const char *msg2 = "Kernel funcionando correctamente.";
 
-                bmp_font_t *font =
-                    &font_ubuntu_mono; // usamos la fuente directamente
+                bmp_font_t *font = &font_ubuntu_mono;
+                setFont(font);
                 int msg1_len = strlen(msg1);
                 int msg2_len = strlen(msg2);
 
@@ -140,17 +139,14 @@ int main() {
         restore_cursor();
 
         printLn("UserCodeModule begins at: ", VGA_WHITE);
-        ncPrintHex(*(uint64_t *)userCodeModuleAddress);
+        ncPrintHex((uint64_t)userCodeModuleAddress);
         ncPrint("\n", VGA_WHITE);
 
-        ((EntryPoint)userCodeModuleAddress)();
+        // ((EntryPoint)userCodeModuleAddress)();
 
-        // jump_to_userland(userCodeModuleAddress);
+        jump_to_userland(userCodeModuleAddress);
 
         while (1)
                 haltcpu();
-
-        // for ever;
-
         return 0;
 }

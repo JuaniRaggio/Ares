@@ -1,12 +1,8 @@
 // naiveConsole.c
-
-#include <colors.h>
-#include <fontManager.h>
 #include <naiveConsole.h>
-#include <video_driver.h>
 
 static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base);
-static uint8_t *const video = (uint8_t *)0xB8000;
+// static uint8_t *const video = (uint8_t *)0xB8000;
 
 // temp. buffer to print num
 static char buffer[64] = {'0'};
@@ -115,6 +111,15 @@ void ncPrintChar(char c, uint8_t color) {
         else {
                 uint32_t rgb     = vgaToRGB(color);
                 bmp_font_t *font = getFont();
+                if (font == NULL)
+                        return;
+
+                if (c == '\n') {
+                        gfxCursorX = 0;
+                        gfxCursorY += font->height;
+                        return;
+                }
+
                 drawChar(c, gfxCursorX, gfxCursorY, rgb, font);
                 gfxCursorX += font->width;
                 if (gfxCursorX + font->width >= SCREEN_WIDTH) {

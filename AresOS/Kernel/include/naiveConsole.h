@@ -4,11 +4,13 @@
 #define NAIVE_CONSOLE_H
 
 #include <colors.h>
+#include <fontManager.h>
 #include <stdint.h>
+#include <video_driver.h>
 
 // TODO:
 // NO DEBERIA IR ACA, CAMBIAR
-static uint8_t *limit = (uint8_t *)0xB8FA0; // video + width * height * 2 - 1
+// static uint8_t *limit = (uint8_t *)0xB8FA0; // video + width * height * 2 - 1
 
 void printLn(const char *str, const uint8_t color);
 

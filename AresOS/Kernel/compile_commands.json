@@ -1,72 +1,72 @@
 [
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c drivers/video/video_driver.c -o build/drivers/video/video_driver.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/drivers/video/video_driver.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/drivers/video/video_driver.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c drivers/video/naiveConsole.c -o build/drivers/video/naiveConsole.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/drivers/video/naiveConsole.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/drivers/video/naiveConsole.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c drivers/video/fonts/font_ubuntu_mono.c -o build/drivers/video/fonts/font_ubuntu_mono.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/drivers/video/fonts/font_ubuntu_mono.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/drivers/video/fonts/font_ubuntu_mono.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c drivers/video/fonts/fontManager.c -o build/drivers/video/fonts/fontManager.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/drivers/video/fonts/fontManager.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/drivers/video/fonts/fontManager.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c drivers/timer/time.c -o build/drivers/timer/time.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/drivers/timer/time.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/drivers/timer/time.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c drivers/keyboard/keyboard_driver.c -o build/drivers/keyboard/keyboard_driver.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/drivers/keyboard/keyboard_driver.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/drivers/keyboard/keyboard_driver.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c core/kernel.c -o build/core/kernel.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/core/kernel.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/core/kernel.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c core/moduleLoader.c -o build/core/moduleLoader.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/core/moduleLoader.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/core/moduleLoader.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c arch/x86_64/interrupts/syscallDispatcher.c -o build/arch/x86_64/interrupts/syscallDispatcher.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/arch/x86_64/interrupts/syscallDispatcher.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/arch/x86_64/interrupts/syscallDispatcher.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c arch/x86_64/interrupts/syscalls.c -o build/arch/x86_64/interrupts/syscalls.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/arch/x86_64/interrupts/syscalls.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/arch/x86_64/interrupts/syscalls.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c arch/x86_64/interrupts/irqDispatcher.c -o build/arch/x86_64/interrupts/irqDispatcher.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/arch/x86_64/interrupts/irqDispatcher.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/arch/x86_64/interrupts/irqDispatcher.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c arch/x86_64/interrupts/idtLoader.c -o build/arch/x86_64/interrupts/idtLoader.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/arch/x86_64/interrupts/idtLoader.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/arch/x86_64/interrupts/idtLoader.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c arch/x86_64/interrupts/exceptions.c -o build/arch/x86_64/interrupts/exceptions.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/arch/x86_64/interrupts/exceptions.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/arch/x86_64/interrupts/exceptions.c"
   },
   {
-    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel",
+    "directory": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel",
     "command": "x86_64-linux-gnu-gcc -m64 -fno-exceptions -fno-asynchronous-unwind-tables -mno-mmx -mno-sse -mno-sse2 -fno-builtin-malloc -fno-builtin-free -fno-builtin-realloc -mno-red-zone -Wall -ffreestanding -nostdlib -fno-common -std=c99 -fno-pie -Iinclude -Iinclude/arch/x86_64 -Iinclude/core -Iinclude/drivers -Idrivers/video -c lib/lib.c -o build/lib/lib.c.o",
-    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/x64BareBones/Kernel/lib/lib.c"
+    "file": "/Users/juaniraggio/workspace/itbaworkspace/TPEARQUITECTURA/Ares/AresOS/Kernel/lib/lib.c"
   }
 ]

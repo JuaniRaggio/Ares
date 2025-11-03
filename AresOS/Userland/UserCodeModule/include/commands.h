@@ -5,7 +5,7 @@
 #include <regs.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <syscall.h>
+#include <syscalls.h>
 
 #define NULL 0
 #define QTY_COMMANDS 9

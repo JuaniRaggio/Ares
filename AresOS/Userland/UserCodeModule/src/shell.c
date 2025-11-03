@@ -38,7 +38,7 @@ static shell_attributes shell_status = {
     .magnification = 1,
     .prompts       = (prompt_data){0},
     .cursor =
-        (shell_cursor){
+        {
             .shape   = underline,
             .x       = 0,
             .y       = 0,
@@ -62,6 +62,7 @@ static void add_to_history(const char *command) {
 }
 
 void run_shell(void) {
+        clear_cmd();
         printf(welcome_msg_shell);
         printf("Type 'help' to see available commands\n\n");
         for_ever {
@@ -86,22 +87,22 @@ void run_shell(void) {
                         continue;
                 }
 
-                int func_params = commands[index].ftype;
+                int func_params = commands[index].lambda.ftype;
                 if (qty_params - 1 != func_params) {
                         printf(wrong_params);
                         printf(CHECK_MAN, command);
                         continue;
                 }
 
-                switch (commands[index].ftype) {
+                switch (commands[index].lambda.ftype) {
                 case supplier_t:
-                        commands[index].supplier();
+                        commands[index].lambda.execute.supplier();
                         break;
                 case function_t:
-                        commands[index].function(arg1);
+                        commands[index].lambda.execute.function(arg1);
                         break;
                 case bi_function_t:
-                        commands[index].bi_function(arg1, arg2);
+                        commands[index].lambda.execute.bi_function(arg1, arg2);
                         break;
                 }
         }

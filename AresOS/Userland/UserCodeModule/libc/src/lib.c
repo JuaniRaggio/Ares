@@ -87,3 +87,83 @@ char *strncpy(char *dest, const char *src, uint64_t n) {
                 ;
         return dest;
 }
+
+char *itoa(int value, char *str, int base) {
+        char *ptr  = str;
+        char *ptr1 = str;
+        char tmp_char;
+        int tmp_value;
+
+        if (base < 2 || base > 36) {
+                *str = '\0';
+                return str;
+        }
+
+        if (value == 0) {
+                *ptr++ = '0';
+                *ptr   = '\0';
+                return str;
+        }
+
+        int negative = 0;
+        if (value < 0 && base == 10) {
+                negative = 1;
+                value    = -value;
+        }
+
+        while (value != 0) {
+                tmp_value = value % base;
+                *ptr++ =
+                    (tmp_value < 10) ? tmp_value + '0' : tmp_value - 10 + 'a';
+                value /= base;
+        }
+
+        if (negative) {
+                *ptr++ = '-';
+        }
+
+        *ptr-- = '\0';
+
+        while (ptr1 < ptr) {
+                tmp_char = *ptr;
+                *ptr--   = *ptr1;
+                *ptr1++  = tmp_char;
+        }
+
+        return str;
+}
+
+char *utoa(uint64_t value, char *str, int base) {
+        char *ptr  = str;
+        char *ptr1 = str;
+        char tmp_char;
+        uint64_t tmp_value;
+
+        if (base < 2 || base > 36) {
+                *str = '\0';
+                return str;
+        }
+
+        if (value == 0) {
+                *ptr++ = '0';
+                *ptr   = '\0';
+                return str;
+        }
+
+        while (value != 0) {
+                tmp_value = value % base;
+                *ptr++ =
+                    (tmp_value < 10) ? tmp_value + '0' : tmp_value - 10 + 'a';
+                value /= base;
+        }
+
+        *ptr-- = '\0';
+
+        while (ptr1 < ptr) {
+                tmp_char = *ptr;
+                *ptr--   = *ptr1;
+                *ptr1++  = tmp_char;
+        }
+
+        return str;
+}
