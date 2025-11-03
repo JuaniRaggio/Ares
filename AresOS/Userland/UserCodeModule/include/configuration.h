@@ -9,6 +9,7 @@
 
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 768
+// #define CELL_SIZE 10
 #define SCREEN_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT)
 
 #define BLACK 0x0
