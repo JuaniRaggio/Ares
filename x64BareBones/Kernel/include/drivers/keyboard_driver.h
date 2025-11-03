@@ -2,12 +2,20 @@
 #define _KEYBOARD_H_
 
 #include <naiveConsole.h>
-#include <stdbool.h>
 
 #define TABLE_SIZE 256
 #define NON_PRINTABLE 0
 
-typedef enum { off, shift, ctl, alt } modifiers;
+#define LSHIFT_CODE 0x2A
+#define RSHIFT_CODE 0x36
+#define BREAK_CODE 0x80
+
+typedef enum {
+        off,
+        shift,
+        ctl,
+        alt,
+} modifiers;
 
 uint8_t keyboard_handler();
 void update_buffer(uint8_t c);
@@ -17,8 +25,10 @@ uint8_t buffer_next();
 
 extern uint8_t get_input();
 
-// This table must be initialized matching the modifiers enum
+// This table either must be initialized matching the modifiers enum
+// or should be assigned using modifiers as indexes
 static uint8_t ascii_table[][TABLE_SIZE] = {
+    // off - normal version
     {
         /* 0x00 */ NON_PRINTABLE,
         /* 0x01 */ NON_PRINTABLE, // Escape pressed (no ASCII)
@@ -81,7 +91,7 @@ static uint8_t ascii_table[][TABLE_SIZE] = {
         /* 0x3A */ NON_PRINTABLE, // CapsLock pressed
         /* 0x3B */ NON_PRINTABLE, // F1 pressed
     },
-    /* Shift‐pressed version: ASCII when Shift (o CapsLock) está activado */
+    // Shift‐pressed version: ASCII when Shift is pressed
     {
         /* 0x00 */ NON_PRINTABLE,
         /* 0x01 */ NON_PRINTABLE,
@@ -137,6 +147,7 @@ static uint8_t ascii_table[][TABLE_SIZE] = {
         /* 0x33 */ '<',
         /* 0x34 */ '>', // NO funciona
         /* 0x35 */ '?'  // NO funciona
-    }};
+    },
+};
 
 #endif

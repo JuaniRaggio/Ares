@@ -9,10 +9,6 @@ typedef struct {
 
 static keyboard_state_t keyboard = {0};
 
-#define LSHIFT_CODE 0x2A
-#define RSHIFT_CODE 0x36
-#define BREAK_CODE 0x80
-
 uint8_t keyboard_handler() {
         uint8_t scan_code = get_input();
 
