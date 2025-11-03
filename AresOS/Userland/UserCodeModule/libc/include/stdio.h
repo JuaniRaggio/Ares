@@ -1,5 +1,9 @@
 #pragma once
 
+#include <lib.h>
+#include <stdarg.h> // Esta no deberia estar
+#include <syscall.h>
+
 int printf(const char *format, ...);
 
 int putchar(int c);

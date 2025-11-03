@@ -1,14 +1,14 @@
-#include <lib.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <syscall.h>
+#include <stdio.h>
 
 #define MAX_CHARS 256
 #define EOF (-1)
 #define CURSOR_FREQ 10
-#define STDIN 0
-#define STDOUT 1
-#define STDERR 2
+
+typedef enum {
+        STDIN = 0,
+        STDOUT,
+        STDERR,
+} stdcodes;
 
 /* Lee un caracter del stdin (bloqueante con polling) */
 int getchar(void) {
@@ -134,31 +134,31 @@ int printf(const char *format, ...) {
         va_start(args, format);
 
         const char *p = format;
-        while(*p) {
-                if(*p == '%') {
+        while (*p) {
+                if (*p == '%') {
                         p++;
-                        switch(*p) {
-                                case 'c': {
-                                        char c = (char)va_arg(args, int);
-                                        putchar(c);
-                                        break;
-                                }
-                                case 's': {
-                                        char *s = va_arg(args, char *);
-                                        puts(s);
-                                        break;
-                                }
-                                case 'd': {
-                                        int num = va_arg(args, int);
-                                        char buf[20];
-                                        itoa(num, buf, 10);
-                                        char *s = buf;
-                                        puts(s);
-                                        break;
-                                }
-                                default:
-                                        putchar('%');
-                                        putchar(*p);
+                        switch (*p) {
+                        case 'c': {
+                                char c = (char)va_arg(args, int);
+                                putchar(c);
+                                break;
+                        }
+                        case 's': {
+                                char *s = va_arg(args, char *);
+                                puts(s);
+                                break;
+                        }
+                        case 'd': {
+                                int num = va_arg(args, int);
+                                char buf[20];
+                                itoa(num, buf, 10);
+                                char *s = buf;
+                                puts(s);
+                                break;
+                        }
+                        default:
+                                putchar('%');
+                                putchar(*p);
                         }
                 } else {
                         putchar(*p);
