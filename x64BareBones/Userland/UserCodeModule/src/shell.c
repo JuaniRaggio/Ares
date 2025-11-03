@@ -137,7 +137,11 @@ void shell_loop() {
         }
 }
 
+void init_shell() {
+}
+
 int shell(void) {
+        init_shell();
         welcome_shell();
         shell_loop();
         return 0;

@@ -5,7 +5,7 @@
 
 void int_20(void);
 void int_21(void);
-// static void kbd_handler();
+void kbd_handler();
 
 typedef void (*interruption_signature)(void);
 

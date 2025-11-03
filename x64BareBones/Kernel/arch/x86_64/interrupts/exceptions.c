@@ -1,4 +1,3 @@
-
 #define ZERO_EXCEPTION_ID 0x00
 
 static void zero_division();
