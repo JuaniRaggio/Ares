@@ -1,5 +1,7 @@
 # ARES Recursive Experimental System
 
+![ITBA](ITBAgua.png)
+
 ## Configuración del entorno de desarrollo
 
 ### Configurar Git Hooks
