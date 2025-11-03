@@ -32,6 +32,11 @@ In progress
         - [ ] terminar print_registers y mapearlo a un keybind
         - [ ] implementar printf de alguna forma
 
+- [ ] SYS_GET_RESOLUTION
+- [ ] SYS_SET_FONT_SIZE: integrarlo con fontManager si es que queremos usar eso
+- [ ] SYS_DRAW_RECT: funcionalidad en video_driver
+- [ ] Mapear un keybind con print_registers para mostrar registros en cualquier
+      momento
 
 Issues
 -------------------------------------------------------------------------------
