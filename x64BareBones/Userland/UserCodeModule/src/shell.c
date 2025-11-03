@@ -1,16 +1,40 @@
 #include <configuration.h>
+#include <i386/types.h>
 #include <parser.h>
 #include <shell.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <syscall.h>
 
-#include <drivers/keyboard_driver.h>
-#include <drivers/video_driver.h>
-
+#define TRUE 1
+#define FALSE 0
 #define for_ever for (;;)
 
 static const char *const welcome_msg_shell = "Welcome back!\n";
 static const char *const input_prompt      = " > ";
+
+// @return: input_prompt length, this is inlined because it should be resolved
+// in compile time since input_prompt won't change at runtime and its also a
+// static variable
+static inline uint8_t input_prompt_length() {
+        int length = 0;
+        while (input_prompt[length])
+                length++;
+        return length;
+}
+
+// @return: pointer to the current prompt, this means, the prompt
+// attribute inside shell_status
+static char *current_prompt();
+
+// @return: index in history of the lastest executed prompt
+static uint8_t lastest_prompt_idx();
+
+// @return: the horizontal number of cell which the cursor should be in
+static uint8_t get_x_cursor();
+
+// @return: the vertical number of cell which the cursor should be in
+static uint8_t get_y_cursor();
 
 typedef struct {
         cursor_shape shape;
@@ -41,51 +65,45 @@ static shell_attributes shell_status = {
             .shape   = underline,
             .x       = 0,
             .y       = 0,
-            .focused = true,
+            .focused = TRUE,
         },
 };
+
+static uint8_t get_y_cursor() {
+        return shell_status.cursor.y;
+}
+static uint8_t get_x_cursor() {
+        return shell_status.cursor.x;
+}
+static uint8_t lastest_prompt_idx() {
+        return shell_status.prompts.lastest_prompt_idx;
+}
+
+static char *current_prompt() {
+        return shell_status.prompts.prompt;
+}
+
+void print_registers(void) {
+        static const uint8_t reg_size_B      = 8;
+        static const char *const reg_names[] = {
+            "RIP", "RSP", "RAX", "RBX", "RCX", "RDX", "RBP", "RDI", "RSI",
+            "R8",  "R9",  "R10", "R11", "R12", "R13", "R14", "R15",
+        };
+        void *snapshot = get_register_values();
+        for (int i = 0; reg_names[i]; i++) {
+                printf("%s: 0x%x\n", reg_names[i],
+                       (uint64_t *)(snapshot + i * reg_size_B));
+        }
+}
 
 void welcome_shell() {
         syscall_write(1, welcome_msg_shell, 14);
         return;
 }
 
-static void print_registers(void) {
-        static const char *const reg_names[] = {
-            "RIP", "RSP", "RAX", "RBX", "RCX", "RDX", "RBP", "RDI", "RSI",
-            "R8",  "R9",  "R10", "R11", "R12", "R13", "R14", "R15"};
-        void *snapshot = get_register_values();
-        for (int i = 0; reg_names[i]; i++) {
-                // Aca habria que hacer un print de reg_names[i] por un lado
-                // y de (uint64_t)(snapshot + 8*i) pero en hexa
-                // La otra opcion seria que el codigo de assembly haga los
-                // prints directamente
-        }
-}
-
 void show_input_prompt() {
-        // ===== TODO Esto deberiamos cambiarlo por un printf =====
-        for (int i = 0; input_prompt[i] != '\0'; ++i, ++shell_status.cursor.x) {
-                drawChar(input_prompt[i], get_x_cursor(), get_y_cursor(),
-                         background_color, user_font);
-        }
-        shell_status.cursor.y++;
-}
-
-uint8_t get_y_cursor() {
-        return shell_status.cursor.y;
-}
-
-uint8_t get_x_cursor() {
-        return shell_status.cursor.x;
-}
-
-uint8_t lastest_prompt_idx() {
-        return shell_status.prompts.lastest_prompt_idx;
-}
-
-char *current_prompt() {
-        return shell_status.prompts.prompt;
+        printf("%s", input_prompt);
+        shell_status.cursor.x = 3;
 }
 
 void save_prompt() {
@@ -120,13 +138,8 @@ void shell_loop() {
         }
 }
 
-void init_shell() {
-        // TODO
-}
-
 int shell(void) {
         welcome_shell();
-        init_shell();
         shell_loop();
         return 0;
 }

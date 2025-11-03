@@ -6,7 +6,11 @@
 #define DEFAULT_HISTORY_S 10
 #define PROMPT_SIZE DEFAULT_PROMPT_S
 #define HISTORY_SIZE DEFAULT_HISTORY_S
-#define SCREEN_SIZE (TEXT_WIDTH * TEXT_HEIGHT)
+
+// Esto es copy paste de video_driver
+#define SCREEN_WIDTH 1024
+#define SCREEN_HEIGHT 768
+#define SCREEN_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT)
 
 #define BLACK 0x0
 #define BLUE 0x1

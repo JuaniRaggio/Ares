@@ -1,18 +1,17 @@
 #ifndef __SHELL_H__
 #define __SHELL_H__
 
-#include <drivers/keyboard_driver.h>
-#include <drivers/video_driver.h>
 #include <stdint.h>
 
 #define RUNNING 1
 
-uint8_t get_y_cursor();
-uint8_t get_x_cursor();
-
 extern struct regs *get_register_values();
 
-void shell_printf(const char *msg);
+// @breif: shows the current value of all registers
+void print_registers(void);
+
+// @brief: show input prompt in a newline
+void show_input_prompt();
 void welcome_shell();
 int shell(void);
 

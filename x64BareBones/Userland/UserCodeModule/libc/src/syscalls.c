@@ -19,5 +19,5 @@ long read(int fd, void *buf, unsigned long count) {
 void exit(int status) {
         _syscall3(SYS_EXIT, status, 0, 0);
         while (1)
-                ; // No deberia llegar aqui
+                ;
 }
