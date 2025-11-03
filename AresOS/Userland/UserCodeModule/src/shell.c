@@ -62,9 +62,10 @@ static void add_to_history(const char *command) {
 }
 
 void run_shell(void) {
-        clear_cmd();
-        printf(welcome_msg_shell);
-        printf("Type 'help' to see available commands\n\n");
+        // clear_cmd();
+        printf("X");
+        // printf(welcome_msg_shell);
+        // printf("Type 'help' to see available commands\n\n");
         for_ever {
                 printf(input_prompt);
                 char command[MAX_CHARS] = {0};

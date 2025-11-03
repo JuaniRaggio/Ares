@@ -4,6 +4,7 @@
 #include <keyboard_driver.h>
 #include <time.h>
 #include <naiveConsole.h>
+#include <video_driver.h>
 #include <regs.h>
 #include <stdint.h>
 #include <syscalls_numbers.h>
