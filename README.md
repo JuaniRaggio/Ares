@@ -1,6 +1,6 @@
 # ARES Recursive Experimental System
 
-![ITBA](ITBAgua.png)
+![ITBA](assets/ITBAgua.png)
 
 ## Configuración del entorno de desarrollo
 
