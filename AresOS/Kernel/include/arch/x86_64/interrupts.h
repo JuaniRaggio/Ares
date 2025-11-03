@@ -8,8 +8,8 @@
 #ifndef INTERRUPS_H_
 #define INTERRUPS_H_
 
-#include <arch/x86_64/idtLoader.h>
 #include <stdint.h>
+#include <idtLoader.h>
 
 void _syscallHandler(void);
 

@@ -27,3 +27,7 @@ uint64_t strlen(const char *s);
 char *strcpy(char *dest, const char *src);
 char *strncpy(char *dest, const char *src, uint64_t n);
 
+// Conversion de numeros a string
+char *itoa(int value, char *str, int base);
+char *utoa(unsigned int value, char *str, int base);
+

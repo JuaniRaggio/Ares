@@ -156,6 +156,14 @@ int printf(const char *format, ...) {
                                 puts(s);
                                 break;
                         }
+                        case 'x': {
+                                unsigned int num = va_arg(args, unsigned int);
+                                char buf[20];
+                                utoa(num, buf, 16);
+                                char *s = buf;
+                                puts(s);
+                                break;
+                        }
                         default:
                                 putchar('%');
                                 putchar(*p);
