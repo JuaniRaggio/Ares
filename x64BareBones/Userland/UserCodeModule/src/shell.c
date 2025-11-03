@@ -16,8 +16,7 @@ static const char *const welcome_msg_shell = "=== Welcome to Ares OS ===\n";
 static const char *const input_prompt      = " > ";
 static const char *const invalid_command   = "Invalid command!\n";
 static const char *const wrong_params      = "Invalid number of parameters\n";
-static const char *const check_man =
-    "Type \"man %s\" to see how the command works\n";
+#define CHECK_MAN "Type \"man %s\" to see how the command works\n"
 
 typedef enum { NO_PARAMS = 0, SINGLE_PARAM, DUAL_PARAM } function_type;
 
