@@ -7,6 +7,8 @@
 #include <font_ubuntu_mono.h>
 #include <stdint.h>
 
+#define NULL ((void *) 0)
+
 // -------------------------
 // Memory addresses
 // -------------------------
