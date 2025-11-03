@@ -16,6 +16,9 @@ static const char *const welcome_msg_shell =
     "Ares Recursive Experimental System\n";
 static const char *const input_prompt = " > ";
 
+static uint8_t lastest_prompt_idx();
+static void add_to_history(const char *command);
+
 typedef struct {
         cursor_shape shape;
         uint8_t x, y;
@@ -49,11 +52,11 @@ static shell_attributes shell_status = {
         },
 };
 
-static inline uint8_t lastest_prompt_idx() {
+static uint8_t lastest_prompt_idx() {
         return shell_status.prompts.lastest_prompt_idx;
 }
 
-static inline void add_to_history(const char *command) {
+static void add_to_history(const char *command) {
         if (command[0] == 0 || command[0] == '\n')
                 return;
         strncpy(shell_status.prompts.prompt_history[lastest_prompt_idx()],
