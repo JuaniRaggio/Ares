@@ -1,21 +1,27 @@
-// colors.h
-
+/* colors.h - Definiciones de colores compartidas */
 #ifndef COLORS_H
 #define COLORS_H
 
-#define BLACK 0x0
-#define BLUE 0x1
-#define GREEN 0x2
-#define CYAN 0x3
-#define RED 0x4
-#define MAGENTA 0x5
-#define BROWN 0x6
-#define GREY 0x7
-#define WHITE 0xF
-#define BLACK_WHITE 0x0F
-#define GREEN_BLACK 0x20
-#define RED_WHITE 0x00FF0000
+// Colores RGB (32-bit)
+#define BLACK 0x000000
+#define WHITE 0xFFFFFF
+#define RED 0xFF0000
+#define GREEN 0x00FF00
+#define BLUE 0x0000FF
+#define YELLOW 0xFFFF00
+#define CYAN 0x00FFFF
+#define MAGENTA 0xFF00FF
+#define GRAY 0x808080
 
-// #define BLACK_WHITE ((BLACK << 4) | WHITE)
+// Colores VGA (8-bit)
+#define VGA_BLACK 0x00
+#define VGA_BLUE 0x01
+#define VGA_GREEN 0x02
+#define VGA_CYAN 0x03
+#define VGA_RED 0x04
+#define VGA_MAGENTA 0x05
+#define VGA_BROWN 0x06
+#define VGA_GRAY 0x07
+#define VGA_WHITE 0x0F
 
 #endif
