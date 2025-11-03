@@ -45,8 +45,10 @@ void *memcpy(void *destination, const void *source, uint64_t length) {
 }
 
 s_time get_current_time() {
-        return (s_time){.hours   = get_current_hour(),
-                        .minutes = get_current_minutes()};
+        return (s_time){
+            .hours   = get_current_hour(),
+            .minutes = get_current_minutes(),
+        };
 }
 
 int strcmp(const char *s1, const char *s2) {

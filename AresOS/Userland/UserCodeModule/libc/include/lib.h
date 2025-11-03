@@ -38,11 +38,11 @@ char *strncpy(char *dest, const char *src, uint64_t n);
 char *itoa(int value, char *str, int base);
 
 /**
- * Converts an unsigned integer to a string representation in the specified base.
- * @param value The unsigned integer value to convert
+ * Converts an unsigned 64-bit integer to a string representation in the specified base.
+ * @param value The unsigned 64-bit integer value to convert
  * @param str Buffer to store the resulting string (must be large enough)
  * @param base Numeric base for conversion (2-36)
  * @return Pointer to the resulting string (same as str parameter)
  */
-char *utoa(unsigned int value, char *str, int base);
+char *utoa(uint64_t value, char *str, int base);
 

@@ -1,5 +1,3 @@
-#include "colors.h"
-#include "time.h"
 #include <core/moduleLoader.h>
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
@@ -22,8 +20,8 @@ extern uint8_t bss;
 extern uint8_t endOfKernelBinary;
 extern uint8_t endOfKernel;
 extern void init_syscalls(void);
-extern void setup_user_segments(void);
-extern void jump_to_userland(void *entry_point);
+// extern void setup_user_segments(void);
+// extern void jump_to_userland(void *entry_point);
 
 static const uint64_t PageSize           = 0x1000;
 static void *const userCodeModuleAddress = (void *)0x400000;
@@ -54,8 +52,10 @@ void *initializeKernelBinary() {
 
         ncPrintOld("[Loading modules]");
         ncNewline();
-        void *moduleAddresses[] = {userCodeModuleAddress,
-                                   userDataModuleAddress};
+        void *moduleAddresses[] = {
+            userCodeModuleAddress,
+            userDataModuleAddress,
+        };
         loadModules(&endOfKernelBinary, moduleAddresses);
         ncPrintOld("[Done]");
         ncNewline();
@@ -75,24 +75,22 @@ static inline void restore_cursor() {
 // ======================================================
 
 int main() {
-        video_init();          // Inicializa el modo gráfico (o VGA)
-        load_idt();            // Inicializa la IDT
-        init_syscalls();       // Configura SYSCALL/SYSRET
-        setup_user_segments(); // Carga nueva GDT con segmentos de usuario
-                               // (antes de clearScreen)
+        video_init();    // Inicializa el modo gráfico (o VGA)
+        load_idt();      // Inicializa la IDT
+        init_syscalls(); // Configura SYSCALL/SYSRET
+        // setup_user_segments(); // Carga nueva GDT con segmentos de usuario
+        // (antes de clearScreen)
 
         if (videoMode == 1) {
                 clearScreen(0x000000); // Pantalla negra limpia
                 ncClear();             // Limpia buffer de texto del ncPrint
 
-                // Texto principal
                 const char *msg1 = "[MODO VIDEO ACTIVADO]";
                 const char *msg2 = "Kernel funcionando correctamente.";
 
-                bmp_font_t *font =
-                    &font_ubuntu_mono; // usamos la fuente directamente
-                int msg1_len = strlen(msg1);
-                int msg2_len = strlen(msg2);
+                bmp_font_t *font = &font_ubuntu_mono;
+                int msg1_len     = strlen(msg1);
+                int msg2_len     = strlen(msg2);
 
                 int startX1 = (screenWidth - msg1_len * font->width) / 2;
                 int startX2 = (screenWidth - msg2_len * font->width) / 2;
@@ -121,7 +119,7 @@ int main() {
                 ncPrintOld("Kernel funcionando correctamente.");
                 ncNewline();
         }
-
+        
         // Lo hago asi porque sabemos que no va a cambiar el formato, siempre
         // van a ser dos posiciones para las horas y dos para los minutos a
         // menos de que seas un enfermo mental
@@ -134,11 +132,11 @@ int main() {
         buffer[4]   = time.minutes % 10 + '0';
         buffer[5]   = 0;
         printLn(buffer, VGA_WHITE);
-
+        
         clearScreen(0x000000); // Pantalla negra limpia
         ncClear();             // Limpia buffer de texto del ncPrint
         restore_cursor();
-
+        
         printLn("UserCodeModule begins at: ", VGA_WHITE);
         ncPrintHex(*(uint64_t *)userCodeModuleAddress);
         ncPrint("\n", VGA_WHITE);
@@ -149,8 +147,5 @@ int main() {
 
         while (1)
                 haltcpu();
-
-        // for ever;
-
         return 0;
 }

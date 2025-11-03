@@ -1,9 +1,4 @@
 /* syscalls.c - Implementaciones de syscalls del kernel */
-#include <drivers/keyboard_driver.h>
-#include <drivers/time.h>
-#include <naiveConsole.h>
-#include <stdint.h>
-#include <syscalls_numbers.h>
 #include <syscalls.h>
 
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t count) {

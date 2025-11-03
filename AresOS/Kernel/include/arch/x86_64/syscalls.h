@@ -1,8 +1,13 @@
 // syscalls.h
 #pragma once
 
-#include <stdint.h>
+#include <arch/x86_64/syscalls.h>
+#include <arch/x86_64/syscalls_numbers.h>
+#include <drivers/keyboard_driver.h>
+#include <drivers/time.h>
+#include <naiveConsole.h>
 #include <regs.h>
+#include <stdint.h>
 #include <syscalls_numbers.h>
 
 #define NULL 0

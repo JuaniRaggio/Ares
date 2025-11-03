@@ -133,11 +133,11 @@ char *itoa(int value, char *str, int base) {
         return str;
 }
 
-char *utoa(unsigned int value, char *str, int base) {
+char *utoa(uint64_t value, char *str, int base) {
         char *ptr  = str;
         char *ptr1 = str;
         char tmp_char;
-        unsigned int tmp_value;
+        uint64_t tmp_value;
 
         if (base < 2 || base > 36) {
                 *str = '\0';

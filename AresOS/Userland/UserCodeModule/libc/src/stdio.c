@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdint.h>
 
 #define MAX_CHARS 256
 #define EOF (-1)
@@ -157,8 +158,8 @@ int printf(const char *format, ...) {
                                 break;
                         }
                         case 'x': {
-                                unsigned int num = va_arg(args, unsigned int);
-                                char buf[20];
+                                uint64_t num = va_arg(args, uint64_t);
+                                char buf[32];
                                 utoa(num, buf, 16);
                                 char *s = buf;
                                 puts(s);
