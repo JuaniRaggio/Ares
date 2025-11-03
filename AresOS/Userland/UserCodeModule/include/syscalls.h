@@ -1,9 +1,9 @@
 #pragma once
 
 #include <stdint.h>
-#include <syscall_numbers.h>
+#include <syscalls_numbers.h>
 
-uint64_t _syscall3(uint64_t n, uint64_t a1, uint64_t a2, uint64_t a3);
+extern uint64_t _syscall3(uint64_t n, uint64_t a1, uint64_t a2, uint64_t a3);
 
 /* Wrappers de syscalls para userspace */
 

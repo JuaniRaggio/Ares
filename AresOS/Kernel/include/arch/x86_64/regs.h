@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-/* Estructura de registros - debe coincidir con la definición en assembly */
+/* Estructura de registros en el kernel */
 typedef struct {
         uint64_t rip;
         uint64_t rsp;
@@ -21,6 +21,4 @@ typedef struct {
         uint64_t r13;
         uint64_t r14;
         uint64_t r15;
-} regs_t;
-
-extern regs_t *get_register_values(void);
+} regs_snapshot_t;

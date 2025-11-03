@@ -1,5 +1,4 @@
-#ifndef __SHELL_H__
-#define __SHELL_H__
+#pragma once
 
 #include <stdint.h>
 
@@ -9,5 +8,3 @@
 void show_input_prompt();
 void welcome_shell();
 int shell(void);
-
-#endif

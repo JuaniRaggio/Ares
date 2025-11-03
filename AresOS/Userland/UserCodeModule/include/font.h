@@ -1,5 +1,4 @@
-#ifndef FONT_H
-#define FONT_H
+#pragma once
 
 typedef struct {
         const char *name; // nombre legible ("ubuntu", "terminus", etc.)
@@ -8,5 +7,3 @@ typedef struct {
         int nChars;
         const char *bitmap[17]; // cada carácter es un arreglo de bytes (filas)
 } bmp_font_t;
-
-#endif

@@ -2,7 +2,7 @@
 
 #include <lib.h>
 #include <stdarg.h> // Esta no deberia estar
-#include <syscall.h>
+#include <syscalls.h>
 
 int printf(const char *format, ...);
 
