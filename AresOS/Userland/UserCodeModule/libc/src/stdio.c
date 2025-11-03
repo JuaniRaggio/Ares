@@ -4,9 +4,11 @@
 #include <syscall.h>
 
 #define MAX_CHARS 256
+#define EOF (-1)
 #define CURSOR_FREQ 10
 #define STDIN 0
 #define STDOUT 1
+#define STDERR 2
 
 /* Lee un caracter del stdin (bloqueante con polling) */
 int getchar(void) {
@@ -108,4 +110,63 @@ int scanf(char *fmt, ...) {
 
         va_end(v);
         return qtyParams;
+}
+
+int putchar(int c) {
+        char ch = (char)c;
+        if (syscall_write(STDOUT, &ch, 1) == 1)
+                return c;
+        return EOF;
+}
+
+int puts(const char *s) {
+        while (*s) {
+                if (putchar(*s++) == EOF)
+                        return EOF;
+        }
+        if (putchar('\n') == EOF)
+                return EOF;
+        return 0;
+}
+
+int printf(const char *format, ...) {
+        va_list args;
+        va_start(args, format);
+
+        // Implementación de printf aquí
+        const char *p = format;
+        while(*p) {
+                if(*p == '%') {
+                        p++;
+                        switch(*p) {
+                                case 'c': {
+                                        char c = (char)va_arg(args, int);
+                                        putchar(c);
+                                        break;
+                                }
+                                case 's': {
+                                        char *s = va_arg(args, char *);
+                                        puts(s);
+                                        break;
+                                }
+                                case 'd': {
+                                        int num = va_arg(args, int);
+                                        char buf[20];
+                                        itoa(num, buf, 10);
+                                        char *s = buf;
+                                        puts(s);
+                                        break;
+                                }
+                                default:
+                                        putchar('%');
+                                        putchar(*p);
+                        }
+                } else {
+                        putchar(*p);
+                }
+                p++;
+        }
+
+        va_end(args);
+        return 0;
 }
