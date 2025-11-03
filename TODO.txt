@@ -8,7 +8,7 @@ Este archivo mantiene:
 
 Dudas para Fede
 -------------------------------------------------------------------------------
-- None
+- [ ] Ver el tema de los segmentos de codigo y dato
 
 
 Notas pre-entrega
@@ -32,6 +32,15 @@ In progress
         - [ ] terminar print_registers y mapearlo a un keybind
         - [ ] implementar printf de alguna forma
 
+
+Issues
+-------------------------------------------------------------------------------
+- [ ] No podemos usar next(), hasNext() para leer del keyboard driver, esta mal
+      lo que tenemos que hacer es que el keyboard driver escriba en stdin y
+      desde el kernel se lea ese buffer y si se decida si:
+      + Hay que escribir en pantalla
+      + Es un comando
+      + Bananas en pijamas
 
 Done tasks
 -------------------------------------------------------------------------------

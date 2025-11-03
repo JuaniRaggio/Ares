@@ -1,5 +1,4 @@
 #include <configuration.h>
-#include <i386/types.h>
 #include <parser.h>
 #include <shell.h>
 #include <stdint.h>

@@ -25,7 +25,12 @@
 #define GREEN_BLACK 0x20
 #define RED_WHITE 0x00FF0000
 
-typedef enum { block, hollow, line, underline } cursor_shape;
+typedef enum {
+        block,
+        hollow,
+        line,
+        underline,
+} cursor_shape;
 
 // Esto esta mal, no podemos llamar a Kernel space desde aca
 // static const bmp_font_t *user_font = &font_ubuntu_mono;
