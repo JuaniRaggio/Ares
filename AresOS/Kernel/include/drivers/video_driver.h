@@ -5,7 +5,6 @@
 #include <font.h>
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
-#include <naiveConsole.h>
 #include <stdint.h>
 
 // -------------------------

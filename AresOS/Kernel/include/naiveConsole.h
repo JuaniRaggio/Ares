@@ -4,7 +4,11 @@
 #define NAIVE_CONSOLE_H
 
 #include <colors.h>
+#include <fontManager.h>
 #include <stdint.h>
+#include <video_driver.h>
+
+#define NULL ((void *)0)
 
 // TODO:
 // NO DEBERIA IR ACA, CAMBIAR

@@ -115,6 +115,15 @@ void ncPrintChar(char c, uint8_t color) {
         else {
                 uint32_t rgb     = vgaToRGB(color);
                 bmp_font_t *font = getFont();
+                if (font == NULL)
+                        return;
+
+                if (c == '\n') {
+                        gfxCursorX = 0;
+                        gfxCursorY += font->height;
+                        return;
+                }
+
                 drawChar(c, gfxCursorX, gfxCursorY, rgb, font);
                 gfxCursorX += font->width;
                 if (gfxCursorX + font->width >= SCREEN_WIDTH) {
