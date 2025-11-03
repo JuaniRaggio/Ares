@@ -1,7 +1,5 @@
 // lib.h
-
-#ifndef LIB_H
-#define LIB_H
+#pragma once
 
 #include <stdint.h>
 
@@ -29,4 +27,3 @@ uint64_t strlen(const char *s);
 char *strcpy(char *dest, const char *src);
 char *strncpy(char *dest, const char *src, uint64_t n);
 
-#endif

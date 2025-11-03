@@ -2,6 +2,8 @@
 
 #include <syscall_numbers.h> // API compartida con el kernel
 
+#define for_ever for (;;)
+
 // Declarar _syscall3 (implementado en asm/syscall.asm)
 extern long _syscall3(long n, long a1, long a2, long a3);
 
@@ -18,6 +20,5 @@ long read(int fd, void *buf, unsigned long count) {
 // Wrapper para exit
 void exit(int status) {
         _syscall3(SYS_EXIT, status, 0, 0);
-        while (1)
-                ;
+        for_ever;
 }
