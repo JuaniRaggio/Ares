@@ -1,5 +1,3 @@
-#include "colors.h"
-#include "naiveConsole.h"
 #include <configuration.h>
 #include <parser.h>
 #include <shell.h>

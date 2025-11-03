@@ -1,12 +1,9 @@
 /* syscalls.c - Wrappers de syscalls para userland */
 
+#include <syscall_numbers.h> // API compartida con el kernel
+
 // Declarar _syscall3 (implementado en asm/syscall.asm)
 extern long _syscall3(long n, long a1, long a2, long a3);
-
-// Numeros de syscall
-#define SYS_WRITE 0
-#define SYS_EXIT 1
-#define SYS_READ 2
 
 // Wrapper para write
 long write(int fd, const void *buf, unsigned long count) {
