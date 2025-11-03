@@ -26,7 +26,7 @@ void ncPrint(const char *string, uint8_t color) {
 }
 
 void ncPrintOld(const char *string) {
-        ncPrint(string, WHITE);
+        ncPrint(string, VGA_WHITE);
 }
 
 void ncPrintText(const char *string, uint8_t color) {
@@ -42,7 +42,7 @@ void ncPrintCharText(char c, uint8_t color) {
 
 void ncNewline() {
         do {
-                ncPrintCharText(' ', BLACK_WHITE);
+                ncPrintCharText(' ', VGA_WHITE);
         } while ((uint64_t)(currentVideo - videoTextBase) % (TEXT_WIDTH * 2) !=
                  0);
 }
@@ -82,7 +82,7 @@ void ncPrintBin(uint64_t value) {
 
 void ncPrintBase(uint64_t value, uint32_t base) {
         uintToBase(value, buffer, base);
-        ncPrint(buffer, WHITE);
+        ncPrint(buffer, VGA_WHITE);
 }
 
 static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base) {

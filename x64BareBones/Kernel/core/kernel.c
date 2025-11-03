@@ -128,7 +128,7 @@ int main() {
         buffer[3]   = time.minutes / 10 + '0';
         buffer[4]   = time.minutes % 10 + '0';
         buffer[5]   = 0;
-        printLn(buffer, BLACK_WHITE);
+        printLn(buffer, VGA_WHITE);
 
         clearScreen(0x000000); // Pantalla negra limpia
         ncClear();             // Limpia buffer de texto del ncPrint
@@ -137,22 +137,22 @@ int main() {
         gfxCursorX = 0;
         gfxCursorY = 0;
 
-        ncPrint("KERNEL: Video OK\n", WHITE);
-        ncPrint("KERNEL: GDT with user segments loaded\n", WHITE);
+        ncPrint("KERNEL: Video OK\n", VGA_WHITE);
+        ncPrint("KERNEL: GDT with user segments loaded\n", VGA_WHITE);
 
-        ncPrint("KERNEL: userCodeModuleAddress = 0x", WHITE);
+        ncPrint("KERNEL: userCodeModuleAddress = 0x", VGA_WHITE);
         ncPrintHex((uint64_t)userCodeModuleAddress);
-        ncPrint("\n", WHITE);
+        ncPrint("\n", VGA_WHITE);
 
         // Verificar los primeros bytes del modulo
-        ncPrint("KERNEL: Primeros 8 bytes: 0x", WHITE);
+        ncPrint("KERNEL: Primeros 8 bytes: 0x", VGA_WHITE);
         ncPrintHex(*(uint64_t *)userCodeModuleAddress);
-        ncPrint("\n", WHITE);
+        ncPrint("\n", VGA_WHITE);
 
         ncPrint(
             "KERNEL: Llamando a userland (SIN cambiar a Ring 3 - TEST)...\n",
-            WHITE);
-        ncPrint("KERNEL: Punto inmediatamente antes del call...\n", WHITE);
+            VGA_WHITE);
+        ncPrint("KERNEL: Punto inmediatamente antes del call...\n", VGA_WHITE);
 
         ((EntryPoint)userCodeModuleAddress)();
 

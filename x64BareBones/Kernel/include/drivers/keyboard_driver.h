@@ -1,8 +1,9 @@
-#ifndef _KEYBOARD_H_
-#define _KEYBOARD_H_
+#pragma once
 
 #include <naiveConsole.h>
+#include <stdint.h>
 
+#define NULL 0
 #define TABLE_SIZE 256
 #define NON_PRINTABLE 0
 
@@ -149,5 +150,3 @@ static uint8_t ascii_table[][TABLE_SIZE] = {
         /* 0x35 */ '?'  // NO funciona
     },
 };
-
-#endif

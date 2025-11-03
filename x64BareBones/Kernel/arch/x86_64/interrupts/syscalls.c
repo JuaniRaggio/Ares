@@ -4,8 +4,8 @@
 #include <naiveConsole.h>
 #include <stdint.h>
 #include <syscall_numbers.h>
+#include <syscalls.h>
 
-/* SYS_READ - Lee un caracter del buffer de teclado */
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t count) {
         if (fd != 0 || count == 0 || buf == NULL) {
                 return 0;
