@@ -47,12 +47,37 @@ uint64_t sys_get_resolution(uint32_t *width, uint32_t *height) {
         return 0;
 }
 
+/* Estructura de registros en el kernel */
+typedef struct {
+        uint64_t rip;
+        uint64_t rsp;
+        uint64_t rax;
+        uint64_t rbx;
+        uint64_t rcx;
+        uint64_t rdx;
+        uint64_t rbp;
+        uint64_t rdi;
+        uint64_t rsi;
+        uint64_t r8;
+        uint64_t r9;
+        uint64_t r10;
+        uint64_t r11;
+        uint64_t r12;
+        uint64_t r13;
+        uint64_t r14;
+        uint64_t r15;
+} regs_snapshot_t;
+
+/* Snapshot global de registros (capturado por hotkey) */
+static regs_snapshot_t saved_regs = {0};
+
 /* SYS_GET_REGISTER_ARRAY - Retorna snapshot de registros */
-uint64_t sys_get_register_array(uint64_t *regs) {
+uint64_t sys_get_register_array(regs_snapshot_t *regs) {
         if (regs == NULL) {
                 return 0;
         }
-        // TODO: implementar guardado de registros en hotkey
+        /* Copiar el snapshot guardado al buffer del usuario */
+        *regs = saved_regs;
         return 0;
 }
 

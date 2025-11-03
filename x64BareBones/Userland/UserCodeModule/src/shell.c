@@ -1,5 +1,6 @@
 #include <configuration.h>
-#include <parser.h>
+#include <lib.h>
+#include <regs.h>
 #include <shell.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -8,32 +9,28 @@
 #define TRUE 1
 #define FALSE 0
 #define for_ever for (;;)
+#define MAX_CHARS 256
+#define QTY_COMMANDS 9
 
-static const char *const welcome_msg_shell = "Welcome back!\n";
+static const char *const welcome_msg_shell = "=== Welcome to Ares OS ===\n";
 static const char *const input_prompt      = " > ";
+static const char *const invalid_command   = "Invalid command!\n";
+static const char *const wrong_params      = "Invalid number of parameters\n";
+static const char *const check_man =
+    "Type \"man %s\" to see how the command works\n";
 
-// @return: input_prompt length, this is inlined because it should be resolved
-// in compile time since input_prompt won't change at runtime and its also a
-// static variable
-static inline uint8_t input_prompt_length() {
-        int length = 0;
-        while (input_prompt[length])
-                length++;
-        return length;
-}
+typedef enum { NO_PARAMS = 0, SINGLE_PARAM, DUAL_PARAM } function_type;
 
-// @return: pointer to the current prompt, this means, the prompt
-// attribute inside shell_status
-static char *current_prompt();
-
-// @return: index in history of the lastest executed prompt
-static uint8_t lastest_prompt_idx();
-
-// @return: the horizontal number of cell which the cursor should be in
-static uint8_t get_x_cursor();
-
-// @return: the vertical number of cell which the cursor should be in
-static uint8_t get_y_cursor();
+typedef struct {
+        char *name;
+        char *description;
+        union {
+                int (*f)(void);
+                int (*g)(char *);
+                int (*h)(char *, char *);
+        };
+        function_type ftype;
+} command_t;
 
 typedef struct {
         cursor_shape shape;
@@ -67,6 +64,21 @@ static shell_attributes shell_status = {
             .focused = TRUE,
         },
 };
+
+static command_t commands[QTY_COMMANDS];
+
+static void help(void);
+static void man(char *command);
+static void print_info_reg(void);
+static void show_time(void);
+static int div_cmd(char *num, char *div);
+static void clear_cmd(void);
+static void print_mem(char *pos);
+static void history_cmd(void);
+
+static int get_command_index(char *command);
+static void add_to_history(const char *command);
+static void init_commands(void);
 
 static uint8_t get_y_cursor() {
         return shell_status.cursor.y;

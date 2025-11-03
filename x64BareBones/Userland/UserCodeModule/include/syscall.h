@@ -45,8 +45,12 @@ static inline uint64_t syscall_get_resolution(uint32_t *width,
                          0);
 }
 
+/* Forward declaration de la struct de registros */
+struct regs_snapshot;
+
 /* Obtiene el snapshot de registros */
-static inline uint64_t syscall_get_register_array(uint64_t *regs) {
+static inline uint64_t
+syscall_get_register_snapshot(struct regs_snapshot *regs) {
         return _syscall3(SYS_GET_REGISTER_ARRAY, (uint64_t)regs, 0, 0);
 }
 
