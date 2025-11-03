@@ -14,8 +14,8 @@ Dudas para Fede
 Notas pre-entrega
 -------------------------------------------------------------------------------
 Chequear de cumplir estas cosas antes de hacer la version final para la entrega
-- [ ] No usar funciones de la biblioteca estandar
-- [ ] Documentacion de funciones
+- [X] No usar funciones de la biblioteca estandar
+- [X] Documentacion de funciones
 - [ ] Boton para ver registros
 - [ ] Ver asciinema para el video de la demostracion
 
@@ -23,19 +23,19 @@ Chequear de cumplir estas cosas antes de hacer la version final para la entrega
 In progress
 -------------------------------------------------------------------------------
 - [ ] Shell (Userland)
-        - [ ] _start de nuestro OS. Cuando arranque en modo video que empiece
+        - [X] _start de nuestro OS. Cuando arranque en modo video que empiece
           en la terminal
         - [ ] poder escribir y que se muestre en pantalla
-        - [ ] interprete de comandos
-        - [ ] ejecucion de comandos
-        - [ ] help de comandos
+        - [X] interprete de comandos
+        - [X] ejecucion de comandos
+        - [X] help de comandos
         - [ ] terminar print_registers y mapearlo a un keybind
         - [ ] implementar printf de alguna forma
 
 
 Issues
 -------------------------------------------------------------------------------
-- [ ] No podemos usar next(), hasNext() para leer del keyboard driver, esta mal
+- [X] No podemos usar next(), hasNext() para leer del keyboard driver, esta mal
       lo que tenemos que hacer es que el keyboard driver escriba en stdin y
       desde el kernel se lea ese buffer y si se decida si:
       + Hay que escribir en pantalla

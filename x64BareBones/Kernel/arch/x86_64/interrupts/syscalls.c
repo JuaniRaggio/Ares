@@ -10,13 +10,10 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t count) {
         if (fd != 0 || count == 0 || buf == NULL) {
                 return 0;
         }
-
-        // Leer del buffer de teclado
         if (buffer_has_next()) {
                 buf[0] = buffer_next();
                 return 1;
         }
-
         return 0;
 }
 

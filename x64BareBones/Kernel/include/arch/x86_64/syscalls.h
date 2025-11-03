@@ -33,11 +33,12 @@ typedef struct {
         uint64_t r15;
 } regs_snapshot_t;
 
-// syscalls
 uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len);
+
 void sys_exit(uint64_t code);
 
 /* SYS_READ - Lee un caracter del buffer de teclado */
+uint64_t sys_read(uint64_t fd, char *buf, uint64_t count);
 
 /* SYS_CLEAR - Limpia la pantalla */
 uint64_t sys_clear(void);
