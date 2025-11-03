@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define MAX_CHARS 256
 #define EOF (-1)
@@ -133,8 +133,8 @@ int puts(const char *s) {
 int printf(const char *format, ...) {
         va_list args;
         va_start(args, format);
-
         const char *p = format;
+        int count     = 0;
         while (*p) {
                 if (*p == '%') {
                         p++;
@@ -142,11 +142,15 @@ int printf(const char *format, ...) {
                         case 'c': {
                                 char c = (char)va_arg(args, int);
                                 putchar(c);
+                                count++;
                                 break;
                         }
                         case 's': {
                                 char *s = va_arg(args, char *);
-                                puts(s);
+                                while (*s) {
+                                        putchar(*s++);
+                                        count++;
+                                }
                                 break;
                         }
                         case 'd': {
@@ -154,27 +158,23 @@ int printf(const char *format, ...) {
                                 char buf[20];
                                 itoa(num, buf, 10);
                                 char *s = buf;
-                                puts(s);
-                                break;
-                        }
-                        case 'x': {
-                                uint64_t num = va_arg(args, uint64_t);
-                                char buf[32];
-                                utoa(num, buf, 16);
-                                char *s = buf;
-                                puts(s);
+                                while (*s) {
+                                        putchar(*s++);
+                                        count++;
+                                }
                                 break;
                         }
                         default:
                                 putchar('%');
                                 putchar(*p);
+                                count += 2;
                         }
                 } else {
                         putchar(*p);
+                        count++;
                 }
                 p++;
         }
-
         va_end(args);
-        return 0;
+        return count;
 }

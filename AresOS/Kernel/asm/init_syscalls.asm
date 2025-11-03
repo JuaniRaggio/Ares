@@ -7,32 +7,36 @@ global init_syscalls
 extern syscall_entry
 
 section .text
+
 init_syscalls:
-    ; 1. Asegurar que SYSCALL/SYSRET esté habilitado
-    mov ecx, 0xC0000080          ; EFER
+    ; 1. Habilitar SYSCALL en EFER (bit 0 = SCE)
+    mov ecx, 0xC0000080          ; IA32_EFER
     rdmsr
-    or eax, 1                    ; Bit 0 = SCE
+    or eax, 1                    ; Bit 0 = SCE (System Call Extensions)
     wrmsr
 
-    ; 2. STAR: define selectores de segmento user/kernel
-    mov ecx, 0xC0000081          ; STAR
-    mov edx, 0x001B0008          ; [63:48]=0x1B (userCS), [47:32]=0x08 (kernelCS)
-    xor eax, eax
+    ; 2. STAR: Configurar selectores de segmento
+    ; Bits 63:48 = User CS (0x1B = selector 3, RPL=3, para SYSRET)
+    ; Bits 47:32 = Kernel CS (0x08 = selector 1, RPL=0, para SYSCALL)
+    mov ecx, 0xC0000081          ; IA32_STAR
+    xor eax, eax                 ; Bits 31:0 = 0 (no usados)
+    mov edx, 0x00180008          ; EDX = [User CS : Kernel CS]
+    ; 0x0018 en bits altos = user CS base (SYSRET usa +16 para SS)
+    ; 0x0008 en bits bajos = kernel CS
     wrmsr
 
-    ; 3. LSTAR: dirección del handler de syscall
-    mov ecx, 0xC0000082          ; LSTAR
-    mov rax, syscall_entry
-    mov rdx, rax                 ; copiar rax en rdx
-    shr rdx, 32                  ; sacar la parte alta
-    nop
+    ; 3. LSTAR: Dirección del handler (64-bit)
+    mov ecx, 0xC0000082          ; IA32_LSTAR
+    lea rax, [rel syscall_entry] ; Dirección del handler
+    mov rdx, rax
+    shr rdx, 32                  ; RDX = bits 63:32
     wrmsr
 
-    ; 4. FMASK: flags a limpiar al entrar al kernel
-    mov ecx, 0xC0000084          ; FMASK
-    mov eax, (1 << 9)            ; limpia IF (bit 9)
+    ; 4. FMASK: Máscara de RFLAGS (flags a limpiar al entrar)
+    mov ecx, 0xC0000084          ; IA32_FMASK
+    mov eax, 0x00000200          ; Bit 9 = IF (Interrupt Flag)
+    ; mov eax, 0x00000700         ; IF | DF | TF
     xor edx, edx
     wrmsr
 
     ret
-

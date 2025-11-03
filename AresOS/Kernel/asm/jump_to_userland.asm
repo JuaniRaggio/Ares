@@ -6,7 +6,7 @@ global jump_to_userland
 
 section .bss
 align 4096
-user_stack: resb 16384      ; 16KB user stack
+user_stack: resb 4096 * 16      ; 16KB user stack
 user_stack_top:
 
 section .text
@@ -36,5 +36,4 @@ jump_to_userland:
     ; NO cambiar segmentos antes de IRETQ
     ; IRETQ lo hará automáticamente
 
-    ; Saltar a userland con IRETQ
     iretq

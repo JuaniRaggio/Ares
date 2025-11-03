@@ -1,3 +1,5 @@
+#include "colors.h"
+#include "time.h"
 #include <core/moduleLoader.h>
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
@@ -8,7 +10,7 @@
 #include <video_driver.h>
 
 #define ever (;;)
-#define TIME_FMT_LENGTH 6
+#define TIME_FMT_LENGTH 7
 
 // ======================================================
 // Secciones del kernel y módulos
@@ -79,14 +81,13 @@ int main() {
         load_idt();            // Inicializa la IDT
         init_syscalls();       // Configura SYSCALL/SYSRET
         setup_user_segments(); // Carga nueva GDT con segmentos de usuario
-        // (antes de clearScreen)
 
         if (videoMode == 1) {
                 clearScreen(0x000000); // Pantalla negra limpia
                 ncClear();             // Limpia buffer de texto del ncPrint
 
-                const char *msg1 = "[MODO VIDEO ACTIVADO]";
-                const char *msg2 = "Kernel funcionando correctamente.";
+                const char *msg1 = "[MODO VIDEO ACTIVADO]\n";
+                const char *msg2 = "Kernel funcionando correctamente.\n";
 
                 bmp_font_t *font = &font_ubuntu_mono;
                 setFont(font);
@@ -97,7 +98,6 @@ int main() {
                 int startX2 = (screenWidth - msg2_len * font->width) / 2;
                 int startY  = (screenHeight / 2) - font->height;
 
-                // Banner verde oscuro de fondo
                 for (int y = startY - 10; y < startY + 2 * font->height + 20;
                      y++) {
                         for (int x = startX1 - 20;
@@ -105,6 +105,9 @@ int main() {
                                 putPixel(x, y, 0x003300);
                         }
                 }
+                // Funciona bien el ncPrint !
+                // ncPrint(msg1, VGA_WHITE);
+                // ncPrint(msg2, VGA_WHITE);
 
                 // Mensajes en pantalla
                 for (int i = 0; msg1[i]; i++)
@@ -131,18 +134,26 @@ int main() {
         buffer[2]   = ':';
         buffer[3]   = time.minutes / 10 + '0';
         buffer[4]   = time.minutes % 10 + '0';
-        buffer[5]   = 0;
-        printLn(buffer, VGA_WHITE);
+        buffer[5]   = '\n';
+        buffer[6]   = 0;
+        ncPrint(buffer, VGA_WHITE);
+        ncPrint(buffer, VGA_WHITE);
+        ncPrint(buffer, VGA_WHITE);
+        ncPrint(buffer, VGA_WHITE);
+        ncPrint(buffer, VGA_WHITE);
+        ncPrint(buffer, VGA_WHITE);
+
+        sleep(3);
 
         clearScreen(0x000000); // Pantalla negra limpia
         ncClear();             // Limpia buffer de texto del ncPrint
         restore_cursor();
 
-        printLn("UserCodeModule begins at: ", VGA_WHITE);
+        // OK!
+        ncPrint("UserCodeModule begins at: ", VGA_WHITE);
         ncPrintHex((uint64_t)userCodeModuleAddress);
         ncPrint("\n", VGA_WHITE);
-
-        // ((EntryPoint)userCodeModuleAddress)();
+        ncPrint("OK!", VGA_WHITE);
 
         jump_to_userland(userCodeModuleAddress);
 
