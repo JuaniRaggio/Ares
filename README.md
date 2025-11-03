@@ -1,6 +1,6 @@
 # ARES Recursive Experimental System
 
-![ITBA](assets/ITBAgua.png)
+![ITBA](assets/ares_godlike.webp)
 
 ## Configuración del entorno de desarrollo
 
