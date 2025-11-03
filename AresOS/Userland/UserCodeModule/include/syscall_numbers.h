@@ -19,6 +19,6 @@
 #define SYS_GET_SECONDS 10
 
 // Cuando agregues una nueva syscall, incrementa este número
-#define SYS_MAX 10
+#define SYS_MAX 10 //No deberia ser 11?
 
 #endif /* SYSCALL_NUMBERS_H */
