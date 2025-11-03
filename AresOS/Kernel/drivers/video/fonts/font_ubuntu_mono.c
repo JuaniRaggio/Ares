@@ -1,13 +1,7 @@
 #include <font.h>
 
-bmp_font_t font_ubuntu_mono =
+static const unsigned char ubuntu_mono_bitmap[256][17] =
     {
-        .name   = "Ubuntu Mono",
-        .width  = 8,
-        .height = 17,
-        .nChars = 256,
-        .bitmap =
-            {
                 // 000 0x00 'uni0000'
                 {
                     0x00, // --------
@@ -5128,5 +5122,12 @@ bmp_font_t font_ubuntu_mono =
                     0x04, // --#-----
                     0x03  // ##------
                 },
-            },
+};
+
+bmp_font_t font_ubuntu_mono = {
+    .name   = "Ubuntu Mono",
+    .width  = 8,
+    .height = 17,
+    .nChars = 256,
+    .bitmap = ubuntu_mono_bitmap,
 };

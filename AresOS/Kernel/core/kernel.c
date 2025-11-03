@@ -20,7 +20,7 @@ extern uint8_t bss;
 extern uint8_t endOfKernelBinary;
 extern uint8_t endOfKernel;
 extern void init_syscalls(void);
-// extern void setup_user_segments(void);
+extern void setup_user_segments(void);
 // extern void jump_to_userland(void *entry_point);
 
 static const uint64_t PageSize           = 0x1000;
@@ -78,7 +78,7 @@ int main() {
         video_init();    // Inicializa el modo gráfico (o VGA)
         load_idt();      // Inicializa la IDT
         init_syscalls(); // Configura SYSCALL/SYSRET
-        // setup_user_segments(); // Carga nueva GDT con segmentos de usuario
+        setup_user_segments(); // Carga nueva GDT con segmentos de usuario
         // (antes de clearScreen)
 
         if (videoMode == 1) {
@@ -138,7 +138,7 @@ int main() {
         restore_cursor();
         
         printLn("UserCodeModule begins at: ", VGA_WHITE);
-        ncPrintHex(*(uint64_t *)userCodeModuleAddress);
+        ncPrintHex((uint64_t)userCodeModuleAddress);
         ncPrint("\n", VGA_WHITE);
 
         ((EntryPoint)userCodeModuleAddress)();

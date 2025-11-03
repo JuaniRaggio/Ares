@@ -8,7 +8,7 @@ typedef struct {
         int width;
         int height;
         int nChars;
-        const unsigned char bitmap[][BITMAP_WIDTH];
+        const unsigned char (*bitmap)[BITMAP_WIDTH];
 } bmp_font_t;
 
 #endif
