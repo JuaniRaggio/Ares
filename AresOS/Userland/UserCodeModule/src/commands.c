@@ -109,7 +109,7 @@ void man(char *command) {
         if (idx != -1) {
                 printf("Command: %s\n", commands[idx].name);
                 printf("Description: %s\n", commands[idx].description);
-                printf("Parameters: %d\n", commands[idx].ftype);
+                printf("Parameters: %d\n", commands[idx].lambda.ftype);
         } else {
                 printf(invalid_command);
         }
