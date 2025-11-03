@@ -1,5 +1,4 @@
-#ifndef VIDEO_H
-#define VIDEO_H
+#pragma once
 
 #include <colors.h>
 #include <font.h>
@@ -7,7 +6,7 @@
 #include <font_ubuntu_mono.h>
 #include <stdint.h>
 
-#define NULL ((void *) 0)
+#define NULL ((void *)0)
 
 // -------------------------
 // Memory addresses
@@ -40,6 +39,7 @@ extern int gfxCursorX, gfxCursorY;
 extern uint32_t screenWidth;
 extern uint32_t screenHeight;
 extern uint8_t bytesPerPixel;
+static uint8_t *limit = (uint8_t *)0xB8FA0; // video + width * height * 2 - 1
 
 // -------------------------
 // Video functions
@@ -58,5 +58,3 @@ void drawCharDefault(char c, int x, int y, uint32_t color);
 // ----------------------
 void clearScreen(uint32_t color);
 void drawTestPattern(void);
-
-#endif

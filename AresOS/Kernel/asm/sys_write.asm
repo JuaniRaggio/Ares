@@ -1,6 +1,6 @@
 section .text
 global sys_write
-extern ncPrint, ncPrintChar
+extern ncPrintChar
 
 ; ==============================================
 ; RDI = file descriptor (1 = stdout, 2 = stderr)

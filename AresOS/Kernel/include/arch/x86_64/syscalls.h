@@ -14,10 +14,6 @@
 #define STDOUT 1
 #define STDERR 2
 
-// syscalls IDs
-#define SYS_WRITE 0
-#define SYS_EXIT 1
-
 uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len);
 
 void sys_exit(uint64_t code);
