@@ -133,7 +133,6 @@ int printf(const char *format, ...) {
         va_list args;
         va_start(args, format);
 
-        // Implementación de printf aquí
         const char *p = format;
         while(*p) {
                 if(*p == '%') {
