@@ -94,27 +94,23 @@ char *itoa(int value, char *str, int base) {
         char tmp_char;
         int tmp_value;
 
-        // Validar base
         if (base < 2 || base > 36) {
                 *str = '\0';
                 return str;
         }
 
-        // Manejar valor 0
         if (value == 0) {
                 *ptr++ = '0';
                 *ptr   = '\0';
                 return str;
         }
 
-        // Manejar numeros negativos solo en base 10
         int negative = 0;
         if (value < 0 && base == 10) {
                 negative = 1;
                 value    = -value;
         }
 
-        // Convertir el numero a string
         while (value != 0) {
                 tmp_value = value % base;
                 *ptr++ =
@@ -143,20 +139,17 @@ char *utoa(unsigned int value, char *str, int base) {
         char tmp_char;
         unsigned int tmp_value;
 
-        // Validar base
         if (base < 2 || base > 36) {
                 *str = '\0';
                 return str;
         }
 
-        // Manejar valor 0
         if (value == 0) {
                 *ptr++ = '0';
                 *ptr   = '\0';
                 return str;
         }
 
-        // Convertir el numero a string (en orden inverso)
         while (value != 0) {
                 tmp_value = value % base;
                 *ptr++ =
@@ -166,7 +159,6 @@ char *utoa(unsigned int value, char *str, int base) {
 
         *ptr-- = '\0';
 
-        // Invertir el string
         while (ptr1 < ptr) {
                 tmp_char = *ptr;
                 *ptr--   = *ptr1;
