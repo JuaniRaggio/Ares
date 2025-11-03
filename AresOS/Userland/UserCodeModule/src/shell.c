@@ -62,6 +62,7 @@ static void add_to_history(const char *command) {
 }
 
 void run_shell(void) {
+        clear_cmd();
         printf(welcome_msg_shell);
         printf("Type 'help' to see available commands\n\n");
         for_ever {

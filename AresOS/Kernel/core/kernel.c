@@ -89,6 +89,7 @@ int main() {
                 const char *msg2 = "Kernel funcionando correctamente.";
 
                 bmp_font_t *font = &font_ubuntu_mono;
+                setFont(font);
                 int msg1_len     = strlen(msg1);
                 int msg2_len     = strlen(msg2);
 

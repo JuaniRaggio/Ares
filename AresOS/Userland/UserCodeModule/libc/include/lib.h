@@ -27,7 +27,6 @@ uint64_t strlen(const char *s);
 char *strcpy(char *dest, const char *src);
 char *strncpy(char *dest, const char *src, uint64_t n);
 
-// Number to string conversion
 /**
  * Converts a signed integer to a string representation in the specified base.
  * @param value The integer value to convert
