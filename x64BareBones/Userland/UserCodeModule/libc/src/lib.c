@@ -49,8 +49,6 @@ s_time get_current_time() {
                         .minutes = get_current_minutes()};
 }
 
-//----------------------//
-
 int strcmp(const char *s1, const char *s2) {
         while (*s1 && (*s1 == *s2)) {
                 s1++;

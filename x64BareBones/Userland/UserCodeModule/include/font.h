@@ -6,8 +6,7 @@ typedef struct {
         int width;
         int height;
         int nChars;
-        const unsigned char
-            *bitmap[17]; // cada carácter es un arreglo de bytes (filas)
+        const char *bitmap[17]; // cada carácter es un arreglo de bytes (filas)
 } bmp_font_t;
 
 #endif

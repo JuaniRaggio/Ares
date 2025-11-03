@@ -7,7 +7,6 @@
 #define PROMPT_SIZE DEFAULT_PROMPT_S
 #define HISTORY_SIZE DEFAULT_HISTORY_S
 
-// Esto es copy paste de video_driver
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 768
 #define SCREEN_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT)
@@ -32,7 +31,6 @@ typedef enum {
         underline,
 } cursor_shape;
 
-// Esto esta mal, no podemos llamar a Kernel space desde aca
 // static const bmp_font_t *user_font = &font_ubuntu_mono;
 static uint32_t font_color       = WHITE;
 static uint32_t background_color = BLACK;

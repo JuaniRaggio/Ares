@@ -24,7 +24,6 @@ typedef struct {
         uint64_t r15;
 } regs_t;
 
-/* Obtiene el snapshot de registros desde userland */
 extern regs_t *get_register_values(void);
 
 #endif

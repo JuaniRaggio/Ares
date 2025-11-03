@@ -1,6 +1,6 @@
+#include <commands.h>
 #include <configuration.h>
 #include <lib.h>
-#include <regs.h>
 #include <shell.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -10,26 +10,13 @@
 #define FALSE 0
 #define for_ever for (;;)
 #define MAX_CHARS 256
-#define QTY_COMMANDS 9
-
-static const char *const welcome_msg_shell = "=== Welcome to Ares OS ===\n";
-static const char *const input_prompt      = " > ";
-static const char *const invalid_command   = "Invalid command!\n";
-static const char *const wrong_params      = "Invalid number of parameters\n";
 #define CHECK_MAN "Type \"man %s\" to see how the command works\n"
 
-typedef enum { NO_PARAMS = 0, SINGLE_PARAM, DUAL_PARAM } function_type;
+static void add_to_history(const char *command);
 
-typedef struct {
-        char *name;
-        char *description;
-        union {
-                int (*f)(void);
-                int (*g)(char *);
-                int (*h)(char *, char *);
-        };
-        function_type ftype;
-} command_t;
+static const char *const welcome_msg_shell =
+    "Ares Recursive Experimental System\n";
+static const char *const input_prompt = " > ";
 
 typedef struct {
         cursor_shape shape;
@@ -64,96 +51,66 @@ static shell_attributes shell_status = {
         },
 };
 
-static command_t commands[QTY_COMMANDS];
-
-static void help(void);
-static void man(char *command);
-static void print_info_reg(void);
-static void show_time(void);
-static int div_cmd(char *num, char *div);
-static void clear_cmd(void);
-static void print_mem(char *pos);
-static void history_cmd(void);
-
-static int get_command_index(char *command);
-static void add_to_history(const char *command);
-static void init_commands(void);
-
-static uint8_t get_y_cursor() {
-        return shell_status.cursor.y;
-}
-static uint8_t get_x_cursor() {
-        return shell_status.cursor.x;
-}
-static uint8_t lastest_prompt_idx() {
-        return shell_status.prompts.lastest_prompt_idx;
+static void add_to_history(const char *command) {
+        if (command[0] == 0 || command[0] == '\n')
+                return;
+        strncpy(shell_status.prompts
+                    .prompt_history[shell_status.prompts.lastest_prompt_idx],
+                command, PROMPT_SIZE - 1);
+        shell_status.prompts
+            .prompt_history[shell_status.prompts.lastest_prompt_idx]
+                           [PROMPT_SIZE - 1] = 0;
+        shell_status.prompts.lastest_prompt_idx =
+            (shell_status.prompts.lastest_prompt_idx + 1) % HISTORY_SIZE;
 }
 
-static char *current_prompt() {
-        return shell_status.prompts.prompt;
-}
-
-void print_registers(void) {
-        static const uint8_t reg_size_B      = 8;
-        static const char *const reg_names[] = {
-            "RIP", "RSP", "RAX", "RBX", "RCX", "RDX", "RBP", "RDI", "RSI",
-            "R8",  "R9",  "R10", "R11", "R12", "R13", "R14", "R15",
-        };
-        void *snapshot = get_register_values();
-        for (int i = 0; reg_names[i]; i++) {
-                printf("%s: 0x%x\n", reg_names[i],
-                       (uint64_t *)(snapshot + i * reg_size_B));
-        }
-}
-
-void welcome_shell() {
-        syscall_write(1, welcome_msg_shell, 14);
-        return;
-}
-
-void show_input_prompt() {
-        printf("%s", input_prompt);
-        shell_status.cursor.x = 3;
-}
-
-void save_prompt() {
-        for (int i = 0; current_prompt()[i] != 0; ++i) {
-                shell_status.prompts.prompt_history[lastest_prompt_idx()][i] =
-                    shell_status.prompts.prompt[i];
-        }
-        ++shell_status.prompts.lastest_prompt_idx;
-}
-
-void shell_loop() {
-        uint8_t character, i = 0;
+void run_shell(void) {
+        printf(welcome_msg_shell);
+        printf("Type 'help' to see available commands\n\n");
         for_ever {
-                if (buffer_has_next()) {
-                        character = buffer_next();
-                        // Actualizar cursor de la shell
-                        shell_status.cursor.x++;
-                        // Escribir el caracter usando syscall
-                        syscall_write(1, (const char *)&character, 1);
-                        current_prompt()[i++] = character;
-                        // Solucion facil para ejecutar una vez se llega
-                        // al final
-                        if (character == '\n' || i == PROMPT_SIZE - 1) {
-                                shell_status.cursor.y++;
-                                if (analize_prompt(current_prompt()))
-                                        save_prompt();
-                                i = 0;
-                                // Mostrar prompt usando syscall
-                                syscall_write(1, input_prompt, 3); // " > "
-                        }
+                printf(input_prompt);
+                char command[MAX_CHARS] = {0};
+                char arg1[MAX_CHARS]    = {0};
+                char arg2[MAX_CHARS]    = {0};
+                int qtyParams = scanf("%s %s %s", command, arg1, arg2);
+                if (command[0] == 0)
+                        continue;
+                add_to_history(command);
+
+                if (!strcmp(command, "exit")) {
+                        printf("Exiting Ares OS...\n");
+                        syscall_exit(0);
+                }
+
+                int index = get_command_index(command);
+
+                if (index == -1) {
+                        printf(invalid_command);
+                        continue;
+                }
+
+                int funcParams = commands[index].ftype;
+                if (qtyParams - 1 != funcParams) {
+                        printf(wrong_params);
+                        printf(CHECK_MAN, command);
+                        continue;
+                }
+
+                switch (commands[index].ftype) {
+                case supplier:
+                        commands[index].f();
+                        break;
+                case function:
+                        commands[index].g(arg1);
+                        break;
+                case bi_function:
+                        commands[index].h(arg1, arg2);
+                        break;
                 }
         }
 }
 
-void init_shell() {
-}
-
 int shell(void) {
-        init_shell();
-        welcome_shell();
-        shell_loop();
+        run_shell();
         return 0;
 }
