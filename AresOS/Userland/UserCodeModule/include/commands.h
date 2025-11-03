@@ -29,70 +29,103 @@ typedef enum {
         bi_function_t,
 } function_type;
 
+typedef union {
+        int (*supplier)(void);
+        int (*function)(char *);
+        int (*bi_function)(char *, char *);
+} executable_t;
+
+typedef struct {
+        executable_t execute;
+        function_type ftype;
+} lambda_t;
+
 typedef struct {
         char *name;
         char *description;
-        union {
-                int (*supplier)(void);
-                int (*function)(char *);
-                int (*bi_function)(char *, char *);
-        };
-        function_type ftype;
+        lambda_t lambda;
 } command_t;
 
 static command_t commands[QTY_COMMANDS] = {
     {
         .name        = "help",
         .description = "List all available commands",
-        .supplier    = (void *)&help,
-        .ftype       = supplier_t,
+        .lambda =
+            {
+                .execute.supplier = (void *)&help,
+                .ftype            = supplier_t,
+            },
     },
     {
         .name        = "man",
         .description = "Show manual for a specific command",
-        .function    = (void *)&man,
-        .ftype       = function_t,
+        .lambda =
+            {
+                .execute.function = (void *)&man,
+                .ftype            = function_t,
+            },
     },
     {
         .name        = "inforeg",
         .description = "Display captured CPU registers",
-        .supplier    = (void *)&print_info_reg,
-        .ftype       = supplier_t,
+        .lambda =
+            {
+                .execute.supplier = (void *)&print_info_reg,
+                .ftype            = supplier_t,
+            },
     },
     {
         .name        = "time",
         .description = "Show system elapsed time",
-        .supplier    = (void *)&show_time,
-        .ftype       = supplier_t,
+        .lambda =
+            {
+                .execute.supplier = (void *)&show_time,
+                .ftype            = supplier_t,
+            },
     },
     {
         .name        = "div",
         .description = "Integer division of two numbers",
-        .bi_function = (void *)&div_cmd,
-        .ftype       = bi_function_t,
+        .lambda =
+            {
+                .execute.bi_function = (void *)&div_cmd,
+                .ftype               = bi_function_t,
+            },
     },
     {
         .name        = "clear",
         .description = "Clear the entire screen",
-        .supplier    = (void *)&clear_cmd,
-        .ftype       = supplier_t,
+        .lambda =
+            {
+                .execute.supplier = (void *)&clear_cmd,
+                .ftype            = supplier_t,
+            },
     },
     {
         .name        = "printmem",
         .description = "Memory dump of 32 bytes from an address",
-        .function    = (void *)&print_mem,
-        .ftype       = function_t,
+        .lambda =
+            {
+                .execute.function = (void *)&print_mem,
+                .ftype            = function_t,
+            },
     },
     {
         .name        = "history",
         .description = "Show command history",
-        .supplier    = (void *)&history_cmd,
-        .ftype       = function_t,
+        .lambda =
+            {
+                .execute.supplier = (void *)&history_cmd,
+                .ftype            = function_t,
+            },
     },
     {
         .name        = "exit",
         .description = "Exit Ares OS",
-        .supplier    = NULL,
-        .ftype       = supplier_t,
+        .lambda =
+            {
+                .execute.supplier = NULL,
+                .ftype            = supplier_t,
+            },
     },
 };
