@@ -12,8 +12,6 @@
 #define MAX_CHARS 256
 #define CHECK_MAN "Type \"man %s\" to see how the command works\n"
 
-static void add_to_history(const char *command);
-
 static const char *const welcome_msg_shell =
     "Ares Recursive Experimental System\n";
 static const char *const input_prompt = " > ";
@@ -51,17 +49,19 @@ static shell_attributes shell_status = {
         },
 };
 
-static void add_to_history(const char *command) {
+static inline uint8_t lastest_prompt_idx() {
+        return shell_status.prompts.lastest_prompt_idx;
+}
+
+static inline void add_to_history(const char *command) {
         if (command[0] == 0 || command[0] == '\n')
                 return;
-        strncpy(shell_status.prompts
-                    .prompt_history[shell_status.prompts.lastest_prompt_idx],
+        strncpy(shell_status.prompts.prompt_history[lastest_prompt_idx()],
                 command, PROMPT_SIZE - 1);
         shell_status.prompts
-            .prompt_history[shell_status.prompts.lastest_prompt_idx]
-                           [PROMPT_SIZE - 1] = 0;
+            .prompt_history[lastest_prompt_idx()][PROMPT_SIZE - 1] = 0;
         shell_status.prompts.lastest_prompt_idx =
-            (shell_status.prompts.lastest_prompt_idx + 1) % HISTORY_SIZE;
+            (lastest_prompt_idx() + 1) % HISTORY_SIZE;
 }
 
 void run_shell(void) {
@@ -72,7 +72,7 @@ void run_shell(void) {
                 char command[MAX_CHARS] = {0};
                 char arg1[MAX_CHARS]    = {0};
                 char arg2[MAX_CHARS]    = {0};
-                int qtyParams = scanf("%s %s %s", command, arg1, arg2);
+                int qty_params = scanf("%s %s %s", command, arg1, arg2);
                 if (command[0] == 0)
                         continue;
                 add_to_history(command);
@@ -89,8 +89,8 @@ void run_shell(void) {
                         continue;
                 }
 
-                int funcParams = commands[index].ftype;
-                if (qtyParams - 1 != funcParams) {
+                int func_params = commands[index].ftype;
+                if (qty_params - 1 != func_params) {
                         printf(wrong_params);
                         printf(CHECK_MAN, command);
                         continue;
@@ -112,5 +112,6 @@ void run_shell(void) {
 
 int shell(void) {
         run_shell();
+        // Posible error as value
         return 0;
 }
