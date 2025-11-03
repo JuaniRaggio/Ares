@@ -1,10 +1,4 @@
 #include <commands.h>
-#include <configuration.h>
-#include <lib.h>
-#include <shell.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <syscall.h>
 
 #define TRUE 1
 #define FALSE 0
@@ -100,14 +94,14 @@ void run_shell(void) {
                 }
 
                 switch (commands[index].ftype) {
-                case supplier:
-                        commands[index].f();
+                case supplier_t:
+                        commands[index].supplier();
                         break;
-                case function:
-                        commands[index].g(arg1);
+                case function_t:
+                        commands[index].function(arg1);
                         break;
-                case bi_function:
-                        commands[index].h(arg1, arg2);
+                case bi_function_t:
+                        commands[index].bi_function(arg1, arg2);
                         break;
                 }
         }

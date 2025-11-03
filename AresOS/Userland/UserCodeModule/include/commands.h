@@ -24,18 +24,18 @@ int get_command_index(char *command);
 int div_cmd(char *num, char *div);
 
 typedef enum {
-        supplier = 0,
-        function,
-        bi_function,
+        supplier_t = 0,
+        function_t,
+        bi_function_t,
 } function_type;
 
 typedef struct {
         char *name;
         char *description;
         union {
-                int (*f)(void);
-                int (*g)(char *);
-                int (*h)(char *, char *);
+                int (*supplier)(void);
+                int (*function)(char *);
+                int (*bi_function)(char *, char *);
         };
         function_type ftype;
 } command_t;
@@ -44,55 +44,55 @@ static command_t commands[QTY_COMMANDS] = {
     {
         .name        = "help",
         .description = "List all available commands",
-        .f           = (void *)&help,
-        .ftype       = supplier,
+        .supplier    = (void *)&help,
+        .ftype       = supplier_t,
     },
     {
         .name        = "man",
         .description = "Show manual for a specific command",
-        .g           = (void *)&man,
-        .ftype       = function,
+        .function    = (void *)&man,
+        .ftype       = function_t,
     },
     {
         .name        = "inforeg",
         .description = "Display captured CPU registers",
-        .f           = (void *)&print_info_reg,
-        .ftype       = supplier,
+        .supplier    = (void *)&print_info_reg,
+        .ftype       = supplier_t,
     },
     {
         .name        = "time",
         .description = "Show system elapsed time",
-        .f           = (void *)&show_time,
-        .ftype       = supplier,
+        .supplier    = (void *)&show_time,
+        .ftype       = supplier_t,
     },
     {
         .name        = "div",
         .description = "Integer division of two numbers",
-        .h           = (void *)&div_cmd,
-        .ftype       = bi_function,
+        .bi_function = (void *)&div_cmd,
+        .ftype       = bi_function_t,
     },
     {
         .name        = "clear",
         .description = "Clear the entire screen",
-        .f           = (void *)&clear_cmd,
-        .ftype       = supplier,
+        .supplier    = (void *)&clear_cmd,
+        .ftype       = supplier_t,
     },
     {
         .name        = "printmem",
         .description = "Memory dump of 32 bytes from an address",
-        .g           = (void *)&print_mem,
-        .ftype       = function,
+        .function    = (void *)&print_mem,
+        .ftype       = function_t,
     },
     {
         .name        = "history",
         .description = "Show command history",
-        .f           = (void *)&history_cmd,
-        .ftype       = function,
+        .supplier    = (void *)&history_cmd,
+        .ftype       = function_t,
     },
     {
         .name        = "exit",
         .description = "Exit Ares OS",
-        .f           = NULL,
-        .ftype       = supplier,
+        .supplier    = NULL,
+        .ftype       = supplier_t,
     },
 };
