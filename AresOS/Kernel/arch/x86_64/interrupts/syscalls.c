@@ -3,7 +3,7 @@
 #include <drivers/time.h>
 #include <naiveConsole.h>
 #include <stdint.h>
-#include <syscall_numbers.h>
+#include <syscalls_numbers.h>
 #include <syscalls.h>
 
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t count) {
