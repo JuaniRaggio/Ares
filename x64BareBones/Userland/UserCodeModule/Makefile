@@ -10,9 +10,12 @@ SOURCES=$(wildcard [^_]*.c) $(wildcard src/*.c) $(wildcard libc/src/*.c)
 ASM_SOURCES=asm/syscall.asm
 ASM_OBJECTS=$(ASM_SOURCES:.asm=.o)
 
-# RIGUROSO: Solo incluir headers de userland (libc + propios)
-# NO incluir ../../Kernel/include - eso causaria acoplamiento incorrecto
-INCLUDE_FLAGS=-Ilibc/include -Iinclude
+# RIGUROSO: Solo incluir headers públicos
+# - libc/include: API de userland
+# - include: Headers propios
+# - ../../Common/include: API compartida kernel-userland
+# NO incluir ../../Kernel/include (privado del kernel)
+INCLUDE_FLAGS=-Ilibc/include -Iinclude -I../../Common/include
 
 all: $(MODULE)
 

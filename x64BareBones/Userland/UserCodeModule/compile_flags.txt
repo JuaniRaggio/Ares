@@ -15,8 +15,9 @@
 -Wno-unused-parameter
 -Iinclude
 -Ilibc/include
-# RIGUROSO: NO incluir headers del kernel
-# Userland solo debe usar su propia libc y syscalls
+-I../../Common/include
+# RIGUROSO: NO incluir headers PRIVADOS del kernel
+# Solo usar Common/ (API pública) y libc propia
 # -I../../Kernel/include
 # -I../../Kernel/include/arch/x86_64
 # -I../../Kernel/include/drivers
