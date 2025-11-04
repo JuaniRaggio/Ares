@@ -103,7 +103,7 @@ void show_time(void) {
         uint32_t h       = seconds / 3600;
         uint32_t m       = (seconds % 3600) / 60;
         uint32_t s       = seconds % 60;
-        printf("Elapsed time: %d:%2d:%2d\n", h, m, s);
+        printf("Elapsed time: %d:%d:%d\n", h, m, s);
 }
 
 void clear_cmd(void) {
