@@ -43,7 +43,7 @@ typedef struct {
 
 typedef struct {
         char buffer[SCREEN_SIZE];
-        float magnification;
+        uint8_t magnification;
         float font_size;
         uint32_t font_color;
         uint32_t background_color;
@@ -52,7 +52,7 @@ typedef struct {
 } shell_attributes;
 
 shell_attributes shell_status = {
-    .magnification    = 1,
+    .magnification    = MIN_FONT_SCALE,
     .prompts          = (prompt_data){0},
     .font_color       = default_font_color,
     .background_color = default_background_color,
@@ -98,8 +98,7 @@ static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
         if (!visible)
                 return;
 
-        uint8_t scale = (uint8_t)shell_status.magnification;
-        if (scale < 1) scale = 1;
+        uint8_t scale = shell_status.magnification;
 
         uint16_t px = x * FONT_WIDTH * scale;
         uint16_t py = y * FONT_HEIGHT * scale;
@@ -136,8 +135,7 @@ static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
 }
 
 static void erase_cursor(int x, int y) {
-        uint8_t scale = (uint8_t)shell_status.magnification;
-        if (scale < 1) scale = 1;
+        uint8_t scale = shell_status.magnification;
 
         int px = x * FONT_WIDTH * scale;
         int py = y * FONT_HEIGHT * scale;
@@ -151,7 +149,7 @@ int shell_read_line(char input[][256], int max_params) {
         int current_param = 0;
 
         uint64_t last_blink = syscall_get_ticks();
-        int cursor_visible  = 1;
+        int cursor_visible  = 0;
 
         for (int i = 0; i < max_params; i++) {
                 input[i][0] = 0;
@@ -162,43 +160,39 @@ int shell_read_line(char input[][256], int max_params) {
 
                 if (c == 0) {
                         uint64_t now = syscall_get_ticks();
-                        if (now - last_blink > CURSOR_BLINK_TICKS) {
-                                if (cursor_visible) {
-                                        erase_cursor(shell_status.cursor.x,
-                                                     shell_status.cursor.y);
-                                } else {
-                                        draw_cursor(shell_status.cursor.x,
-                                                    shell_status.cursor.y, 1);
-                                }
-                                cursor_visible = !cursor_visible;
+                        if (now - last_blink > CURSOR_BLINK_TICKS && !cursor_visible) {
+                                draw_cursor(shell_status.cursor.x,
+                                            shell_status.cursor.y, 1);
+                                cursor_visible = 1;
                                 last_blink = now;
                         }
                         continue;
                 }
 
                 if (c == ZOOM_IN_CHAR) {
-                        if (shell_status.magnification < MAX_MAGNIFICATION) {
-                                shell_status.magnification += MAGNIFICATION_STEP;
-                                uint8_t scale = (uint8_t)shell_status.magnification;
-                                if (scale < 1) scale = 1;
-                                syscall_set_font_size(scale);
+                        if (shell_status.magnification < MAX_FONT_SCALE) {
+                                shell_status.magnification++;
+                                syscall_set_font_size(shell_status.magnification);
+                                syscall_clear();
+                                printf(welcome_msg_shell);
+                                printf(helper_msg);
+                                printf(input_prompt);
+                                sync_cursor_pos();
                         }
                         continue;
                 }
 
                 if (c == ZOOM_OUT_CHAR) {
-                        if (shell_status.magnification > MIN_MAGNIFICATION) {
-                                shell_status.magnification -= MAGNIFICATION_STEP;
-                                uint8_t scale = (uint8_t)shell_status.magnification;
-                                if (scale < 1) scale = 1;
-                                syscall_set_font_size(scale);
+                        if (shell_status.magnification > MIN_FONT_SCALE) {
+                                shell_status.magnification--;
+                                syscall_set_font_size(shell_status.magnification);
+                                syscall_clear();
+                                printf(welcome_msg_shell);
+                                printf(helper_msg);
+                                printf(input_prompt);
+                                sync_cursor_pos();
                         }
                         continue;
-                }
-
-                if (cursor_visible) {
-                        erase_cursor(shell_status.cursor.x, shell_status.cursor.y);
-                        cursor_visible = 0;
                 }
 
                 if (c == '\n') {
