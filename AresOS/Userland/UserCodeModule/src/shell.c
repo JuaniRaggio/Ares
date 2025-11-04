@@ -101,7 +101,7 @@ int shell(void) {
                 composed_command_t current_prompt =
                     shell_status.prompts.prompt_history[lastest_prompt_idx()];
                 executable_t execute = current_prompt.cmd->lambda.execute;
-                switch (current_prompt.cmd->lambda.ftype) {
+                switch (r_arguments - 1) {
                 case supplier_t:
                         execute.supplier();
                         break;
