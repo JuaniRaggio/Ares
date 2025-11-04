@@ -67,38 +67,69 @@ cpuVendor:
 	pop rbp
 	ret
 
-get_current_minutes:
-    xor   rax, rax
-    mov   al, 0x0B
-    out   70h, al           ; Seleccion el registro 0Bh para escribir
-    mov   al, 4             ; Muevo lo que quiero escribir a un registro tmp
-    out   71h, al           ; Escribo en el registro previamente seleccionado
+; Convert BCD to binary
+; Input: AL = BCD value
+; Output: AL = binary value
+; Formula: binary = (BCD >> 4) * 10 + (BCD & 0x0F)
+bcd_to_binary:
+    push rcx
+    push rdx
 
-    mov   al, 0x02          ; Para obtener los minutos
-    out   70h, al           ; Selecciono el registro 04 (para obtener la hora)
-    in    al, 71h           ; Leo lo que se me escribio
-    movzx rax, al           ; Lo copio en el registro de convencion para return
-    ret
+    mov cl, al           ; Save original BCD value
+    and al, 0x0F         ; AL = lower nibble (ones digit)
 
-get_current_hour:
-    xor   rax, rax
-    mov   al, 0x0B
-    out   70h, al           ; Seleccion el registro 0Bh para escribir
-    mov   al, 4             ; Muevo lo que quiero escribir a un registro tmp
-    out   71h, al           ; Escribo en el registro previamente seleccionado
+    shr cl, 4            ; CL = upper nibble (tens digit)
+    mov dl, cl           ; DL = tens
+    shl dl, 3            ; DL = tens * 8
+    shl cl, 1            ; CL = tens * 2
+    add dl, cl           ; DL = tens * 10
 
-    mov   al, 0x04          ; Para obtener las horas
-    out   70h, al           ; Selecciono el registro 04 (para obtener la hora)
-    in    al, 71h           ; Leo lo que se me escribio
-    movzx rax, al           ; Lo copio en el registro de convencion para return
+    add al, dl           ; AL = tens*10 + ones
+
+    pop rdx
+    pop rcx
     ret
 
 get_current_seconds:
     xor   rax, rax
-    mov   al, 0x00          ; Register 00h = seconds
-    out   70h, al           ; Select register
-    in    al, 71h           ; Read value
-    movzx rax, al           ; Zero-extend to 64-bit
+
+    ; Disable NMI and select seconds register
+    mov   al, 0x00
+    out   70h, al
+    in    al, 71h        ; Read seconds
+
+    ; Convert from BCD to binary
+    call bcd_to_binary
+
+    movzx rax, al
+    ret
+
+get_current_minutes:
+    xor   rax, rax
+
+    ; Disable NMI and select minutes register
+    mov   al, 0x02
+    out   70h, al
+    in    al, 71h        ; Read minutes
+
+    ; Convert from BCD to binary
+    call bcd_to_binary
+
+    movzx rax, al
+    ret
+
+get_current_hour:
+    xor   rax, rax
+
+    ; Disable NMI and select hours register
+    mov   al, 0x04
+    out   70h, al
+    in    al, 71h        ; Read hours
+
+    ; Assume 24-hour format, just convert from BCD
+    call  bcd_to_binary
+
+    movzx rax, al
     ret
 
 get_input:

@@ -13,6 +13,7 @@
 
 // Exception IDs
 #define ID_DIVISION_BY_ZERO 0x00
+#define ID_INVALID_OPCODE 0x06
 
 #pragma pack(push) /* Push current alignment */
 #pragma pack(1)    /* Align following structures to 1 byte */
@@ -35,6 +36,7 @@ void load_idt() {
         setup_IDT_entry(ID_TIMER_TICK, (uint64_t)&_irq00Handler);
         setup_IDT_entry(ID_KEYBOARD, (uint64_t)&_irq01Handler);
         setup_IDT_entry(ID_DIVISION_BY_ZERO, (uint64_t)&_exception0Handler);
+        setup_IDT_entry(ID_INVALID_OPCODE, (uint64_t)&_exception6Handler);
         picMasterMask(0xFC);
         picSlaveMask(0xFF);
         _sti();

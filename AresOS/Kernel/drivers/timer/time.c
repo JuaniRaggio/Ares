@@ -5,11 +5,15 @@ static uint64_t start_seconds = 0;
 static uint64_t start_minutes = 0;
 static uint64_t start_hours   = 0;
 
+/* PIT timer tick counter (IRQ 0 fires ~18.2 times per second) */
+static volatile uint64_t tick_counter = 0;
+
 void timer_init(void) {
         /* Capture initial time from RTC */
         start_seconds = get_current_seconds();
         start_minutes = get_current_minutes();
         start_hours   = get_current_hour();
+        tick_counter  = 0;
 }
 
 uint64_t seconds_elapsed() {
@@ -21,11 +25,11 @@ uint64_t seconds_elapsed() {
 }
 
 void timer_handler() {
+        tick_counter++;
 }
 
 uint64_t ticks_elapsed() {
-        /* Approximate ticks as seconds * 18 for compatibility */
-        return seconds_elapsed() * 18;
+        return tick_counter;
 }
 
 void sleep(int seconds) {

@@ -314,6 +314,10 @@ void init_shell(void) {
         syscall_get_time(&start_time);
 }
 
+s_time get_shell_start_time(void) {
+        return start_time;
+}
+
 int shell(void) {
         init_shell();
         printf(welcome_msg_shell);

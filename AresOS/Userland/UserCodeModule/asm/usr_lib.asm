@@ -1,7 +1,4 @@
 global get_register_values
-global get_current_seconds
-global get_current_minutes
-global get_current_hour
 
 struc regs
         _rip: resq 1

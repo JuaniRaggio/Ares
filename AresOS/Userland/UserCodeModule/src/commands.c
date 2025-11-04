@@ -2,6 +2,7 @@
 #include "syscalls.h"
 #include <commands.h>
 #include <configuration.h>
+#include <shell.h>
 #include <stdio.h>
 #include <tron.h>
 
@@ -37,10 +38,8 @@ extern shell_attributes shell_status;
 void history_cmd(char **history) {
         int count = 0;
         printf("Command history:\n");
-        for (int i = 0; history[i][i] != 0 && i < HISTORY_SIZE; i++) {
-                if (history[i][0] != 0) {
-                        printf("%2d: %s\n", ++count, history[i]);
-                }
+        for (int i = 0; i < HISTORY_SIZE && history[i][0] != 0; i++) {
+                printf("%d: %s\n", ++count, history[i]);
         }
         if (count == 0) {
                 printf("No commands in history\n");
@@ -101,7 +100,33 @@ int div_cmd(char *num_str, char *div_str) {
         return 1;
 }
 
-s_time get_elapsed_time(s_time time) {
+s_time get_elapsed_time(s_time current_time) {
+        s_time start = get_shell_start_time();
+
+        // Convert both times to total seconds since midnight
+        uint32_t current_total_seconds = current_time.hours * 3600 +
+                                         current_time.minutes * 60 +
+                                         current_time.seconds;
+        uint32_t start_total_seconds =
+            start.hours * 3600 + start.minutes * 60 + start.seconds;
+
+        // Calculate elapsed seconds
+        uint32_t elapsed_seconds;
+        if (current_total_seconds >= start_total_seconds) {
+                elapsed_seconds = current_total_seconds - start_total_seconds;
+        } else {
+                // Handle day wrap-around (crossed midnight)
+                elapsed_seconds =
+                    (86400 - start_total_seconds) + current_total_seconds;
+        }
+
+        // Convert back to h:m:s format
+        s_time elapsed;
+        elapsed.hours   = (elapsed_seconds / 3600) % 24;
+        elapsed.minutes = (elapsed_seconds / 60) % 60;
+        elapsed.seconds = elapsed_seconds % 60;
+
+        return elapsed;
 }
 
 void show_time(void) {
@@ -109,8 +134,10 @@ void show_time(void) {
         syscall_get_time(&time);
         printf("Current time: %d:%d:%d\n", time.hours, time.minutes,
                time.seconds);
-        time = get_elapsed_time(time);
-        printf("Time elapsed: %d\n", );
+
+        s_time elapsed = get_elapsed_time(time);
+        printf("Time elapsed: %d:%d:%d\n", elapsed.hours, elapsed.minutes,
+               elapsed.seconds);
 }
 
 void clear_cmd(void) {
@@ -139,7 +166,7 @@ void print_mem(char *pos_str) {
 
         printf("Memory at 0x%x:\n", addr);
         for (int i = 0; i < 32; i++) {
-                printf("%2x ", buffer[i]);
+                printf("%x ", buffer[i]);
                 if ((i + 1) % 8 == 0)
                         printf("\n");
         }

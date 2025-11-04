@@ -1,5 +1,6 @@
 #pragma once
 
+#include <lib.h>
 #include <stdint.h>
 
 #define RUNNING 1
@@ -14,3 +15,4 @@ void show_input_prompt();
 void welcome_shell();
 int shell(void);
 int shell_read_line(char input[][256], int max_params);
+s_time get_shell_start_time(void);
