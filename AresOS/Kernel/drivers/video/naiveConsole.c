@@ -60,6 +60,11 @@ void ncPrintVideo(const char *string, uint8_t color) {
                     string[i] == '\n') {
                         gfxCursorX = 0;
                         gfxCursorY += font->height;
+                        if (gfxCursorY + font->height >= SCREEN_HEIGHT) {
+                                clearScreen(0x000000);
+                                gfxCursorX = 0;
+                                gfxCursorY = 0;
+                        }
                 }
         }
 }
@@ -117,6 +122,11 @@ void ncPrintChar(char c, uint8_t color) {
                 if (c == '\n') {
                         gfxCursorX = 0;
                         gfxCursorY += font->height;
+                        if (gfxCursorY + font->height >= SCREEN_HEIGHT) {
+                                clearScreen(0x000000);
+                                gfxCursorX = 0;
+                                gfxCursorY = 0;
+                        }
                         return;
                 }
 
@@ -125,6 +135,11 @@ void ncPrintChar(char c, uint8_t color) {
                 if (gfxCursorX + font->width >= SCREEN_WIDTH) {
                         gfxCursorX = 0;
                         gfxCursorY += font->height;
+                        if (gfxCursorY + font->height >= SCREEN_HEIGHT) {
+                                clearScreen(0x000000);
+                                gfxCursorX = 0;
+                                gfxCursorY = 0;
+                        }
                 }
         }
 }

@@ -196,6 +196,8 @@ int shell_read_line(char input[][256], int max_params) {
                                 buf_idx--;
                                 putchar('\b');
                                 sync_cursor_pos();
+                                draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
+                                cursor_visible = 1;
                                 last_blink = syscall_get_ticks();
                         }
                         continue;
@@ -222,6 +224,8 @@ int shell_read_line(char input[][256], int max_params) {
                         }
                         putchar(' ');
                         sync_cursor_pos();
+                        draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
+                        cursor_visible = 1;
                         last_blink = syscall_get_ticks();
                         continue;
                 }
@@ -230,6 +234,8 @@ int shell_read_line(char input[][256], int max_params) {
                         buffer[buf_idx++] = c;
                         putchar(c);
                         sync_cursor_pos();
+                        draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
+                        cursor_visible = 1;
                         last_blink = syscall_get_ticks();
                 }
         }
