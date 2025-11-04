@@ -154,21 +154,24 @@ int shell_read_line(char input[][256], int max_params) {
         for_ever {
                 char c = getchar();
 
-                uint64_t now = syscall_get_ticks();
-                if (now - last_blink > CURSOR_BLINK_TICKS) {
-                        erase_cursor(shell_status.cursor.x,
-                                     shell_status.cursor.y);
-                        cursor_visible = !cursor_visible;
-                        draw_cursor(shell_status.cursor.x,
-                                    shell_status.cursor.y, cursor_visible);
-                        last_blink = now;
+                if (c == 0) {
+                        uint64_t now = syscall_get_ticks();
+                        if (now - last_blink > CURSOR_BLINK_TICKS) {
+                                erase_cursor(shell_status.cursor.x,
+                                             shell_status.cursor.y);
+                                cursor_visible = !cursor_visible;
+                                draw_cursor(shell_status.cursor.x,
+                                            shell_status.cursor.y, cursor_visible);
+                                last_blink = now;
+                        }
+                        continue;
                 }
 
-                if (c == 0)
-                        continue;
-
-                erase_cursor(shell_status.cursor.x, shell_status.cursor.y);
-                cursor_visible = 1;
+                if (cursor_visible) {
+                        erase_cursor(shell_status.cursor.x, shell_status.cursor.y);
+                        cursor_visible = 0;
+                }
+                last_blink = syscall_get_ticks();
 
                 if (c == '\n') {
                         if (buf_idx > 0) {
@@ -191,6 +194,8 @@ int shell_read_line(char input[][256], int max_params) {
                                 buf_idx--;
                                 putchar('\b');
                                 sync_cursor_pos();
+                                cursor_visible = 1;
+                                draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
                         }
                         continue;
                 }
@@ -216,6 +221,8 @@ int shell_read_line(char input[][256], int max_params) {
                         }
                         putchar(' ');
                         sync_cursor_pos();
+                        cursor_visible = 1;
+                        draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
                         continue;
                 }
 
@@ -223,6 +230,8 @@ int shell_read_line(char input[][256], int max_params) {
                         buffer[buf_idx++] = c;
                         putchar(c);
                         sync_cursor_pos();
+                        cursor_visible = 1;
+                        draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
                 }
         }
 }
