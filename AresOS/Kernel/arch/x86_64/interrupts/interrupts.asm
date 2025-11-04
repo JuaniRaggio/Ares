@@ -64,6 +64,7 @@ SECTION .text
 	pushState
 
 	mov rdi, %1 ; pasaje de parametro
+	mov rsi, rsp ; pasar el stack pointer para captura de registros
 	call irqDispatcher
 
 	; signal pic EOI (End of Interrupt)

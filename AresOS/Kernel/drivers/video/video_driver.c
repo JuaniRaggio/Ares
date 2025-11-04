@@ -183,3 +183,14 @@ void drawTestPattern(void) {
 void drawCharDefault(char c, int x, int y, uint32_t color) {
         drawChar(c, x, y, color, getFont());
 }
+
+// ------------------------------------------------------------
+// Dibuja un rectángulo relleno
+// ------------------------------------------------------------
+void drawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint32_t color) {
+        for (uint16_t i = 0; i < height; i++) {
+                for (uint16_t j = 0; j < width; j++) {
+                        putPixel(x + j, y + i, color);
+                }
+        }
+}

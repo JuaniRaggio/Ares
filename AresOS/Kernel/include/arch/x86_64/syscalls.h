@@ -43,7 +43,6 @@ uint64_t sys_set_font_size(uint8_t size);
 uint64_t sys_get_memory(uint64_t addr, uint8_t *buf, uint64_t size);
 
 /* SYS_DRAW_RECT - Dibuja un rectángulo */
-uint64_t sys_draw_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
-                       uint32_t color);
+uint64_t sys_draw_rect(uint64_t packed_xy, uint64_t packed_wh, uint64_t color);
 
 void init_syscalls(void);
