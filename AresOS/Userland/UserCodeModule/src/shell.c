@@ -20,6 +20,7 @@ static const char *const welcome_msg_shell =
     "Ares Recursive Experimental System\n";
 static const char *const input_prompt = " > ";
 
+static void sync_cursor_pos(void);
 static uint8_t lastest_prompt_idx();
 static void add_to_history(const command_t *command, uint32_t params);
 
@@ -50,7 +51,7 @@ typedef struct {
         shell_cursor cursor;
 } shell_attributes;
 
-static shell_attributes shell_status = {
+shell_attributes shell_status = {
     .magnification    = 1,
     .prompts          = (prompt_data){0},
     .font_color       = default_font_color,
@@ -58,6 +59,7 @@ static shell_attributes shell_status = {
     .cursor =
         {
             .shape            = underline,
+            .color            = WHITE,
             .border_width     = 1,
             .line_width       = 2,
             .underline_height = 2,
@@ -180,8 +182,7 @@ int shell_read_line(char input[][256], int max_params) {
                                 param_count++;
                         }
                         putchar('\n');
-                        shell_status.cursor.x = 0;
-                        shell_status.cursor.y++;
+                        sync_cursor_pos();
                         return param_count;
                 }
 
@@ -189,12 +190,7 @@ int shell_read_line(char input[][256], int max_params) {
                         if (buf_idx > 0) {
                                 buf_idx--;
                                 putchar('\b');
-                                shell_status.cursor.x--;
-                                if (shell_status.cursor.x < 0) {
-                                        shell_status.cursor.x =
-                                            (SCREEN_WIDTH / FONT_WIDTH) - 1;
-                                        shell_status.cursor.y--;
-                                }
+                                sync_cursor_pos();
                         }
                         continue;
                 }
@@ -215,25 +211,18 @@ int shell_read_line(char input[][256], int max_params) {
                                 while (getchar() != '\n')
                                         ;
                                 putchar('\n');
-                                shell_status.cursor.x = 0;
-                                shell_status.cursor.y++;
+                                sync_cursor_pos();
                                 return param_count;
                         }
                         putchar(' ');
-                        shell_status.cursor.x++;
+                        sync_cursor_pos();
                         continue;
                 }
 
                 if (buf_idx < MAX_CHARS - 1) {
                         buffer[buf_idx++] = c;
                         putchar(c);
-                        shell_status.cursor.x++;
-
-                        if (shell_status.cursor.x >=
-                            SCREEN_WIDTH / FONT_WIDTH) {
-                                shell_status.cursor.x = 0;
-                                shell_status.cursor.y++;
-                        }
+                        sync_cursor_pos();
                 }
         }
 }
@@ -252,21 +241,35 @@ uint8_t analize_user_input(uint32_t params) {
         return VALID_INPUT;
 }
 
+static void sync_cursor_pos(void) {
+        int x, y;
+        syscall_get_cursor_pos(&x, &y);
+        shell_status.cursor.x = x;
+        shell_status.cursor.y = y;
+}
+
 int shell(void) {
         clear_cmd();
+
         printf(welcome_msg_shell);
         printf(helper_msg);
+        sync_cursor_pos();
 
         for_ever {
                 printf(input_prompt);
-                int prompt_x    = shell_status.cursor.x;
+                sync_cursor_pos();
+                char error      = VALID_INPUT;
                 int r_arguments = shell_read_line(
                     shell_status.prompts.user_input, MAX_PARAMS);
 
                 if (shell_status.prompts.user_input[0][0] == 0)
                         continue;
 
-                analize_user_input(r_arguments);
+                error = analize_user_input(r_arguments);
+
+                if (error == INVALID_INPUT || error == INVALID_COMMAND_NAME)
+                        continue;
+
                 composed_command_t current_prompt =
                     shell_status.prompts.prompt_history[lastest_prompt_idx()];
                 executable_t execute = current_prompt.cmd->lambda.execute;
