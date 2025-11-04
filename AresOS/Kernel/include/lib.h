@@ -20,6 +20,7 @@ char *cpuVendor(char *result);
 // Tiempo
 uint8_t get_current_hour(void);
 uint8_t get_current_minutes(void);
+uint8_t get_current_seconds(void);
 s_time get_current_time(void);
 
 // Funciones de string
