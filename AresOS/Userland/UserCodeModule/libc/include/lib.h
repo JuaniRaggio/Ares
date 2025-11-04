@@ -13,15 +13,6 @@ typedef struct {
 void *memset(void *destination, int32_t character, uint64_t length);
 void *memcpy(void *destination, const void *source, uint64_t length);
 
-// CPU info
-char *cpuVendor(char *result);
-
-// Tiempo
-uint8_t get_current_hour(void);
-uint8_t get_current_minutes(void);
-uint8_t get_current_seconds(void);
-s_time get_current_time(void);
-
 // Funciones de string
 int strcmp(const char *s1, const char *s2);
 int strncmp(const char *s1, const char *s2, uint64_t n);

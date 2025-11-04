@@ -316,7 +316,6 @@ void init_shell(void) {
 
 int shell(void) {
         init_shell();
-
         printf(welcome_msg_shell);
         printf(helper_msg);
         sync_cursor_pos();

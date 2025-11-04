@@ -1,4 +1,5 @@
 #include "lib.h"
+#include "syscalls.h"
 #include <commands.h>
 #include <configuration.h>
 #include <stdio.h>
@@ -100,11 +101,16 @@ int div_cmd(char *num_str, char *div_str) {
         return 1;
 }
 
+s_time get_elapsed_time(s_time time) {
+}
+
 void show_time(void) {
-        s_time time = get_current_time();
+        s_time time;
+        syscall_get_time(&time);
         printf("Current time: %d:%d:%d\n", time.hours, time.minutes,
                time.seconds);
-        printf("Time elapsed: %d\n", get_current_seconds());
+        time = get_elapsed_time(time);
+        printf("Time elapsed: %d\n", );
 }
 
 void clear_cmd(void) {
