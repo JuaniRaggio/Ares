@@ -51,4 +51,7 @@ uint64_t sys_set_text_color(uint8_t color, uint8_t stream);
 /* SYS_SET_BG_COLOR - Cambia el color de fondo */
 uint64_t sys_set_bg_color(uint8_t color);
 
+/* SYS_GET_CURSOR_POS - Obtiene la posicion del cursor */
+uint64_t sys_get_cursor_pos(int *x, int *y);
+
 void init_syscalls(void);

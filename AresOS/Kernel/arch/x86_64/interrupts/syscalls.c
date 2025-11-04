@@ -102,3 +102,12 @@ uint64_t sys_set_bg_color(uint8_t color) {
         }
         return 0;
 }
+
+uint64_t sys_get_cursor_pos(int *x, int *y) {
+        if (x == NULL || y == NULL) {
+                return 0;
+        }
+        *x = gfxCursorX / 8;
+        *y = gfxCursorY / 17;
+        return 1;
+}
