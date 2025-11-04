@@ -17,7 +17,29 @@
 static const char *const helper_msg =
     "Type 'help' to see available commands\n\n";
 static const char *const welcome_msg_shell =
-    "Ares Recursive Experimental System\n";
+    "Ares Recursive Experimental System\n MMMMm                 MMMMMMMMMMM    "
+    "               mMMMMMMMMMMMm\n MMMMMMM               mMMMMMMMMMm          "
+    "       MMMMMMMMMMM\n MMMMMMMMm              MMMMMMMMM                "
+    "mMMMMMMMMMm\n MMMMMMMMM            mMMMMMMMm              MMMMMMMMM\n "
+    "mMMMMMMMMm           MMMMMMM             mMMMMMMMMm\n MMMMMMMM         "
+    "mMMMMMm           MMMMMMMM         0\n mMMMMMm         MMMMM           "
+    "mMMMMMm         o@@@o              mmm\n MMMMM       mMMMm         MMMMM  "
+    "          o@@@@@@o     mmmmmMMMMM\n mMMMm       MMM         mMMMm         "
+    "   o@@@@@@@@@oMMMMMMMMMMMMM\n @oo              MMM      mMm        MMM    "
+    "         o@@@@@@@@@@@@@@ooMMMMMMMMM\n @@@@o              mMm     M       "
+    "mMm              o@@@@@@@@@@@@@@@@@@@oooMMMM\n @@@@@@@@o           "
+    "MhhhHHHHHHHHhhhM              o@@@@@@@@@@@@@@@@@@@@@@@@@oo\n @@@@@@@@@o   "
+    "    hhHHHHHHHHHHHHHHHHHhh       oo@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n "
+    "@@@@@@@@@@@oo hHHHHHHHHHHHHHHHHHHHHHHHHh "
+    "oo@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n "
+    "@@@@@@@@@@@@@@ooHHHHHHHHHHHHHHHHHHHHoo@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+    "@@@@@\n "
+    "@@@@@@@@@@@@@@@@ooHHHHHHHHHHHHHHHHoo@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+    "@@@@@\n "
+    "@@@@@@@@@@@@@@@@@@@ooHHHHHHHHHoo@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"
+    "@@@@@\n "
+    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@AresSystem@@@"
+    "@@@@@\n";
 static const char *const input_prompt = " > ";
 
 static void sync_cursor_pos(void);
@@ -79,7 +101,7 @@ static uint8_t lastest_prompt_idx() {
 static void add_to_history(const command_t *command, uint32_t params) {
         shell_status.prompts.prompt_history[lastest_prompt_idx()].cmd = command;
         int i;
-        for (int p = 1; p < params; p++) {
+        for (uint32_t p = 1; p < params; p++) {
                 for (i = 0;
                      shell_status.prompts.user_input[p][i] && i < MAX_CHARS - 1;
                      i++) {
