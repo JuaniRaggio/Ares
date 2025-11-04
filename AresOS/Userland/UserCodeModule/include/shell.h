@@ -3,8 +3,10 @@
 #include <stdint.h>
 
 #define RUNNING 1
+#define FONT_WIDTH 8
+#define FONT_HEIGHT 17
 
-// @brief: show input prompt in a newline
 void show_input_prompt();
 void welcome_shell();
 int shell(void);
+int shell_read_line(char input[][256], int max_params);
