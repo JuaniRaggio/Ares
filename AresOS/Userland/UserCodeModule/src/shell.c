@@ -80,8 +80,8 @@ static void add_to_history(const command_t *command, uint32_t params) {
         shell_status.prompts.prompt_history[lastest_prompt_idx()].cmd = command;
         int i;
         for (int p = 1; p < params; p++) {
-                for (i = 0; shell_status.prompts.user_input[p][i] &&
-                            i < MAX_CHARS - 1;
+                for (i = 0;
+                     shell_status.prompts.user_input[p][i] && i < MAX_CHARS - 1;
                      i++) {
                         shell_status.prompts
                             .prompt_history[lastest_prompt_idx()]
@@ -99,8 +99,8 @@ static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
 
         uint8_t scale = shell_status.magnification;
 
-        uint16_t px = x * FONT_WIDTH * scale;
-        uint16_t py = y * FONT_HEIGHT * scale;
+        uint16_t px           = x * FONT_WIDTH * scale;
+        uint16_t py           = y * FONT_HEIGHT * scale;
         uint32_t cursor_color = WHITE;
 
         uint8_t border_width     = shell_status.cursor.border_width * scale;
@@ -109,26 +109,29 @@ static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
 
         switch (shell_status.cursor.shape) {
         case block:
-                syscall_draw_rect(px, py, FONT_WIDTH * scale, FONT_HEIGHT * scale,
-                                  cursor_color);
+                syscall_draw_rect(px, py, FONT_WIDTH * scale,
+                                  FONT_HEIGHT * scale, cursor_color);
                 break;
         case hollow:
                 syscall_draw_rect(px, py, FONT_WIDTH * scale, border_width,
                                   cursor_color);
                 syscall_draw_rect(px, py + FONT_HEIGHT * scale - border_width,
-                                  FONT_WIDTH * scale, border_width, cursor_color);
+                                  FONT_WIDTH * scale, border_width,
+                                  cursor_color);
                 syscall_draw_rect(px, py, border_width, FONT_HEIGHT * scale,
                                   cursor_color);
                 syscall_draw_rect(px + FONT_WIDTH * scale - border_width, py,
-                                  border_width, FONT_HEIGHT * scale, cursor_color);
+                                  border_width, FONT_HEIGHT * scale,
+                                  cursor_color);
                 break;
         case line:
                 syscall_draw_rect(px, py, line_width, FONT_HEIGHT * scale,
                                   cursor_color);
                 break;
         case underline:
-                syscall_draw_rect(px, py + FONT_HEIGHT * scale - underline_height,
-                                  FONT_WIDTH * scale, underline_height, cursor_color);
+                syscall_draw_rect(
+                    px, py + FONT_HEIGHT * scale - underline_height,
+                    FONT_WIDTH * scale, underline_height, cursor_color);
                 break;
         }
 }
@@ -138,7 +141,8 @@ static void erase_cursor(int x, int y) {
 
         int px = x * FONT_WIDTH * scale;
         int py = y * FONT_HEIGHT * scale;
-        syscall_draw_rect(px, py, FONT_WIDTH * scale, FONT_HEIGHT * scale, BLACK);
+        syscall_draw_rect(px, py, FONT_WIDTH * scale, FONT_HEIGHT * scale,
+                          BLACK);
 }
 
 int shell_read_line(char input[][256], int max_params) {
@@ -159,11 +163,12 @@ int shell_read_line(char input[][256], int max_params) {
 
                 if (c == 0) {
                         uint64_t now = syscall_get_ticks();
-                        if (now - last_blink > CURSOR_BLINK_TICKS && !cursor_visible) {
+                        if (now - last_blink > CURSOR_BLINK_TICKS &&
+                            !cursor_visible) {
                                 draw_cursor(shell_status.cursor.x,
                                             shell_status.cursor.y, 1);
                                 cursor_visible = 1;
-                                last_blink = now;
+                                last_blink     = now;
                         }
                         continue;
                 }
@@ -171,7 +176,8 @@ int shell_read_line(char input[][256], int max_params) {
                 if (c == ZOOM_IN_CHAR) {
                         if (shell_status.magnification < MAX_FONT_SCALE) {
                                 shell_status.magnification++;
-                                syscall_set_font_size(shell_status.magnification);
+                                syscall_set_font_size(
+                                    shell_status.magnification);
                                 syscall_redraw_screen();
                                 sync_cursor_pos();
                         }
@@ -181,7 +187,8 @@ int shell_read_line(char input[][256], int max_params) {
                 if (c == ZOOM_OUT_CHAR) {
                         if (shell_status.magnification > MIN_FONT_SCALE) {
                                 shell_status.magnification--;
-                                syscall_set_font_size(shell_status.magnification);
+                                syscall_set_font_size(
+                                    shell_status.magnification);
                                 syscall_redraw_screen();
                                 sync_cursor_pos();
                         }
@@ -209,9 +216,10 @@ int shell_read_line(char input[][256], int max_params) {
                                 buf_idx--;
                                 putchar('\b');
                                 sync_cursor_pos();
-                                draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
+                                draw_cursor(shell_status.cursor.x,
+                                            shell_status.cursor.y, 1);
                                 cursor_visible = 1;
-                                last_blink = syscall_get_ticks();
+                                last_blink     = syscall_get_ticks();
                         }
                         continue;
                 }
@@ -237,9 +245,10 @@ int shell_read_line(char input[][256], int max_params) {
                         }
                         putchar(' ');
                         sync_cursor_pos();
-                        draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
+                        draw_cursor(shell_status.cursor.x,
+                                    shell_status.cursor.y, 1);
                         cursor_visible = 1;
-                        last_blink = syscall_get_ticks();
+                        last_blink     = syscall_get_ticks();
                         continue;
                 }
 
@@ -247,9 +256,10 @@ int shell_read_line(char input[][256], int max_params) {
                         buffer[buf_idx++] = c;
                         putchar(c);
                         sync_cursor_pos();
-                        draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
+                        draw_cursor(shell_status.cursor.x,
+                                    shell_status.cursor.y, 1);
                         cursor_visible = 1;
-                        last_blink = syscall_get_ticks();
+                        last_blink     = syscall_get_ticks();
                 }
         }
 }

@@ -1,4 +1,5 @@
 global get_register_values
+global get_current_seconds
 global get_current_minutes
 global get_current_hour
 global get_input
@@ -135,6 +136,14 @@ get_current_hour:
     out   70h, al           ; Selecciono el registro 04 (para obtener la hora)
     in    al, 71h           ; Leo lo que se me escribio
     movzx rax, al           ; Lo copio en el registro de convencion para return
+    ret
+
+get_current_seconds:
+    xor   rax, rax
+    mov   al, 0x00          ; Register 00h = seconds
+    out   70h, al           ; Select register
+    in    al, 71h           ; Read value
+    movzx rax, al           ; Zero-extend to 64-bit
     ret
 
 get_input:

@@ -99,11 +99,8 @@ int div_cmd(char *num_str, char *div_str) {
 }
 
 void show_time(void) {
-        uint64_t seconds = syscall_get_seconds();
-        uint32_t h       = seconds / 3600;
-        uint32_t m       = (seconds % 3600) / 60;
-        uint32_t s       = seconds % 60;
-        printf("Elapsed time: %d:%d:%d\n", h, m, s);
+        printf("Elapsed time: %d:%d\n", get_current_hour(),
+               get_current_minutes(), get_current_seconds());
 }
 
 void clear_cmd(void) {

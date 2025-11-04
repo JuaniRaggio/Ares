@@ -9,7 +9,10 @@ void kbd_handler();
 
 typedef void (*interruption_signature)(uint64_t *stack_ptr);
 
-static interruption_signature ints[] = {int_20, int_21};
+static interruption_signature ints[] = {
+    int_20,
+    int_21,
+};
 
 void irqDispatcher(uint64_t irq, uint64_t *stack_ptr) {
         ints[irq](stack_ptr);
