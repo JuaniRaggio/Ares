@@ -157,10 +157,17 @@ int printf(const char *format, ...) {
                                 break;
                         }
                         case 'x': {
-                                int num = va_arg(args, int);
+                                uint64_t num = va_arg(args, uint64_t);
                                 char buf[32];
-                                itoa(num, buf, 16);
+                                utoa(num, buf, 16);
+                                int len = 0;
                                 char *s = buf;
+                                while (*s++) len++;
+                                for (int i = 0; i < 16 - len; i++) {
+                                        putchar('0');
+                                        count++;
+                                }
+                                s = buf;
                                 while (*s) {
                                         putchar(*s++);
                                         count++;
