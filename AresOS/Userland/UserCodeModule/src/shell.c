@@ -8,12 +8,14 @@
 #define MAX_CHARS 256
 #define CHECK_MAN "Type \"man %s\" to see how the command works\n"
 
+static const char *const helper_msg =
+    "Type 'help' to see available commands\n\n";
 static const char *const welcome_msg_shell =
     "Ares Recursive Experimental System\n";
 static const char *const input_prompt = " > ";
 
 static uint8_t lastest_prompt_idx();
-static void add_to_history(const char *command);
+static void add_to_history(const command_t *command, uint32_t params);
 
 typedef struct {
         cursor_shape shape;
@@ -55,6 +57,19 @@ static uint8_t lastest_prompt_idx() {
 #define INVALID_INPUT 0
 #define VALID_INPUT 1
 
+static void add_to_history(const command_t *command, uint32_t params) {
+        shell_status.prompts.prompt_history[lastest_prompt_idx()].cmd =
+            command;
+        int i;
+        while (params > 1) {
+                for (i = 0; shell_status.prompts.user_input[params][i] && i < MAX_CHARS - 1; i++) {
+                shell_status.prompts.prompt_history[lastest_prompt_idx()].args[params - 1][i] = shell_status.prompts.user_input[params][i];
+                }
+                shell_status.prompts.prompt_history[lastest_prompt_idx()].args[params - 1][i] = '\0';
+                params--;
+        }
+}
+
 uint8_t analize_user_input(uint32_t params) {
         int idx = get_command_index(shell_status.prompts.user_input[0]);
         if (idx == INVALID_COMMAND_NAME) {
@@ -65,12 +80,9 @@ uint8_t analize_user_input(uint32_t params) {
                 printf(CHECK_MAN, shell_status.prompts.user_input[0]);
                 return INVALID_INPUT;
         }
-        shell_status.prompts.prompt_history[lastest_prompt_idx()].cmd =
-            commands[idx];
+        add_to_history(commands[idx], params);
         return VALID_INPUT;
 }
-
-static char * helper_msg = "Type 'help' to see available commands\n\n";
 
 int shell(void) {
         clear_cmd();

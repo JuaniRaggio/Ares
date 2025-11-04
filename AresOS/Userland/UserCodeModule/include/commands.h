@@ -44,17 +44,17 @@ typedef struct {
 } lambda_t;
 
 typedef struct {
-        char *name;
-        char *description;
+        const char *name;
+        const char *description;
         lambda_t lambda;
 } command_t;
 
 typedef struct {
-        command_t *cmd;
+        const command_t *cmd;
         char args[max_parameters - 1][MAX_CHARS];
 } composed_command_t;
 
-static command_t help_command = {
+static const command_t help_command = {
     .name        = "help",
     .description = "List all available commands",
     .lambda =
@@ -64,7 +64,7 @@ static command_t help_command = {
         },
 };
 
-static command_t man_command = {
+static const command_t man_command = {
     .name        = "man",
     .description = "Show manual for a specific command",
     .lambda =
@@ -74,7 +74,7 @@ static command_t man_command = {
         },
 };
 
-static command_t inforeg_command = {
+static const command_t inforeg_command = {
     .name        = "inforeg",
     .description = "Display captured CPU registers",
     .lambda =
@@ -84,7 +84,7 @@ static command_t inforeg_command = {
         },
 };
 
-static command_t time_command = {
+static const command_t time_command = {
     .name        = "time",
     .description = "Show system elapsed time",
     .lambda =
@@ -94,7 +94,7 @@ static command_t time_command = {
         },
 };
 
-static command_t div_command = {
+static const command_t div_command = {
     .name        = "div",
     .description = "Integer division of two numbers",
     .lambda =
@@ -104,7 +104,7 @@ static command_t div_command = {
         },
 };
 
-static command_t clear_command = {
+static const command_t clear_command = {
     .name        = "clear",
     .description = "Clear the entire screen",
     .lambda =
@@ -114,7 +114,7 @@ static command_t clear_command = {
         },
 };
 
-static command_t print_mem_command = {
+static const command_t print_mem_command = {
     .name        = "printmem",
     .description = "Memory dump of 32 bytes from an address",
     .lambda =
@@ -124,7 +124,7 @@ static command_t print_mem_command = {
         },
 };
 
-static command_t history_command = {
+static const command_t history_command = {
     .name        = "history",
     .description = "Show command history",
     .lambda =
@@ -134,7 +134,7 @@ static command_t history_command = {
         },
 };
 
-static command_t exit_command = {
+static const command_t exit_command = {
     .name        = "exit",
     .description = "Exit Ares OS",
     .lambda =
@@ -144,7 +144,7 @@ static command_t exit_command = {
         },
 };
 
-static command_t *commands[QTY_COMMANDS] = {
+static const command_t *const commands[QTY_COMMANDS] = {
     &help_command,      &man_command,     &inforeg_command,
     &time_command,      &div_command,     &clear_command,
     &print_mem_command, &history_command, &exit_command,
