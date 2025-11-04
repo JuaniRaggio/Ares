@@ -1,16 +1,16 @@
 #include <drivers/time.h>
 
-static unsigned long ticks = 0;
+static uint64_t ticks = 0;
 
 void timer_handler() {
         ticks++;
 }
 
-int ticks_elapsed() {
+uint64_t ticks_elapsed() {
         return ticks;
 }
 
-int seconds_elapsed() {
+uint64_t seconds_elapsed() {
         return ticks / 18;
 }
 
