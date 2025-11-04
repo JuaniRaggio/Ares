@@ -1,5 +1,7 @@
+#include "lib.h"
 #include <commands.h>
 #include <configuration.h>
+#include <stdio.h>
 #include <tron.h>
 
 typedef struct {
@@ -99,8 +101,10 @@ int div_cmd(char *num_str, char *div_str) {
 }
 
 void show_time(void) {
-        printf("Elapsed time: %d:%d\n", get_current_hour(),
-               get_current_minutes(), get_current_seconds());
+        s_time time = get_current_time();
+        printf("Current time: %d:%d:%d\n", time.hours, time.minutes,
+               time.seconds);
+        printf("Time elapsed: %d\n", get_current_seconds());
 }
 
 void clear_cmd(void) {
