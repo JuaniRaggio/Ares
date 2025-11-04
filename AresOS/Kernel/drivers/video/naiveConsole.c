@@ -114,6 +114,8 @@ void ncPrintChar(char c, uint8_t color) {
         if (videoMode == 0)
                 ncPrintCharText(c, color);
         else {
+                screen_buffer_add_char(c);
+
                 uint32_t rgb     = vgaToRGB(color);
                 bmp_font_t *font = getFont();
                 if (font == NULL)

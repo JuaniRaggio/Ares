@@ -200,6 +200,47 @@ void drawCharDefault(char c, int x, int y, uint32_t color) {
         drawChar(c, x, y, color, getFont());
 }
 
+void screen_buffer_add_char(char c) {
+        if (c == '\n' || screen_buffer.current_line_pos >= SCREEN_BUFFER_LINE_LENGTH - 1) {
+                if (screen_buffer.line_count < SCREEN_BUFFER_LINES) {
+                        screen_buffer.line_count++;
+                }
+                uint16_t next_line = (screen_buffer.line_count % SCREEN_BUFFER_LINES);
+                screen_buffer.lines[next_line][0] = '\0';
+                screen_buffer.current_line_pos = 0;
+                if (c == '\n') return;
+        }
+
+        uint16_t current_line = ((screen_buffer.line_count == 0 ? 0 : screen_buffer.line_count - 1) % SCREEN_BUFFER_LINES);
+        screen_buffer.lines[current_line][screen_buffer.current_line_pos++] = c;
+        screen_buffer.lines[current_line][screen_buffer.current_line_pos] = '\0';
+}
+
+void screen_buffer_redraw(void) {
+        bmp_font_t *font = getFont();
+        if (font == NULL) return;
+
+        uint32_t lines_that_fit = screenHeight / (font->height * fontScale);
+
+        clearScreen(0x000000);
+        gfxCursorX = 0;
+        gfxCursorY = 0;
+
+        uint16_t start_line = 0;
+        if (screen_buffer.line_count > lines_that_fit) {
+                start_line = screen_buffer.line_count - lines_that_fit;
+        }
+
+        for (uint16_t i = start_line; i < screen_buffer.line_count; i++) {
+                uint16_t buf_idx = i % SCREEN_BUFFER_LINES;
+                char *line = screen_buffer.lines[buf_idx];
+                for (int j = 0; line[j] != '\0'; j++) {
+                        ncPrintChar(line[j], VGA_WHITE);
+                }
+                ncPrintChar('\n', VGA_WHITE);
+        }
+}
+
 // ------------------------------------------------------------
 // Dibuja un rectángulo relleno
 // ------------------------------------------------------------
