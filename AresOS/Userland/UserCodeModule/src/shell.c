@@ -1,9 +1,9 @@
 #include "configuration.h"
 #include <commands.h>
+#include <shell.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <syscalls.h>
-#include <shell.h>
 
 #define TRUE 1
 #define FALSE !TRUE
@@ -11,6 +11,8 @@
 #define MAX_CHARS 256
 #define CHECK_MAN "Type \"man %s\" to see how the command works\n"
 #define PROMPT_LENGTH 3
+#define CURSOR_BLINK_TICKS 25
+#define MAX_PARAMS 3
 
 static const char *const helper_msg =
     "Type 'help' to see available commands\n\n";
@@ -23,6 +25,10 @@ static void add_to_history(const command_t *command, uint32_t params);
 
 typedef struct {
         cursor_shape shape;
+        uint32_t color;
+        uint8_t border_width;
+        uint8_t line_width;
+        uint8_t underline_height;
         uint8_t x, y;
         uint8_t head, tail;
         uint8_t focused;
@@ -51,10 +57,13 @@ static shell_attributes shell_status = {
     .background_color = default_background_color,
     .cursor =
         {
-            .shape   = underline,
-            .x       = 0,
-            .y       = 0,
-            .focused = TRUE,
+            .shape            = underline,
+            .border_width     = 1,
+            .line_width       = 2,
+            .underline_height = 2,
+            .x                = 0,
+            .y                = 0,
+            .focused          = TRUE,
         },
 };
 
@@ -83,28 +92,40 @@ static void add_to_history(const command_t *command, uint32_t params) {
         }
 }
 
-static void draw_cursor(int x, int y, int visible) {
-        if (!visible) return;
+static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
+        if (!visible)
+                return;
 
-        int px = x * FONT_WIDTH;
-        int py = y * FONT_HEIGHT;
-        uint32_t color = 0xFFFFFF;
+        uint8_t px            = x * FONT_WIDTH;
+        uint8_t py            = y * FONT_HEIGHT;
+        uint32_t cursor_color = WHITE;
+
+        uint8_t border_width     = shell_status.cursor.border_width;
+        uint8_t line_width       = shell_status.cursor.line_width;
+        uint8_t underline_height = shell_status.cursor.underline_height;
 
         switch (shell_status.cursor.shape) {
         case block:
-                syscall_draw_rect(px, py, FONT_WIDTH, FONT_HEIGHT, color);
+                syscall_draw_rect(px, py, FONT_WIDTH, FONT_HEIGHT,
+                                  cursor_color);
                 break;
         case hollow:
-                syscall_draw_rect(px, py, FONT_WIDTH, 1, color);
-                syscall_draw_rect(px, py + FONT_HEIGHT - 1, FONT_WIDTH, 1, color);
-                syscall_draw_rect(px, py, 1, FONT_HEIGHT, color);
-                syscall_draw_rect(px + FONT_WIDTH - 1, py, 1, FONT_HEIGHT, color);
+                syscall_draw_rect(px, py, FONT_WIDTH, border_width,
+                                  cursor_color);
+                syscall_draw_rect(px, py + FONT_HEIGHT - border_width,
+                                  FONT_WIDTH, border_width, cursor_color);
+                syscall_draw_rect(px, py, border_width, FONT_HEIGHT,
+                                  cursor_color);
+                syscall_draw_rect(px + FONT_WIDTH - border_width, py,
+                                  border_width, FONT_HEIGHT, cursor_color);
                 break;
         case line:
-                syscall_draw_rect(px, py, 2, FONT_HEIGHT, color);
+                syscall_draw_rect(px, py, line_width, FONT_HEIGHT,
+                                  cursor_color);
                 break;
         case underline:
-                syscall_draw_rect(px, py + FONT_HEIGHT - 2, FONT_WIDTH, 2, color);
+                syscall_draw_rect(px, py + FONT_HEIGHT - underline_height,
+                                  FONT_WIDTH, underline_height, cursor_color);
                 break;
         }
 }
@@ -112,34 +133,37 @@ static void draw_cursor(int x, int y, int visible) {
 static void erase_cursor(int x, int y) {
         int px = x * FONT_WIDTH;
         int py = y * FONT_HEIGHT;
-        syscall_draw_rect(px, py, FONT_WIDTH, FONT_HEIGHT, 0x000000);
+        syscall_draw_rect(px, py, FONT_WIDTH, FONT_HEIGHT, BLACK);
 }
 
 int shell_read_line(char input[][256], int max_params) {
         char buffer[MAX_CHARS];
-        int buf_idx = 0;
-        int param_count = 0;
+        int buf_idx       = 0;
+        int param_count   = 0;
         int current_param = 0;
 
         uint64_t last_blink = syscall_get_ticks();
-        int cursor_visible = 1;
+        int cursor_visible  = 1;
 
         for (int i = 0; i < max_params; i++) {
                 input[i][0] = 0;
         }
 
-        while (1) {
+        for_ever {
                 char c = getchar();
 
                 uint64_t now = syscall_get_ticks();
-                if (now - last_blink > 25) {
-                        erase_cursor(shell_status.cursor.x, shell_status.cursor.y);
+                if (now - last_blink > CURSOR_BLINK_TICKS) {
+                        erase_cursor(shell_status.cursor.x,
+                                     shell_status.cursor.y);
                         cursor_visible = !cursor_visible;
-                        draw_cursor(shell_status.cursor.x, shell_status.cursor.y, cursor_visible);
+                        draw_cursor(shell_status.cursor.x,
+                                    shell_status.cursor.y, cursor_visible);
                         last_blink = now;
                 }
 
-                if (c == 0) continue;
+                if (c == 0)
+                        continue;
 
                 erase_cursor(shell_status.cursor.x, shell_status.cursor.y);
                 cursor_visible = 1;
@@ -147,8 +171,9 @@ int shell_read_line(char input[][256], int max_params) {
                 if (c == '\n') {
                         if (buf_idx > 0) {
                                 buffer[buf_idx] = 0;
-                                int j = 0;
-                                for (int i = 0; i <= buf_idx && j < 256; i++, j++) {
+                                int j           = 0;
+                                for (int i = 0; i <= buf_idx && j < MAX_CHARS;
+                                     i++, j++) {
                                         input[current_param][j] = buffer[i];
                                 }
                                 input[current_param][j] = 0;
@@ -166,7 +191,8 @@ int shell_read_line(char input[][256], int max_params) {
                                 putchar('\b');
                                 shell_status.cursor.x--;
                                 if (shell_status.cursor.x < 0) {
-                                        shell_status.cursor.x = (SCREEN_WIDTH / FONT_WIDTH) - 1;
+                                        shell_status.cursor.x =
+                                            (SCREEN_WIDTH / FONT_WIDTH) - 1;
                                         shell_status.cursor.y--;
                                 }
                         }
@@ -175,8 +201,9 @@ int shell_read_line(char input[][256], int max_params) {
 
                 if (c == ' ' && buf_idx > 0) {
                         buffer[buf_idx] = 0;
-                        int j = 0;
-                        for (int i = 0; i <= buf_idx && j < 256; i++, j++) {
+                        int j           = 0;
+                        for (int i = 0; i <= buf_idx && j < MAX_CHARS;
+                             i++, j++) {
                                 input[current_param][j] = buffer[i];
                         }
                         input[current_param][j] = 0;
@@ -185,7 +212,8 @@ int shell_read_line(char input[][256], int max_params) {
                         buf_idx = 0;
 
                         if (current_param >= max_params) {
-                                while (getchar() != '\n');
+                                while (getchar() != '\n')
+                                        ;
                                 putchar('\n');
                                 shell_status.cursor.x = 0;
                                 shell_status.cursor.y++;
@@ -201,7 +229,8 @@ int shell_read_line(char input[][256], int max_params) {
                         putchar(c);
                         shell_status.cursor.x++;
 
-                        if (shell_status.cursor.x >= SCREEN_WIDTH / FONT_WIDTH) {
+                        if (shell_status.cursor.x >=
+                            SCREEN_WIDTH / FONT_WIDTH) {
                                 shell_status.cursor.x = 0;
                                 shell_status.cursor.y++;
                         }
@@ -230,8 +259,9 @@ int shell(void) {
 
         for_ever {
                 printf(input_prompt);
-                int prompt_x = shell_status.cursor.x;
-                int r_arguments = shell_read_line(shell_status.prompts.user_input, 3);
+                int prompt_x    = shell_status.cursor.x;
+                int r_arguments = shell_read_line(
+                    shell_status.prompts.user_input, MAX_PARAMS);
 
                 if (shell_status.prompts.user_input[0][0] == 0)
                         continue;
