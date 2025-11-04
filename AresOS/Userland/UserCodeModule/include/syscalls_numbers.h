@@ -16,6 +16,7 @@ typedef enum {
         SYS_SET_BG_COLOR,
         SYS_GET_CURSOR_POS,
         SYS_REDRAW_SCREEN,
+        SYS_GET_TIME,
         SYS_MAX,
 } syscall_codes;
 
