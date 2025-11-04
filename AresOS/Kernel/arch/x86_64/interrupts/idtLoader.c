@@ -4,18 +4,20 @@
 
 #include <drivers/keyboard_driver.h>
 
-// Interruptions id
+// Hardware interrupt IDs (IRQs remapped to 0x20-0x2F)
 #define ID_TIMER_TICK 0x20
 #define ID_KEYBOARD 0x21
+
+// Software interrupt ID (legacy, not used - we use SYSCALL instruction)
 #define ID_SYSCALL 0x80
 
-// Exceptions id
+// Exception IDs
 #define ID_DIVISION_BY_ZERO 0x00
 
-#pragma pack(push) /* Push de la alineación actual */
-#pragma pack(1)    /* Alinear las siguiente estructuras a 1 byte */
+#pragma pack(push) /* Push current alignment */
+#pragma pack(1)    /* Align following structures to 1 byte */
 
-/* Descriptor de interrupcion */
+/* Interrupt descriptor */
 typedef struct {
         uint16_t offset_l, selector;
         uint8_t cero, access;
@@ -31,17 +33,17 @@ static void setup_IDT_entry(int index, uint64_t offset);
 
 void load_idt() {
 
-        // Interrupciones de software
+        // Hardware interrupts (IRQs)
         setup_IDT_entry(ID_TIMER_TICK, (uint64_t)&_irq00Handler);
         setup_IDT_entry(ID_KEYBOARD, (uint64_t)&_irq01Handler);
 
-        // Interrupciones de hardware
-        setup_IDT_entry(ID_SYSCALL, (uint64_t)&_syscallHandler);
+        // Software interrupts (int 0x80) - Not used, we use SYSCALL instruction
+        // setup_IDT_entry(ID_SYSCALL, (uint64_t)&_syscallHandler);
 
-        // Excepciones
+        // Exceptions
         setup_IDT_entry(ID_DIVISION_BY_ZERO, (uint64_t)&_exception0Handler);
 
-        // Solo interrupcion timer tick habilitadas
+        // Enable only timer and keyboard interrupts (bits 0 and 1 = 0)
         picMasterMask(0xFC);
         picSlaveMask(0xFF);
 

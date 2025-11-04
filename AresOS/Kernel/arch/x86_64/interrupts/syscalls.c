@@ -1,5 +1,8 @@
-/* syscalls.c - Implementaciones de syscalls del kernel */
+/* syscalls.c - Kernel syscall implementations */
 #include <syscalls.h>
+
+/* Global register snapshot (captured by F1 hotkey) */
+regs_snapshot_t saved_regs = {0};
 
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t count) {
         if (fd != 0 || count == 0 || buf == NULL) {
@@ -27,24 +30,21 @@ uint64_t sys_get_ticks(void) {
         return ticks_elapsed();
 }
 
-/* SYS_GET_SECONDS - Retorna los segundos transcurridos */
+/* SYS_GET_SECONDS - Returns elapsed seconds */
 uint64_t sys_get_seconds(void) {
         return seconds_elapsed();
 }
 
-/* SYS_GET_RESOLUTION - Retorna la resolución de pantalla */
+/* SYS_GET_RESOLUTION - Returns screen resolution */
 uint64_t sys_get_resolution(uint32_t *width, uint32_t *height) {
         if (width == NULL || height == NULL) {
                 return 0;
         }
-        // TODO: implementar cuando se tenga acceso a los datos de video
+        // TODO: implement when video data access is available
         *width  = 1024;
         *height = 768;
         return 0;
 }
-
-/* Snapshot global de registros (capturado por hotkey) */
-static regs_snapshot_t saved_regs = {0};
 
 uint64_t sys_get_register_array(regs_snapshot_t *regs) {
         if (regs == NULL) {
@@ -55,7 +55,7 @@ uint64_t sys_get_register_array(regs_snapshot_t *regs) {
 }
 
 uint64_t sys_set_font_size(uint8_t size) {
-        // TODO: implementar cuando fontManager tenga esta funcionalidad
+        // TODO: implement when fontManager has this functionality
         return 0;
 }
 
@@ -70,8 +70,18 @@ uint64_t sys_get_memory(uint64_t addr, uint8_t *buf, uint64_t size) {
         return size;
 }
 
-uint64_t sys_draw_rect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
-                       uint32_t color) {
-        // TODO: implementar cuando video_driver tenga esta funcionalidad
+uint64_t sys_draw_rect(uint64_t packed_xy, uint64_t packed_wh, uint64_t color) {
+        // Unpack parameters
+        uint16_t x = (packed_xy >> 16) & 0xFFFF;
+        uint16_t y = packed_xy & 0xFFFF;
+        uint16_t width = (packed_wh >> 16) & 0xFFFF;
+        uint16_t height = packed_wh & 0xFFFF;
+
+        // If no color specified, use white as default
+        if (color == 0) {
+                color = 0xFFFFFF;
+        }
+
+        drawRect(x, y, width, height, (uint32_t)color);
         return 0;
 }

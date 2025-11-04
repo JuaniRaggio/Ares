@@ -1,4 +1,5 @@
 #include <drivers/keyboard_driver.h>
+#include <regs.h>
 
 typedef struct {
         uint8_t buffer[256];
@@ -9,21 +10,30 @@ typedef struct {
 
 static keyboard_state_t keyboard = {0};
 
-uint8_t keyboard_handler() {
+/* External variable defined in syscalls.c */
+extern regs_snapshot_t saved_regs;
+
+uint8_t keyboard_handler(uint64_t *stack_ptr) {
         uint8_t scan_code = get_input();
 
-        // BREAK_CODE -> Se suelta tecla
+        // BREAK_CODE -> Key released
         if (scan_code & BREAK_CODE) {
-                uint8_t make_code = scan_code & 0x7F; // le saco el bit 7
+                uint8_t make_code = scan_code & 0x7F; // Remove bit 7
 
                 if (make_code == LSHIFT_CODE || make_code == RSHIFT_CODE) {
-                        keyboard.modifiers = (uint8_t)off; // se solto el shift
+                        keyboard.modifiers = (uint8_t)off; // Shift released
                 }
                 goto end;
         }
-        // MAKE_CODE -> Se presiono una tecla
+        // MAKE_CODE -> Key pressed
         if (scan_code == LSHIFT_CODE || scan_code == RSHIFT_CODE) {
-                keyboard.modifiers = (uint8_t)shift; // se presionó Shift
+                keyboard.modifiers = (uint8_t)shift; // Shift pressed
+                goto end;
+        }
+
+        // Hotkey to capture registers (F1)
+        if (scan_code == F1_CODE) {
+                capture_registers(stack_ptr);
                 goto end;
         }
 
@@ -50,4 +60,35 @@ uint8_t buffer_next() {
         keyboard.read_pos = (keyboard.read_pos + 1) & 0xff;
 
         return aux;
+}
+
+void capture_registers(uint64_t *stack_ptr) {
+        /*
+         * Stack layout (from lower to higher addresses):
+         * [0] = r15, [1] = r14, [2] = r13, [3] = r12,
+         * [4] = r11, [5] = r10, [6] = r9, [7] = r8,
+         * [8] = rsi, [9] = rdi, [10] = rbp, [11] = rdx,
+         * [12] = rcx, [13] = rbx, [14] = rax
+         * After pushState stack: RIP, CS, RFLAGS, RSP, SS
+         */
+
+        saved_regs.r15 = stack_ptr[0];
+        saved_regs.r14 = stack_ptr[1];
+        saved_regs.r13 = stack_ptr[2];
+        saved_regs.r12 = stack_ptr[3];
+        saved_regs.r11 = stack_ptr[4];
+        saved_regs.r10 = stack_ptr[5];
+        saved_regs.r9 = stack_ptr[6];
+        saved_regs.r8 = stack_ptr[7];
+        saved_regs.rsi = stack_ptr[8];
+        saved_regs.rdi = stack_ptr[9];
+        saved_regs.rbp = stack_ptr[10];
+        saved_regs.rdx = stack_ptr[11];
+        saved_regs.rcx = stack_ptr[12];
+        saved_regs.rbx = stack_ptr[13];
+        saved_regs.rax = stack_ptr[14];
+
+        /* RIP and RSP are in the interrupt stack frame */
+        saved_regs.rip = stack_ptr[15]; // RIP saved by interrupt
+        saved_regs.rsp = stack_ptr[18]; // RSP saved by interrupt
 }
