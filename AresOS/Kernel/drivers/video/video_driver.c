@@ -56,6 +56,17 @@ uint32_t *framebuffer  = 0;
 uint8_t *videoTextBase = (uint8_t *)VIDEO_ADDR_TEXT;
 uint8_t *currentVideo  = (uint8_t *)VIDEO_ADDR_TEXT;
 
+#define SCREEN_BUFFER_LINES 200
+#define SCREEN_BUFFER_LINE_LENGTH 256
+
+typedef struct {
+        char lines[SCREEN_BUFFER_LINES][SCREEN_BUFFER_LINE_LENGTH];
+        uint16_t line_count;
+        uint16_t current_line_pos;
+} screen_buffer_t;
+
+screen_buffer_t screen_buffer = {0};
+
 int gfxCursorX = 0, gfxCursorY = 0;
 uint32_t screenWidth  = SCREEN_WIDTH;
 uint32_t screenHeight = SCREEN_HEIGHT;

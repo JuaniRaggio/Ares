@@ -20,7 +20,7 @@ typedef struct {
 
 typedef struct {
         char buffer[1024 * 768];
-        float magnification;
+        uint8_t magnification;
         float font_size;
         uint32_t font_color;
         uint32_t background_color;
