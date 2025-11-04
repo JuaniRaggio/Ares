@@ -98,44 +98,50 @@ static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
         if (!visible)
                 return;
 
-        uint8_t px            = x * FONT_WIDTH;
-        uint8_t py            = y * FONT_HEIGHT;
+        uint8_t scale = (uint8_t)shell_status.magnification;
+        if (scale < 1) scale = 1;
+
+        uint16_t px = x * FONT_WIDTH * scale;
+        uint16_t py = y * FONT_HEIGHT * scale;
         uint32_t cursor_color = WHITE;
 
-        uint8_t border_width     = shell_status.cursor.border_width;
-        uint8_t line_width       = shell_status.cursor.line_width;
-        uint8_t underline_height = shell_status.cursor.underline_height;
+        uint8_t border_width     = shell_status.cursor.border_width * scale;
+        uint8_t line_width       = shell_status.cursor.line_width * scale;
+        uint8_t underline_height = shell_status.cursor.underline_height * scale;
 
         switch (shell_status.cursor.shape) {
         case block:
-                syscall_draw_rect(px, py, FONT_WIDTH, FONT_HEIGHT,
+                syscall_draw_rect(px, py, FONT_WIDTH * scale, FONT_HEIGHT * scale,
                                   cursor_color);
                 break;
         case hollow:
-                syscall_draw_rect(px, py, FONT_WIDTH, border_width,
+                syscall_draw_rect(px, py, FONT_WIDTH * scale, border_width,
                                   cursor_color);
-                syscall_draw_rect(px, py + FONT_HEIGHT - border_width,
-                                  FONT_WIDTH, border_width, cursor_color);
-                syscall_draw_rect(px, py, border_width, FONT_HEIGHT,
+                syscall_draw_rect(px, py + FONT_HEIGHT * scale - border_width,
+                                  FONT_WIDTH * scale, border_width, cursor_color);
+                syscall_draw_rect(px, py, border_width, FONT_HEIGHT * scale,
                                   cursor_color);
-                syscall_draw_rect(px + FONT_WIDTH - border_width, py,
-                                  border_width, FONT_HEIGHT, cursor_color);
+                syscall_draw_rect(px + FONT_WIDTH * scale - border_width, py,
+                                  border_width, FONT_HEIGHT * scale, cursor_color);
                 break;
         case line:
-                syscall_draw_rect(px, py, line_width, FONT_HEIGHT,
+                syscall_draw_rect(px, py, line_width, FONT_HEIGHT * scale,
                                   cursor_color);
                 break;
         case underline:
-                syscall_draw_rect(px, py + FONT_HEIGHT - underline_height,
-                                  FONT_WIDTH, underline_height, cursor_color);
+                syscall_draw_rect(px, py + FONT_HEIGHT * scale - underline_height,
+                                  FONT_WIDTH * scale, underline_height, cursor_color);
                 break;
         }
 }
 
 static void erase_cursor(int x, int y) {
-        int px = x * FONT_WIDTH;
-        int py = y * FONT_HEIGHT;
-        syscall_draw_rect(px, py, FONT_WIDTH, FONT_HEIGHT, BLACK);
+        uint8_t scale = (uint8_t)shell_status.magnification;
+        if (scale < 1) scale = 1;
+
+        int px = x * FONT_WIDTH * scale;
+        int py = y * FONT_HEIGHT * scale;
+        syscall_draw_rect(px, py, FONT_WIDTH * scale, FONT_HEIGHT * scale, BLACK);
 }
 
 int shell_read_line(char input[][256], int max_params) {
@@ -166,6 +172,26 @@ int shell_read_line(char input[][256], int max_params) {
                                 }
                                 cursor_visible = !cursor_visible;
                                 last_blink = now;
+                        }
+                        continue;
+                }
+
+                if (c == ZOOM_IN_CHAR) {
+                        if (shell_status.magnification < MAX_MAGNIFICATION) {
+                                shell_status.magnification += MAGNIFICATION_STEP;
+                                uint8_t scale = (uint8_t)shell_status.magnification;
+                                if (scale < 1) scale = 1;
+                                syscall_set_font_size(scale);
+                        }
+                        continue;
+                }
+
+                if (c == ZOOM_OUT_CHAR) {
+                        if (shell_status.magnification > MIN_MAGNIFICATION) {
+                                shell_status.magnification -= MAGNIFICATION_STEP;
+                                uint8_t scale = (uint8_t)shell_status.magnification;
+                                if (scale < 1) scale = 1;
+                                syscall_set_font_size(scale);
                         }
                         continue;
                 }
