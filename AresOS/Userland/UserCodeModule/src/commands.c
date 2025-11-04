@@ -1,4 +1,34 @@
 #include <commands.h>
+#include <configuration.h>
+
+typedef struct {
+        cursor_shape shape;
+        uint32_t color;
+        uint8_t border_width;
+        uint8_t line_width;
+        uint8_t underline_height;
+        uint8_t x, y;
+        uint8_t head, tail;
+        uint8_t focused;
+} shell_cursor;
+
+typedef struct {
+        uint8_t lastest_prompt_idx;
+        char user_input[3][256];
+        void *prompt_history;
+} prompt_data;
+
+typedef struct {
+        char buffer[1024 * 768];
+        float magnification;
+        float font_size;
+        uint32_t font_color;
+        uint32_t background_color;
+        prompt_data prompts;
+        shell_cursor cursor;
+} shell_attributes;
+
+extern shell_attributes shell_status;
 
 void history_cmd(char **history) {
         int count = 0;
@@ -113,4 +143,24 @@ void man(char *command) {
         } else {
                 printf(invalid_command);
         }
+}
+
+int cursor_cmd(char *type) {
+        if (!strcmp(type, "block")) {
+                shell_status.cursor.shape = block;
+                printf("Cursor shape set to: block\n");
+        } else if (!strcmp(type, "hollow")) {
+                shell_status.cursor.shape = hollow;
+                printf("Cursor shape set to: hollow\n");
+        } else if (!strcmp(type, "line")) {
+                shell_status.cursor.shape = line;
+                printf("Cursor shape set to: line\n");
+        } else if (!strcmp(type, "underline")) {
+                shell_status.cursor.shape = underline;
+                printf("Cursor shape set to: underline\n");
+        } else {
+                printf("Invalid cursor type. Options: block, hollow, line, underline\n");
+                return 0;
+        }
+        return 1;
 }
