@@ -40,7 +40,7 @@ int get_command_index(char *command) {
                 if (commands[idx].name && !strcmp(commands[idx].name, command))
                         return idx;
         }
-        return -1;
+        return INVALID_COMMAND_NAME;
 }
 
 void help(void) {

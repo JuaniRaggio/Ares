@@ -7,8 +7,10 @@
 #include <stdio.h>
 #include <syscalls.h>
 
+#define MAX_CHARS 256
 #define NULL 0
 #define QTY_COMMANDS 9
+#define INVALID_COMMAND_NAME -1
 
 static const char *const invalid_command = "Invalid command!\n";
 static const char *const wrong_params    = "Invalid number of parameters\n";
@@ -27,6 +29,7 @@ typedef enum {
         supplier_t = 0,
         function_t,
         bi_function_t,
+        max_parameters,
 } function_type;
 
 typedef union {
@@ -45,6 +48,11 @@ typedef struct {
         char *description;
         lambda_t lambda;
 } command_t;
+
+typedef struct {
+        command_t *cmd;
+        char args[max_parameters - 1][MAX_CHARS];
+} composed_command_t;
 
 static command_t help_command = {
     .name        = "help",

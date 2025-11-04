@@ -1,4 +1,6 @@
 #include <commands.h>
+#include <stdint.h>
+#include <stdio.h>
 
 #define TRUE 1
 #define FALSE !TRUE
@@ -22,8 +24,8 @@ typedef struct {
 
 typedef struct {
         uint8_t lastest_prompt_idx;
-        char prompt[PROMPT_SIZE];
-        char prompt_history[HISTORY_SIZE][PROMPT_SIZE];
+        char user_input[max_parameters][MAX_CHARS];
+        composed_command_t prompt_history[HISTORY_SIZE];
 } prompt_data;
 
 typedef struct {
@@ -50,59 +52,53 @@ static uint8_t lastest_prompt_idx() {
         return shell_status.prompts.lastest_prompt_idx;
 }
 
-static void add_to_history(const char *command) {
-        if (command[0] == 0 || command[0] == '\n')
-                return;
-        strncpy(shell_status.prompts.prompt_history[lastest_prompt_idx()],
-                command, PROMPT_SIZE - 1);
-        shell_status.prompts
-            .prompt_history[lastest_prompt_idx()][PROMPT_SIZE - 1] = 0;
-        shell_status.prompts.lastest_prompt_idx =
-            (lastest_prompt_idx() + 1) % HISTORY_SIZE;
+#define INVALID_INPUT 0
+#define VALID_INPUT 1
+
+uint8_t analize_user_input(uint32_t params) {
+        int idx = get_command_index(shell_status.prompts.user_input[0]);
+        if (idx == INVALID_COMMAND_NAME) {
+                printf(invalid_command);
+                return INVALID_COMMAND_NAME;
+        } else if (commands[idx]->lambda.ftype != params - 1) {
+                printf(wrong_params);
+                printf(CHECK_MAN, shell_status.prompts.user_input[0]);
+                return INVALID_INPUT;
+        }
+        shell_status.prompts.prompt_history[lastest_prompt_idx()].cmd =
+            commands[idx];
+        return VALID_INPUT;
 }
+
+static char * helper_msg = "Type 'help' to see available commands\n\n";
 
 int shell(void) {
         clear_cmd();
         printf(welcome_msg_shell);
-        printf("Type 'help' to see available commands\n\n");
+        printf(helper_msg);
         for_ever {
                 printf(input_prompt);
-                char command[MAX_CHARS] = {0};
-                char arg1[MAX_CHARS]    = {0};
-                char arg2[MAX_CHARS]    = {0};
-                int qty_params = scanf("%s %s %s", command, arg1, arg2);
-                if (command[0] == 0)
+                int r_arguments =
+                    scanf("%s %s %s", shell_status.prompts.user_input[0],
+                          shell_status.prompts.user_input[1],
+                          shell_status.prompts.user_input[2]);
+                if (shell_status.prompts.user_input[0][0] == 0)
                         continue;
-                add_to_history(command);
 
-                if (!strcmp(command, "exit")) {
-                        printf("Exiting Ares OS...\n");
-                        syscall_exit(0);
-                }
-
-                int index = get_command_index(command);
-
-                if (index == -1) {
-                        printf(invalid_command);
-                        continue;
-                }
-
-                int func_params = commands[index].lambda.ftype;
-                if (qty_params - 1 != func_params) {
-                        printf(wrong_params);
-                        printf(CHECK_MAN, command);
-                        continue;
-                }
-
-                switch (commands[index].lambda.ftype) {
+                analize_user_input(r_arguments);
+                composed_command_t current_prompt =
+                    shell_status.prompts.prompt_history[lastest_prompt_idx()];
+                executable_t execute = current_prompt.cmd->lambda.execute;
+                switch (current_prompt.cmd->lambda.ftype) {
                 case supplier_t:
-                        commands[index].lambda.execute.supplier();
+                        execute.supplier();
                         break;
                 case function_t:
-                        commands[index].lambda.execute.function(arg1);
+                        execute.function(current_prompt.args[0]);
                         break;
                 case bi_function_t:
-                        commands[index].lambda.execute.bi_function(arg1, arg2);
+                        execute.bi_function(current_prompt.args[0],
+                                            current_prompt.args[1]);
                         break;
                 }
         }
