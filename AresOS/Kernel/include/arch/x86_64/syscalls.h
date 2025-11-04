@@ -9,7 +9,6 @@
 #include <stdint.h>
 #include <syscalls_numbers.h>
 
-#define NULL 0
 #define STDIN 0
 #define STDOUT 1
 #define STDERR 2
@@ -53,5 +52,8 @@ uint64_t sys_set_bg_color(uint8_t color);
 
 /* SYS_GET_CURSOR_POS - Obtiene la posicion del cursor */
 uint64_t sys_get_cursor_pos(int *x, int *y);
+
+/* SYS_REDRAW_SCREEN - Redibuja la pantalla con el tamaño actual */
+uint64_t sys_redraw_screen(void);
 
 void init_syscalls(void);
