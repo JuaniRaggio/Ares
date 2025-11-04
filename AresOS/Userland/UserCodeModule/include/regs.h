@@ -23,4 +23,6 @@ typedef struct {
         uint64_t r15;
 } regs_t;
 
+typedef regs_t regs_snapshot_t;
+
 extern regs_t *get_register_values(void);

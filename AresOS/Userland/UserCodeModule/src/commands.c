@@ -44,25 +44,26 @@ void history_cmd(char **history) {
 }
 
 void print_info_reg(void) {
-        regs_t *regs = get_register_values();
+        regs_snapshot_t regs;
+        syscall_get_register_snapshot(&regs);
         printf("===== Register snapshot: =====\n");
-        printf("      RIP: 0x%x\n", regs->rip);
-        printf("      RSP: 0x%x\n", regs->rsp);
-        printf("      RAX: 0x%x\n", regs->rax);
-        printf("      RBX: 0x%x\n", regs->rbx);
-        printf("      RCX: 0x%x\n", regs->rcx);
-        printf("      RDX: 0x%x\n", regs->rdx);
-        printf("      RBP: 0x%x\n", regs->rbp);
-        printf("      RDI: 0x%x\n", regs->rdi);
-        printf("      RSI: 0x%x\n", regs->rsi);
-        printf("      R8:  0x%x\n", regs->r8);
-        printf("      R9:  0x%x\n", regs->r9);
-        printf("      R10: 0x%x\n", regs->r10);
-        printf("      R11: 0x%x\n", regs->r11);
-        printf("      R12: 0x%x\n", regs->r12);
-        printf("      R13: 0x%x\n", regs->r13);
-        printf("      R14: 0x%x\n", regs->r14);
-        printf("      R15: 0x%x\n", regs->r15);
+        printf("      RIP: 0x%x\n", regs.rip);
+        printf("      RSP: 0x%x\n", regs.rsp);
+        printf("      RAX: 0x%x\n", regs.rax);
+        printf("      RBX: 0x%x\n", regs.rbx);
+        printf("      RCX: 0x%x\n", regs.rcx);
+        printf("      RDX: 0x%x\n", regs.rdx);
+        printf("      RBP: 0x%x\n", regs.rbp);
+        printf("      RDI: 0x%x\n", regs.rdi);
+        printf("      RSI: 0x%x\n", regs.rsi);
+        printf("      R8:  0x%x\n", regs.r8);
+        printf("      R9:  0x%x\n", regs.r9);
+        printf("      R10: 0x%x\n", regs.r10);
+        printf("      R11: 0x%x\n", regs.r11);
+        printf("      R12: 0x%x\n", regs.r12);
+        printf("      R13: 0x%x\n", regs.r13);
+        printf("      R14: 0x%x\n", regs.r14);
+        printf("      R15: 0x%x\n", regs.r15);
 }
 
 int get_command_index(char *command) {
