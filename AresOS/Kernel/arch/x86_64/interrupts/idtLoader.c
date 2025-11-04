@@ -25,25 +25,18 @@ typedef struct {
         uint32_t offset_h, other_cero;
 } DESCR_INT;
 
-#pragma pack(pop) /* Reestablece la alinceación actual */
+#pragma pack(pop) /* Restore alignment */
 
-DESCR_INT *idt = (DESCR_INT *)0; // IDT de 255 entradas
+DESCR_INT *idt = (DESCR_INT *)0;
 
 static void setup_IDT_entry(int index, uint64_t offset);
 
 void load_idt() {
-
-        // Hardware interrupts (IRQs)
         setup_IDT_entry(ID_TIMER_TICK, (uint64_t)&_irq00Handler);
         setup_IDT_entry(ID_KEYBOARD, (uint64_t)&_irq01Handler);
 
-        // Software interrupts (int 0x80) - Not used, we use SYSCALL instruction
-        // setup_IDT_entry(ID_SYSCALL, (uint64_t)&_syscallHandler);
-
-        // Exceptions
         setup_IDT_entry(ID_DIVISION_BY_ZERO, (uint64_t)&_exception0Handler);
 
-        // Enable only timer and keyboard interrupts (bits 0 and 1 = 0)
         picMasterMask(0xFC);
         picSlaveMask(0xFF);
 
