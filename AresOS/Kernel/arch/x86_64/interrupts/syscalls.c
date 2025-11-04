@@ -114,3 +114,8 @@ uint64_t sys_get_cursor_pos(int *x, int *y) {
         *y = gfxCursorY / (17 * fontScale);
         return 1;
 }
+
+uint64_t sys_redraw_screen(void) {
+        screen_buffer_redraw();
+        return 0;
+}
