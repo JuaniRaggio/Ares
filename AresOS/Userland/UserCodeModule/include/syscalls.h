@@ -65,9 +65,19 @@ static inline uint64_t syscall_get_memory(uint64_t addr, uint8_t *buf,
         return _syscall3(SYS_GET_MEMORY, addr, (uint64_t)buf, size);
 }
 
-/* Dibuja un rectángulo */
+/* Draw rectangle */
 static inline uint64_t syscall_draw_rect(uint16_t x, uint16_t y, uint16_t width,
-                                         uint16_t height) {
+                                         uint16_t height, uint32_t color) {
         return _syscall3(SYS_DRAW_RECT, (x << 16) | y, (width << 16) | height,
-                         0);
+                         color);
+}
+
+/* Set text color (stream: 1=stdout, 2=stderr) */
+static inline uint64_t syscall_set_text_color(uint8_t color, uint8_t stream) {
+        return _syscall3(SYS_SET_TEXT_COLOR, color, stream, 0);
+}
+
+/* Set background color */
+static inline uint64_t syscall_set_bg_color(uint8_t color) {
+        return _syscall3(SYS_SET_BG_COLOR, color, 0, 0);
 }

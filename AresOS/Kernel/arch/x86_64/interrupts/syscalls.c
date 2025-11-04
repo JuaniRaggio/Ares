@@ -71,17 +71,34 @@ uint64_t sys_get_memory(uint64_t addr, uint8_t *buf, uint64_t size) {
 }
 
 uint64_t sys_draw_rect(uint64_t packed_xy, uint64_t packed_wh, uint64_t color) {
-        // Unpack parameters
         uint16_t x = (packed_xy >> 16) & 0xFFFF;
         uint16_t y = packed_xy & 0xFFFF;
         uint16_t width = (packed_wh >> 16) & 0xFFFF;
         uint16_t height = packed_wh & 0xFFFF;
 
-        // If no color specified, use white as default
         if (color == 0) {
                 color = 0xFFFFFF;
         }
 
         drawRect(x, y, width, height, (uint32_t)color);
+        return 0;
+}
+
+extern uint8_t current_stdout_color;
+extern uint8_t current_stderr_color;
+
+uint64_t sys_set_text_color(uint8_t color, uint8_t stream) {
+        if (stream == 1) {
+                current_stdout_color = color;
+        } else if (stream == 2) {
+                current_stderr_color = color;
+        }
+        return 0;
+}
+
+uint64_t sys_set_bg_color(uint8_t color) {
+        if (videoMode == 1) {
+                clearScreen(vgaToRGB(color));
+        }
         return 0;
 }

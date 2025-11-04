@@ -12,6 +12,8 @@ typedef enum {
         SYS_GET_MEMORY,
         SYS_DRAW_RECT,
         SYS_GET_SECONDS,
+        SYS_SET_TEXT_COLOR,
+        SYS_SET_BG_COLOR,
         SYS_MAX,
 } syscall_codes;
 

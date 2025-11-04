@@ -45,4 +45,10 @@ uint64_t sys_get_memory(uint64_t addr, uint8_t *buf, uint64_t size);
 /* SYS_DRAW_RECT - Dibuja un rectángulo */
 uint64_t sys_draw_rect(uint64_t packed_xy, uint64_t packed_wh, uint64_t color);
 
+/* SYS_SET_TEXT_COLOR - Cambia el color del texto */
+uint64_t sys_set_text_color(uint8_t color, uint8_t stream);
+
+/* SYS_SET_BG_COLOR - Cambia el color de fondo */
+uint64_t sys_set_bg_color(uint8_t color);
+
 void init_syscalls(void);
