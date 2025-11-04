@@ -22,6 +22,7 @@ typedef enum {
         CMD_HISTORY,
         CMD_EXIT,
         CMD_CURSOR,
+        CMD_TRON,
         QTY_COMMANDS
 } command_index;
 
@@ -38,6 +39,7 @@ void history_cmd(char **history);
 int get_command_index(char *command);
 int div_cmd(char *num, char *div);
 int cursor_cmd(char *type);
+void tron_cmd(void);
 
 typedef enum {
         supplier_t = 0,
@@ -168,9 +170,19 @@ static const command_t cursor_command = {
         },
 };
 
+static const command_t tron_command = {
+    .name        = "tron",
+    .description = "Play the Tron game (WASD vs IJKL)",
+    .lambda =
+        {
+            .execute.supplier = (void *)&tron_cmd,
+            .ftype            = supplier_t,
+        },
+};
+
 static const command_t *const commands[QTY_COMMANDS] = {
     &help_command,      &man_command,     &inforeg_command,
     &time_command,      &div_command,     &clear_command,
     &print_mem_command, &history_command, &exit_command,
-    &cursor_command,
+    &cursor_command,    &tron_command,
 };
