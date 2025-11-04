@@ -1,8 +1,10 @@
+#include "colors.h"
+#include "naiveConsole.h"
 #include <drivers/keyboard_driver.h>
 #include <regs.h>
 
 typedef struct {
-        uint8_t buffer[256];
+        uint8_t buffer[TABLE_SIZE];
         uint8_t write_pos; // head
         uint8_t read_pos;  // tail
         uint8_t modifiers; // off, Shift, Ctrl, Alt

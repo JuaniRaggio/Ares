@@ -11,12 +11,10 @@ typedef enum {
         STDERR,
 } stdcodes;
 
-/* Lee un caracter del stdin (bloqueante con polling) */
+/* Lee un caracter del stdin (non-blocking) */
 int getchar(void) {
         char c = 0;
-        while (c == 0) {
-                syscall_read(STDIN, &c, 1);
-        }
+        syscall_read(STDIN, &c, 1);
         return c;
 }
 

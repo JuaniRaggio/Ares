@@ -2,6 +2,7 @@ GLOBAL cpuVendor
 GLOBAL get_current_minutes
 GLOBAL get_current_hour
 GLOBAL get_input
+GLOBAL _load_idt_register
 
 section .text
 
@@ -94,4 +95,9 @@ get_current_hour:
 get_input:
     xor rax, rax
     in al, 0x60
+    ret
+
+_load_idt_register:
+    ; RDI points to IDTR structure (limit + base address)
+    lidt [rdi]
     ret

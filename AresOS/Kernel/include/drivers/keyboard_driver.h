@@ -3,7 +3,6 @@
 #include <naiveConsole.h>
 #include <stdint.h>
 
-#define NULL 0
 #define TABLE_SIZE 256
 #define NON_PRINTABLE 0
 
@@ -31,7 +30,7 @@ extern uint8_t get_input();
 
 // This table either must be initialized matching the modifiers enum
 // or should be assigned using modifiers as indexes
-static uint8_t ascii_table[][TABLE_SIZE] = {
+static char ascii_table[][TABLE_SIZE] = {
     // off - normal version
     {
         /* 0x00 */ NON_PRINTABLE,
