@@ -81,3 +81,8 @@ static inline uint64_t syscall_set_text_color(uint8_t color, uint8_t stream) {
 static inline uint64_t syscall_set_bg_color(uint8_t color) {
         return _syscall3(SYS_SET_BG_COLOR, color, 0, 0);
 }
+
+/* Get cursor position */
+static inline uint64_t syscall_get_cursor_pos(int *x, int *y) {
+        return _syscall3(SYS_GET_CURSOR_POS, (uint64_t)x, (uint64_t)y, 0);
+}

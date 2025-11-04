@@ -14,6 +14,7 @@ typedef enum {
         SYS_GET_SECONDS,
         SYS_SET_TEXT_COLOR,
         SYS_SET_BG_COLOR,
+        SYS_GET_CURSOR_POS,
         SYS_MAX,
 } syscall_codes;
 
