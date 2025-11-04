@@ -55,12 +55,12 @@ void ncPrintVideo(const char *string, uint8_t color) {
 
         for (int i = 0; string[i] != 0; i++) {
                 drawChar(string[i], gfxCursorX, gfxCursorY, rgb, font);
-                gfxCursorX += font->width;
-                if (gfxCursorX + font->width >= SCREEN_WIDTH ||
+                gfxCursorX += font->width * fontScale;
+                if (gfxCursorX + font->width * fontScale >= SCREEN_WIDTH ||
                     string[i] == '\n') {
                         gfxCursorX = 0;
-                        gfxCursorY += font->height;
-                        if (gfxCursorY + font->height >= SCREEN_HEIGHT) {
+                        gfxCursorY += font->height * fontScale;
+                        if (gfxCursorY + font->height * fontScale >= SCREEN_HEIGHT) {
                                 clearScreen(0x000000);
                                 gfxCursorX = 0;
                                 gfxCursorY = 0;
@@ -121,8 +121,8 @@ void ncPrintChar(char c, uint8_t color) {
 
                 if (c == '\n') {
                         gfxCursorX = 0;
-                        gfxCursorY += font->height;
-                        if (gfxCursorY + font->height >= SCREEN_HEIGHT) {
+                        gfxCursorY += font->height * fontScale;
+                        if (gfxCursorY + font->height * fontScale >= SCREEN_HEIGHT) {
                                 clearScreen(0x000000);
                                 gfxCursorX = 0;
                                 gfxCursorY = 0;
@@ -131,11 +131,11 @@ void ncPrintChar(char c, uint8_t color) {
                 }
 
                 drawChar(c, gfxCursorX, gfxCursorY, rgb, font);
-                gfxCursorX += font->width;
-                if (gfxCursorX + font->width >= SCREEN_WIDTH) {
+                gfxCursorX += font->width * fontScale;
+                if (gfxCursorX + font->width * fontScale >= SCREEN_WIDTH) {
                         gfxCursorX = 0;
-                        gfxCursorY += font->height;
-                        if (gfxCursorY + font->height >= SCREEN_HEIGHT) {
+                        gfxCursorY += font->height * fontScale;
+                        if (gfxCursorY + font->height * fontScale >= SCREEN_HEIGHT) {
                                 clearScreen(0x000000);
                                 gfxCursorX = 0;
                                 gfxCursorY = 0;
