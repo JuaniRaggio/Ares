@@ -16,7 +16,6 @@ void irqDispatcher(uint64_t irq, uint64_t *stack_ptr) {
 }
 
 void int_20(uint64_t *stack_ptr) {
-        // ncPrintOld("TIMERTICK ");
         timer_handler();
 }
 
@@ -24,7 +23,6 @@ void int_21(uint64_t *stack_ptr) {
         uint8_t c = keyboard_handler(stack_ptr);
 
         if (c != 0) {
-                // ncPrintCharText(c, BLACK_WHITE);
                 update_buffer(c);
         }
 }
