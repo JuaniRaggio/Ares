@@ -47,6 +47,14 @@ uint8_t keyboard_handler(uint64_t *stack_ptr) {
                 goto end;
         }
 
+        if (scan_code == MINUS_CODE && keyboard.modifiers == ctl) {
+                return ZOOM_OUT_CHAR;
+        }
+
+        if (scan_code == EQUALS_CODE && keyboard.modifiers == ctl) {
+                return ZOOM_IN_CHAR;
+        }
+
         return ascii_table[keyboard.modifiers][scan_code];
 end:
         return 0;

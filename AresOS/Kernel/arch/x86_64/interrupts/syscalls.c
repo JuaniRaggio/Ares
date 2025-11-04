@@ -54,9 +54,12 @@ uint64_t sys_get_register_array(regs_snapshot_t *regs) {
         return 0;
 }
 
-uint64_t sys_set_font_size(uint8_t size) {
-        // TODO: implement when fontManager has this functionality
-        return 0;
+uint64_t sys_set_font_size(uint8_t scale) {
+        if (scale < 1 || scale > 5) {
+                return 0;
+        }
+        fontScale = scale;
+        return 1;
 }
 
 uint64_t sys_get_memory(uint64_t addr, uint8_t *buf, uint64_t size) {
@@ -107,7 +110,7 @@ uint64_t sys_get_cursor_pos(int *x, int *y) {
         if (x == NULL || y == NULL) {
                 return 0;
         }
-        *x = gfxCursorX / 8;
-        *y = gfxCursorY / 17;
+        *x = gfxCursorX / (8 * fontScale);
+        *y = gfxCursorY / (17 * fontScale);
         return 1;
 }

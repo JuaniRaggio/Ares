@@ -60,6 +60,7 @@ int gfxCursorX = 0, gfxCursorY = 0;
 uint32_t screenWidth  = SCREEN_WIDTH;
 uint32_t screenHeight = SCREEN_HEIGHT;
 uint8_t bytesPerPixel = 4;
+uint8_t fontScale = 1;
 
 // ------------------------------------------------------------
 // Inicialización del video
@@ -115,7 +116,11 @@ void drawChar(char c, int x, int y, uint32_t color, const bmp_font_t *font) {
                 unsigned char bits = glyph[row];
                 for (int col = 0; col < font->width; col++) {
                         if (bits & (1 << col)) {
-                                putPixel(x + col, y + row, color);
+                                for (int sy = 0; sy < fontScale; sy++) {
+                                        for (int sx = 0; sx < fontScale; sx++) {
+                                                putPixel(x + col * fontScale + sx, y + row * fontScale + sy, color);
+                                        }
+                                }
                         }
                 }
         }
