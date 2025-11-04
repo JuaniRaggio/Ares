@@ -64,3 +64,4 @@ void drawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint32_t 
 // Screen buffer for redraw
 void screen_buffer_add_char(char c);
 void screen_buffer_redraw(void);
+void screen_buffer_clear(void);

@@ -18,6 +18,7 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t count) {
 uint64_t sys_clear(void) {
         if (videoMode == 1) {
                 clearScreen(0x000000);
+                screen_buffer_clear();
                 gfxCursorX = 0;
                 gfxCursorY = 0;
         } else {

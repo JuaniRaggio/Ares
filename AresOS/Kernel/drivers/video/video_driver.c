@@ -200,6 +200,14 @@ void drawCharDefault(char c, int x, int y, uint32_t color) {
         drawChar(c, x, y, color, getFont());
 }
 
+void screen_buffer_clear(void) {
+        screen_buffer.line_count = 0;
+        screen_buffer.current_line_pos = 0;
+        for (int i = 0; i < SCREEN_BUFFER_LINES; i++) {
+                screen_buffer.lines[i][0] = '\0';
+        }
+}
+
 void screen_buffer_add_char(char c) {
         if (c == '\n' || screen_buffer.current_line_pos >= SCREEN_BUFFER_LINE_LENGTH - 1) {
                 if (screen_buffer.line_count < SCREEN_BUFFER_LINES) {
