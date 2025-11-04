@@ -32,11 +32,9 @@ int scanf(char *fmt, ...) {
         char buffer[MAX_CHARS];
         uint64_t bIdx = 0;
 
-        // Loop de lectura con cursor animado
         while ((c = getchar()) != '\n' && bIdx < MAX_CHARS - 1) {
                 cursorTicks = syscall_get_ticks() - ticks;
 
-                // Animación del cursor cada CURSOR_FREQ ticks
                 if (cursorTicks > CURSOR_FREQ) {
                         ticks       = syscall_get_ticks();
                         cursorTicks = 0;
@@ -49,13 +47,11 @@ int scanf(char *fmt, ...) {
                 }
 
                 if (c != 0) {
-                        // Borrar cursor si estaba dibujado
                         if (cursorDrawn) {
                                 putchar('\b');
                                 cursorDrawn = !cursorDrawn;
                         }
 
-                        // Manejar backspace
                         if (c != '\b') {
                                 buffer[bIdx++] = c;
                                 putchar(c);
@@ -66,7 +62,6 @@ int scanf(char *fmt, ...) {
                 }
         }
 
-        // Limpiar cursor si quedó dibujado
         if (cursorDrawn) {
                 putchar('\b');
         }
@@ -74,7 +69,6 @@ int scanf(char *fmt, ...) {
         putchar('\n');
         buffer[bIdx] = 0;
 
-        // Parsear el formato
         char *fmtPtr = fmt;
         char *end;
         bIdx          = 0;

@@ -32,6 +32,7 @@ typedef enum {
         underline,
 } cursor_shape;
 
+// Default Kernel font will be used
 // static const bmp_font_t *user_font = &font_ubuntu_mono;
-static uint32_t font_color       = WHITE;
-static uint32_t background_color = BLACK;
+static const uint32_t default_font_color       = WHITE;
+static const uint32_t default_background_color = BLACK;

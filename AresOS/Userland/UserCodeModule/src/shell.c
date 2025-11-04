@@ -1,3 +1,4 @@
+#include "configuration.h"
 #include <commands.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -34,13 +35,17 @@ typedef struct {
         char buffer[SCREEN_SIZE];
         float magnification;
         float font_size;
+        uint32_t font_color;
+        uint32_t background_color;
         prompt_data prompts;
         shell_cursor cursor;
 } shell_attributes;
 
 static shell_attributes shell_status = {
-    .magnification = 1,
-    .prompts       = (prompt_data){0},
+    .magnification    = 1,
+    .prompts          = (prompt_data){0},
+    .font_color       = default_font_color,
+    .background_color = default_background_color,
     .cursor =
         {
             .shape   = underline,
@@ -58,14 +63,19 @@ static uint8_t lastest_prompt_idx() {
 #define VALID_INPUT 1
 
 static void add_to_history(const command_t *command, uint32_t params) {
-        shell_status.prompts.prompt_history[lastest_prompt_idx()].cmd =
-            command;
+        shell_status.prompts.prompt_history[lastest_prompt_idx()].cmd = command;
         int i;
         while (params > 1) {
-                for (i = 0; shell_status.prompts.user_input[params][i] && i < MAX_CHARS - 1; i++) {
-                shell_status.prompts.prompt_history[lastest_prompt_idx()].args[params - 1][i] = shell_status.prompts.user_input[params][i];
+                for (i = 0; shell_status.prompts.user_input[params][i] &&
+                            i < MAX_CHARS - 1;
+                     i++) {
+                        shell_status.prompts
+                            .prompt_history[lastest_prompt_idx()]
+                            .args[params - 1][i] =
+                            shell_status.prompts.user_input[params][i];
                 }
-                shell_status.prompts.prompt_history[lastest_prompt_idx()].args[params - 1][i] = '\0';
+                shell_status.prompts.prompt_history[lastest_prompt_idx()]
+                    .args[params - 1][i] = '\0';
                 params--;
         }
 }
