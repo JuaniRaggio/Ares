@@ -8,6 +8,7 @@
 #include <regs.h>
 #include <stdint.h>
 #include <syscalls_numbers.h>
+#include <lib.h>
 
 #define STDIN 0
 #define STDOUT 1
@@ -55,5 +56,8 @@ uint64_t sys_get_cursor_pos(int *x, int *y);
 
 /* SYS_REDRAW_SCREEN - Redibuja la pantalla con el tamaño actual */
 uint64_t sys_redraw_screen(void);
+
+/* SYS_GET_TIME - Obtiene la hora actual completa */
+uint64_t sys_get_time(s_time *time);
 
 void init_syscalls(void);

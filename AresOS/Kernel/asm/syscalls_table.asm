@@ -15,6 +15,7 @@ extern sys_set_text_color_wrapper
 extern sys_set_bg_color_wrapper
 extern sys_get_cursor_pos_wrapper
 extern sys_redraw_screen_wrapper
+extern sys_get_time_wrapper
 
 syscalls_table:
     dq sys_write              ; 0: SYS_WRITE
@@ -32,4 +33,5 @@ syscalls_table:
     dq sys_set_bg_color_wrapper ; 12: SYS_SET_BG_COLOR
     dq sys_get_cursor_pos_wrapper ; 13: SYS_GET_CURSOR_POS
     dq sys_redraw_screen_wrapper ; 14: SYS_REDRAW_SCREEN
+    dq sys_get_time_wrapper ; 15: SYS_GET_TIME
 

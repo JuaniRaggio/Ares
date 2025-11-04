@@ -120,3 +120,11 @@ uint64_t sys_redraw_screen(void) {
         screen_buffer_redraw();
         return 0;
 }
+
+uint64_t sys_get_time(s_time *time) {
+        if (time == NULL) {
+                return 0;
+        }
+        *time = get_current_time();
+        return 1;
+}
