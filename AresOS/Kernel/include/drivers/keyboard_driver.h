@@ -10,6 +10,7 @@
 #define LSHIFT_CODE 0x2A
 #define RSHIFT_CODE 0x36
 #define BREAK_CODE 0x80
+#define F1_CODE 0x3B
 
 typedef enum {
         off,
@@ -18,11 +19,13 @@ typedef enum {
         alt,
 } modifiers;
 
-uint8_t keyboard_handler();
+uint8_t keyboard_handler(uint64_t *stack_ptr);
 void update_buffer(uint8_t c);
 
 uint8_t buffer_has_next();
 uint8_t buffer_next();
+
+void capture_registers(uint64_t *stack_ptr);
 
 extern uint8_t get_input();
 

@@ -20,49 +20,53 @@ sys_write:
 
 .stdout:
     ; RDI = fd, RSI = buffer, RDX = length
-    mov rcx, rdx        ; rcx = contador
-    test rcx, rcx       ; si length == 0
+    mov r13, rdx        ; r13 = counter (use callee-saved register)
+    test r13, r13       ; if length == 0
     jz .done
-    mov r12, rsi        ; r12 = puntero al buffer
-    push r12            ; preservar r12
-    push rbx            ; preservar rbx
-    mov rbx, rcx        ; rbx = guardar length original
+    mov r12, rsi        ; r12 = buffer pointer
+    push r12            ; preserve r12
+    push r13            ; preserve r13
+    push rbx            ; preserve rbx
+    mov rbx, rdx        ; rbx = save original length
 
 .loop_stdout:
-    movzx edi, byte [r12]   ; cargar un caracter del buffer
-    mov sil, 0x0F           ; color blanco
+    movzx edi, byte [r12]   ; load character from buffer
+    mov sil, 0x0F           ; white color
     call ncPrintChar        ; ncPrintChar(char, color)
 
-    inc r12                 ; siguiente caracter
-    dec rcx
+    inc r12                 ; next character
+    dec r13                 ; decrement counter (r13 is preserved across calls)
     jnz .loop_stdout
 
-    mov rax, rbx            ; retornar bytes escritos
+    mov rax, rbx            ; return bytes written
     pop rbx
+    pop r13
     pop r12
     jmp .end
 
 .stderr:
-    ; Similar pero con color rojo
-    mov rcx, rdx
-    test rcx, rcx
+    ; Similar but with red color
+    mov r13, rdx        ; r13 = counter (use callee-saved register)
+    test r13, r13       ; if length == 0
     jz .done
-    mov r12, rsi
-    push r12
-    push rbx
-    mov rbx, rcx
+    mov r12, rsi        ; r12 = buffer pointer
+    push r12            ; preserve r12
+    push r13            ; preserve r13
+    push rbx            ; preserve rbx
+    mov rbx, rdx        ; rbx = save original length
 
 .loop_stderr:
-    movzx edi, byte [r12]
-    mov sil, 0x04           ; color rojo
+    movzx edi, byte [r12]   ; load character from buffer
+    mov sil, 0x04           ; red color
     call ncPrintChar
 
-    inc r12
-    dec rcx
+    inc r12                 ; next character
+    dec r13                 ; decrement counter
     jnz .loop_stderr
 
-    mov rax, rbx
+    mov rax, rbx            ; return bytes written
     pop rbx
+    pop r13
     pop r12
     jmp .end
 

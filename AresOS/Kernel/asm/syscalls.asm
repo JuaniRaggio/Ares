@@ -33,11 +33,6 @@ syscall_entry:
     push r13
     push r14
 
-    ; Guardar argumentos de la syscall
-    push rdi                    ; arg1
-    push rsi                    ; arg2
-    push rdx                    ; arg3
-
     ; syscall number está en RAX
     mov rbx, rax
 
@@ -50,7 +45,7 @@ syscall_entry:
     test rbx, rbx
     jz .unknown_syscall
 
-    ; Los argumentos ya están en RDI, RSI, RDX (no hace falta moverlos)
+    ; Los argumentos ya están en RDI, RSI, RDX correctamente
     ; Llamar a la función de syscall
     call rbx
     jmp .done
@@ -61,7 +56,6 @@ syscall_entry:
 
 .done:
     ; Restaurar registros en orden inverso
-    add rsp, 24                 ; descartar args guardados (rdi, rsi, rdx)
     pop r14
     pop r13
     pop r12
