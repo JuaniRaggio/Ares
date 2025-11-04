@@ -64,8 +64,8 @@ fi
 
 # Buscar archivo .clang-format
 CLANG_FORMAT_FILE=""
-if [ -f "x64BareBones/.clang-format" ]; then
-    CLANG_FORMAT_FILE="x64BareBones/.clang-format"
+if [ -f "AresOS/.clang-format" ]; then
+    CLANG_FORMAT_FILE="AresOS/.clang-format"
 elif [ -f ".clang-format" ]; then
     CLANG_FORMAT_FILE=".clang-format"
 fi
