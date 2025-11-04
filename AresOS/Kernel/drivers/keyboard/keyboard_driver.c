@@ -25,6 +25,9 @@ uint8_t keyboard_handler(uint64_t *stack_ptr) {
                 if (make_code == LSHIFT_CODE || make_code == RSHIFT_CODE) {
                         keyboard.modifiers = (uint8_t)off; // Shift released
                 }
+                if (make_code == LCTRL_CODE) {
+                        keyboard.modifiers = (uint8_t)off; // Ctrl released
+                }
                 goto end;
         }
         // MAKE_CODE -> Key pressed
@@ -33,8 +36,13 @@ uint8_t keyboard_handler(uint64_t *stack_ptr) {
                 goto end;
         }
 
-        // Hotkey to capture registers (F1)
-        if (scan_code == F1_CODE) {
+        if (scan_code == LCTRL_CODE) {
+                keyboard.modifiers = (uint8_t)ctl; // Ctrl pressed
+                goto end;
+        }
+
+        // Hotkey to capture registers (Ctrl+R)
+        if (scan_code == R_CODE && keyboard.modifiers == ctl) {
                 capture_registers(stack_ptr);
                 goto end;
         }

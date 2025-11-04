@@ -8,8 +8,9 @@
 
 #define LSHIFT_CODE 0x2A
 #define RSHIFT_CODE 0x36
+#define LCTRL_CODE 0x1D
+#define R_CODE 0x13
 #define BREAK_CODE 0x80
-#define F1_CODE 0x3B
 
 typedef enum {
         off,
