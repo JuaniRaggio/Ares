@@ -147,16 +147,16 @@ void man(char *command) {
 }
 
 int cursor_cmd(char *type) {
-        if (!strncmp(type, "block", 5)) {
+        if (!strcmp(type, "block")) {
                 shell_status.cursor.shape = block;
                 printf("Cursor shape set to: block\n");
-        } else if (!strncmp(type, "hollow", 6)) {
+        } else if (!strcmp(type, "hollow")) {
                 shell_status.cursor.shape = hollow;
                 printf("Cursor shape set to: hollow\n");
-        } else if (!strncmp(type, "line", 4)) {
+        } else if (!strcmp(type, "line")) {
                 shell_status.cursor.shape = line;
                 printf("Cursor shape set to: line\n");
-        } else if (!strncmp(type, "underline", 9)) {
+        } else if (!strcmp(type, "underline")) {
                 shell_status.cursor.shape = underline;
                 printf("Cursor shape set to: underline\n");
         } else {
