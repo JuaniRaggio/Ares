@@ -69,7 +69,8 @@ void print_info_reg(void) {
 
 int get_command_index(char *command) {
         for (int idx = 0; idx < QTY_COMMANDS; idx++) {
-                if (commands[idx]->name && !strcmp(commands[idx]->name, command))
+                if (commands[idx]->name &&
+                    !strcmp(commands[idx]->name, command))
                         return idx;
         }
         return INVALID_COMMAND_NAME;
@@ -78,7 +79,8 @@ int get_command_index(char *command) {
 void help(void) {
         printf("Available commands:\n");
         for (int i = 0; i < QTY_COMMANDS && commands[i]->name != 0; i++) {
-                printf("  %s: %s\n", commands[i]->name, commands[i]->description);
+                printf("  %s: %s\n", commands[i]->name,
+                       commands[i]->description);
         }
 }
 
@@ -161,7 +163,9 @@ int cursor_cmd(char *type) {
                 shell_status.cursor.shape = underline;
                 printf("Cursor shape set to: underline\n");
         } else {
-                printf("Invalid cursor type. Options: block, hollow, line, underline\n");
+                printf("Invalid cursor type or not supported yet. Current "
+                       "options: block, hollow, line, underline\nTo add a new "
+                       "cursor type, contact support@ares.com");
                 return 0;
         }
         return 1;

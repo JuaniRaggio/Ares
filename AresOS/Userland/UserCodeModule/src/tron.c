@@ -6,7 +6,7 @@
 #define GRID_WIDTH 64
 #define GRID_HEIGHT 48
 #define CELL_SIZE 16
-#define GAME_SPEED_TICKS 5  /* ~3.6 updates per second (5/18) */
+#define GAME_SPEED_TICKS 2  /* ~9 updates per second (2/18) */
 
 /* Color definitions */
 #define PLAYER1_COLOR 0x00FF00
