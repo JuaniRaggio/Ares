@@ -10,6 +10,7 @@
 #define for_ever for (;;)
 #define MAX_CHARS 256
 #define CHECK_MAN "Type \"man %s\" to see how the command works\n"
+#define PROMPT_LENGTH 3
 
 static const char *const helper_msg =
     "Type 'help' to see available commands\n\n";
@@ -226,12 +227,12 @@ int shell(void) {
         clear_cmd();
         printf(welcome_msg_shell);
         printf(helper_msg);
+
         for_ever {
                 printf(input_prompt);
-                int r_arguments =
-                    scanf("%s %s %s", shell_status.prompts.user_input[0],
-                          shell_status.prompts.user_input[1],
-                          shell_status.prompts.user_input[2]);
+                int prompt_x = shell_status.cursor.x;
+                int r_arguments = shell_read_line(shell_status.prompts.user_input, 3);
+
                 if (shell_status.prompts.user_input[0][0] == 0)
                         continue;
 
