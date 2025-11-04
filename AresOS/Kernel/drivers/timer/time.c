@@ -3,35 +3,24 @@
 
 static uint64_t start_seconds = 0;
 static uint64_t start_minutes = 0;
-static uint64_t start_hours = 0;
-
-void timer_handler() {
-        /* Not used - we read from RTC instead */
-}
+static uint64_t start_hours   = 0;
 
 void timer_init(void) {
         /* Capture initial time from RTC */
         start_seconds = get_current_seconds();
         start_minutes = get_current_minutes();
-        start_hours = get_current_hour();
+        start_hours   = get_current_hour();
 }
 
 uint64_t seconds_elapsed() {
-        /* Read current time from RTC */
+        /* Read current time from RTC and return total seconds since midnight */
         uint64_t curr_seconds = get_current_seconds();
         uint64_t curr_minutes = get_current_minutes();
-        uint64_t curr_hours = get_current_hour();
+        uint64_t curr_hours   = get_current_hour();
+        return curr_hours * 3600 + curr_minutes * 60 + curr_seconds;
+}
 
-        /* Convert to total seconds since start */
-        uint64_t curr_total = curr_hours * 3600 + curr_minutes * 60 + curr_seconds;
-        uint64_t start_total = start_hours * 3600 + start_minutes * 60 + start_seconds;
-
-        /* Handle day wraparound (86400 seconds in a day) */
-        if (curr_total < start_total) {
-                curr_total += 86400;
-        }
-
-        return curr_total - start_total;
+void timer_handler() {
 }
 
 uint64_t ticks_elapsed() {

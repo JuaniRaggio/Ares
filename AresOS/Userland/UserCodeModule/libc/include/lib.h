@@ -32,17 +32,18 @@ char *strncpy(char *dest, const char *src, uint64_t n);
  * Converts a signed integer to a string representation in the specified base.
  * @param value The integer value to convert
  * @param str Buffer to store the resulting string (must be large enough)
- * @param base Numeric base for conversion (2-36). Negative values only supported in base 10
+ * @param base Numeric base for conversion (2-36). Negative values only
+ * supported in base 10
  * @return Pointer to the resulting string (same as str parameter)
  */
 char *itoa(int value, char *str, int base);
 
 /**
- * Converts an unsigned 64-bit integer to a string representation in the specified base.
+ * Converts an unsigned 64-bit integer to a string representation in the
+ * specified base.
  * @param value The unsigned 64-bit integer value to convert
  * @param str Buffer to store the resulting string (must be large enough)
  * @param base Numeric base for conversion (2-36)
  * @return Pointer to the resulting string (same as str parameter)
  */
 char *utoa(uint64_t value, char *str, int base);
-

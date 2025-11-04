@@ -181,8 +181,7 @@ static const command_t tron_command = {
 };
 
 static const command_t *const commands[QTY_COMMANDS] = {
-    &help_command,      &man_command,     &inforeg_command,
-    &time_command,      &div_command,     &clear_command,
-    &print_mem_command, &history_command, &exit_command,
-    &cursor_command,    &tron_command,
+    &help_command, &man_command,    &inforeg_command,   &time_command,
+    &div_command,  &clear_command,  &print_mem_command, &history_command,
+    &exit_command, &cursor_command, &tron_command,
 };

@@ -60,7 +60,8 @@ void ncPrintVideo(const char *string, uint8_t color) {
                     string[i] == '\n') {
                         gfxCursorX = 0;
                         gfxCursorY += font->height * fontScale;
-                        if (gfxCursorY + font->height * fontScale >= SCREEN_HEIGHT) {
+                        if (gfxCursorY + font->height * fontScale >=
+                            SCREEN_HEIGHT) {
                                 clearScreen(0x000000);
                                 gfxCursorX = 0;
                                 gfxCursorY = 0;
@@ -124,7 +125,8 @@ void ncPrintChar(char c, uint8_t color) {
                 if (c == '\n') {
                         gfxCursorX = 0;
                         gfxCursorY += font->height * fontScale;
-                        if (gfxCursorY + font->height * fontScale >= SCREEN_HEIGHT) {
+                        if (gfxCursorY + font->height * fontScale >=
+                            SCREEN_HEIGHT) {
                                 clearScreen(0x000000);
                                 gfxCursorX = 0;
                                 gfxCursorY = 0;
@@ -137,7 +139,8 @@ void ncPrintChar(char c, uint8_t color) {
                 if (gfxCursorX + font->width * fontScale >= SCREEN_WIDTH) {
                         gfxCursorX = 0;
                         gfxCursorY += font->height * fontScale;
-                        if (gfxCursorY + font->height * fontScale >= SCREEN_HEIGHT) {
+                        if (gfxCursorY + font->height * fontScale >=
+                            SCREEN_HEIGHT) {
                                 clearScreen(0x000000);
                                 gfxCursorX = 0;
                                 gfxCursorY = 0;

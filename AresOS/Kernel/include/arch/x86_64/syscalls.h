@@ -2,13 +2,13 @@
 #pragma once
 
 #include <keyboard_driver.h>
-#include <time.h>
+#include <lib.h>
 #include <naiveConsole.h>
-#include <video_driver.h>
 #include <regs.h>
 #include <stdint.h>
 #include <syscalls_numbers.h>
-#include <lib.h>
+#include <time.h>
+#include <video_driver.h>
 
 #define STDIN 0
 #define STDOUT 1

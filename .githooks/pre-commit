@@ -5,7 +5,7 @@
 echo "Aplicando clang-format a archivos C/C++..."
 
 # Directorio base del código
-CODE_DIR="x64BareBones"
+CODE_DIR="AresOS"
 
 # Encontrar todos los archivos .c y .h en el directorio x64BareBones
 FILES=$(find "$CODE_DIR" -type f \( -name "*.c" -o -name "*.h" \))

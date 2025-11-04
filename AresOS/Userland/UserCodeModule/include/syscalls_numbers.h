@@ -19,4 +19,3 @@ typedef enum {
         SYS_GET_TIME,
         SYS_MAX,
 } syscall_codes;
-

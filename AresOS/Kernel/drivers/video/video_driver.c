@@ -71,7 +71,7 @@ int gfxCursorX = 0, gfxCursorY = 0;
 uint32_t screenWidth  = SCREEN_WIDTH;
 uint32_t screenHeight = SCREEN_HEIGHT;
 uint8_t bytesPerPixel = 4;
-uint8_t fontScale = 1;
+uint8_t fontScale     = 1;
 
 // ------------------------------------------------------------
 // Inicialización del video
@@ -129,7 +129,10 @@ void drawChar(char c, int x, int y, uint32_t color, const bmp_font_t *font) {
                         if (bits & (1 << col)) {
                                 for (int sy = 0; sy < fontScale; sy++) {
                                         for (int sx = 0; sx < fontScale; sx++) {
-                                                putPixel(x + col * fontScale + sx, y + row * fontScale + sy, color);
+                                                putPixel(
+                                                    x + col * fontScale + sx,
+                                                    y + row * fontScale + sy,
+                                                    color);
                                         }
                                 }
                         }
@@ -201,7 +204,7 @@ void drawCharDefault(char c, int x, int y, uint32_t color) {
 }
 
 void screen_buffer_clear(void) {
-        screen_buffer.line_count = 0;
+        screen_buffer.line_count       = 0;
         screen_buffer.current_line_pos = 0;
         for (int i = 0; i < SCREEN_BUFFER_LINES; i++) {
                 screen_buffer.lines[i][0] = '\0';
@@ -209,24 +212,32 @@ void screen_buffer_clear(void) {
 }
 
 void screen_buffer_add_char(char c) {
-        if (c == '\n' || screen_buffer.current_line_pos >= SCREEN_BUFFER_LINE_LENGTH - 1) {
+        if (c == '\n' ||
+            screen_buffer.current_line_pos >= SCREEN_BUFFER_LINE_LENGTH - 1) {
                 if (screen_buffer.line_count < SCREEN_BUFFER_LINES) {
                         screen_buffer.line_count++;
                 }
-                uint16_t next_line = (screen_buffer.line_count % SCREEN_BUFFER_LINES);
+                uint16_t next_line =
+                    (screen_buffer.line_count % SCREEN_BUFFER_LINES);
                 screen_buffer.lines[next_line][0] = '\0';
-                screen_buffer.current_line_pos = 0;
-                if (c == '\n') return;
+                screen_buffer.current_line_pos    = 0;
+                if (c == '\n')
+                        return;
         }
 
-        uint16_t current_line = ((screen_buffer.line_count == 0 ? 0 : screen_buffer.line_count - 1) % SCREEN_BUFFER_LINES);
+        uint16_t current_line =
+            ((screen_buffer.line_count == 0 ? 0
+                                            : screen_buffer.line_count - 1) %
+             SCREEN_BUFFER_LINES);
         screen_buffer.lines[current_line][screen_buffer.current_line_pos++] = c;
-        screen_buffer.lines[current_line][screen_buffer.current_line_pos] = '\0';
+        screen_buffer.lines[current_line][screen_buffer.current_line_pos] =
+            '\0';
 }
 
 void screen_buffer_redraw(void) {
         bmp_font_t *font = getFont();
-        if (font == NULL) return;
+        if (font == NULL)
+                return;
 
         uint32_t lines_that_fit = screenHeight / (font->height * fontScale);
 
@@ -241,7 +252,7 @@ void screen_buffer_redraw(void) {
 
         for (uint16_t i = start_line; i < screen_buffer.line_count; i++) {
                 uint16_t buf_idx = i % SCREEN_BUFFER_LINES;
-                char *line = screen_buffer.lines[buf_idx];
+                char *line       = screen_buffer.lines[buf_idx];
                 for (int j = 0; line[j] != '\0'; j++) {
                         ncPrintChar(line[j], VGA_WHITE);
                 }
@@ -252,7 +263,8 @@ void screen_buffer_redraw(void) {
 // ------------------------------------------------------------
 // Dibuja un rectángulo relleno
 // ------------------------------------------------------------
-void drawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint32_t color) {
+void drawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
+              uint32_t color) {
         for (uint16_t i = 0; i < height; i++) {
                 for (uint16_t j = 0; j < width; j++) {
                         putPixel(x + j, y + i, color);

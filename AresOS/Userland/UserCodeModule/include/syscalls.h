@@ -47,8 +47,7 @@ static inline uint64_t syscall_get_resolution(uint32_t *width,
 }
 
 /* Obtiene el snapshot de registros */
-static inline uint64_t
-syscall_get_register_snapshot(regs_snapshot_t *regs) {
+static inline uint64_t syscall_get_register_snapshot(regs_snapshot_t *regs) {
         return _syscall3(SYS_GET_REGISTER_ARRAY, (uint64_t)regs, 0, 0);
 }
 

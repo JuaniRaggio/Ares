@@ -162,7 +162,8 @@ int printf(const char *format, ...) {
                                 utoa(num, buf, 16);
                                 int len = 0;
                                 char *s = buf;
-                                while (*s++) len++;
+                                while (*s++)
+                                        len++;
                                 for (int i = 0; i < 16 - len; i++) {
                                         putchar('0');
                                         count++;

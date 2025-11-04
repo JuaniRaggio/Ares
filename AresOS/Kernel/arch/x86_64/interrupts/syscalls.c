@@ -74,9 +74,9 @@ uint64_t sys_get_memory(uint64_t addr, uint8_t *buf, uint64_t size) {
 }
 
 uint64_t sys_draw_rect(uint64_t packed_xy, uint64_t packed_wh, uint64_t color) {
-        uint16_t x = (packed_xy >> 16) & 0xFFFF;
-        uint16_t y = packed_xy & 0xFFFF;
-        uint16_t width = (packed_wh >> 16) & 0xFFFF;
+        uint16_t x      = (packed_xy >> 16) & 0xFFFF;
+        uint16_t y      = packed_xy & 0xFFFF;
+        uint16_t width  = (packed_wh >> 16) & 0xFFFF;
         uint16_t height = packed_wh & 0xFFFF;
 
         if (color == 0) {

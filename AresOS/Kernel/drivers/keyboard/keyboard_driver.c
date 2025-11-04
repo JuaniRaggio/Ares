@@ -96,8 +96,8 @@ void capture_registers(uint64_t *stack_ptr) {
         saved_regs.r12 = stack_ptr[3];
         saved_regs.r11 = stack_ptr[4];
         saved_regs.r10 = stack_ptr[5];
-        saved_regs.r9 = stack_ptr[6];
-        saved_regs.r8 = stack_ptr[7];
+        saved_regs.r9  = stack_ptr[6];
+        saved_regs.r8  = stack_ptr[7];
         saved_regs.rsi = stack_ptr[8];
         saved_regs.rdi = stack_ptr[9];
         saved_regs.rbp = stack_ptr[10];
