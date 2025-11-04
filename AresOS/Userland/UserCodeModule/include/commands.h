@@ -9,8 +9,21 @@
 
 #define MAX_CHARS 256
 #define NULL 0
-#define QTY_COMMANDS 9
 #define INVALID_COMMAND_NAME -1
+
+typedef enum {
+        CMD_HELP,
+        CMD_MAN,
+        CMD_INFOREG,
+        CMD_TIME,
+        CMD_DIV,
+        CMD_CLEAR,
+        CMD_PRINTMEM,
+        CMD_HISTORY,
+        CMD_EXIT,
+        CMD_CURSOR,
+        QTY_COMMANDS
+} command_index;
 
 static const char *const invalid_command = "Invalid command!\n";
 static const char *const wrong_params    = "Invalid number of parameters\n";
@@ -24,6 +37,7 @@ void print_mem(char *pos);
 void history_cmd(char **history);
 int get_command_index(char *command);
 int div_cmd(char *num, char *div);
+int cursor_cmd(char *type);
 
 typedef enum {
         supplier_t = 0,
@@ -144,8 +158,19 @@ static const command_t exit_command = {
         },
 };
 
+static const command_t cursor_command = {
+    .name        = "cursor",
+    .description = "Change cursor shape (block, hollow, line, underline)",
+    .lambda =
+        {
+            .execute.function = (void *)&cursor_cmd,
+            .ftype            = function_t,
+        },
+};
+
 static const command_t *const commands[QTY_COMMANDS] = {
     &help_command,      &man_command,     &inforeg_command,
     &time_command,      &div_command,     &clear_command,
     &print_mem_command, &history_command, &exit_command,
+    &cursor_command,
 };
