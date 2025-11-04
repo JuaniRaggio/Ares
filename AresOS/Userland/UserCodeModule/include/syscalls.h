@@ -84,3 +84,8 @@ static inline uint64_t syscall_set_bg_color(uint8_t color) {
 static inline uint64_t syscall_get_cursor_pos(int *x, int *y) {
         return _syscall3(SYS_GET_CURSOR_POS, (uint64_t)x, (uint64_t)y, 0);
 }
+
+/* Redraw screen with current font size */
+static inline uint64_t syscall_redraw_screen(void) {
+        return _syscall3(SYS_REDRAW_SCREEN, 0, 0, 0);
+}

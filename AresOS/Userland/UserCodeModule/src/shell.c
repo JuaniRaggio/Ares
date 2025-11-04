@@ -173,10 +173,7 @@ int shell_read_line(char input[][256], int max_params) {
                         if (shell_status.magnification < MAX_FONT_SCALE) {
                                 shell_status.magnification++;
                                 syscall_set_font_size(shell_status.magnification);
-                                syscall_clear();
-                                printf(welcome_msg_shell);
-                                printf(helper_msg);
-                                printf(input_prompt);
+                                syscall_redraw_screen();
                                 sync_cursor_pos();
                         }
                         continue;
@@ -186,10 +183,7 @@ int shell_read_line(char input[][256], int max_params) {
                         if (shell_status.magnification > MIN_FONT_SCALE) {
                                 shell_status.magnification--;
                                 syscall_set_font_size(shell_status.magnification);
-                                syscall_clear();
-                                printf(welcome_msg_shell);
-                                printf(helper_msg);
-                                printf(input_prompt);
+                                syscall_redraw_screen();
                                 sync_cursor_pos();
                         }
                         continue;
