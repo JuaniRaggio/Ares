@@ -1,7 +1,7 @@
 #include <commands.h>
 
 #define TRUE 1
-#define FALSE 0
+#define FALSE !TRUE
 #define for_ever for (;;)
 #define MAX_CHARS 256
 #define CHECK_MAN "Type \"man %s\" to see how the command works\n"
@@ -61,18 +61,8 @@ static void add_to_history(const char *command) {
             (lastest_prompt_idx() + 1) % HISTORY_SIZE;
 }
 
-void run_shell(void) {
+int shell(void) {
         clear_cmd();
-
-        // ===== DEBUG ===== //
-        putchar('H');
-        putchar('e');
-        putchar('l');
-        putchar('l');
-        putchar('o');
-        putchar('\n');
-        // ===== DEBUG ===== //
-        
         printf(welcome_msg_shell);
         printf("Type 'help' to see available commands\n\n");
         for_ever {
@@ -116,10 +106,5 @@ void run_shell(void) {
                         break;
                 }
         }
-}
-
-int shell(void) {
-        run_shell();
-        // Posible error as value
         return 0;
 }
