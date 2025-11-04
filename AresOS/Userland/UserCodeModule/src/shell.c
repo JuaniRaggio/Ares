@@ -2,6 +2,8 @@
 #include <commands.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <syscalls.h>
+#include <shell.h>
 
 #define TRUE 1
 #define FALSE !TRUE
@@ -77,6 +79,132 @@ static void add_to_history(const command_t *command, uint32_t params) {
                 shell_status.prompts.prompt_history[lastest_prompt_idx()]
                     .args[params - 1][i] = '\0';
                 params--;
+        }
+}
+
+static void draw_cursor(int x, int y, int visible) {
+        if (!visible) return;
+
+        int px = x * FONT_WIDTH;
+        int py = y * FONT_HEIGHT;
+        uint32_t color = 0xFFFFFF;
+
+        switch (shell_status.cursor.shape) {
+        case block:
+                syscall_draw_rect(px, py, FONT_WIDTH, FONT_HEIGHT, color);
+                break;
+        case hollow:
+                syscall_draw_rect(px, py, FONT_WIDTH, 1, color);
+                syscall_draw_rect(px, py + FONT_HEIGHT - 1, FONT_WIDTH, 1, color);
+                syscall_draw_rect(px, py, 1, FONT_HEIGHT, color);
+                syscall_draw_rect(px + FONT_WIDTH - 1, py, 1, FONT_HEIGHT, color);
+                break;
+        case line:
+                syscall_draw_rect(px, py, 2, FONT_HEIGHT, color);
+                break;
+        case underline:
+                syscall_draw_rect(px, py + FONT_HEIGHT - 2, FONT_WIDTH, 2, color);
+                break;
+        }
+}
+
+static void erase_cursor(int x, int y) {
+        int px = x * FONT_WIDTH;
+        int py = y * FONT_HEIGHT;
+        syscall_draw_rect(px, py, FONT_WIDTH, FONT_HEIGHT, 0x000000);
+}
+
+int shell_read_line(char input[][256], int max_params) {
+        char buffer[MAX_CHARS];
+        int buf_idx = 0;
+        int param_count = 0;
+        int current_param = 0;
+
+        uint64_t last_blink = syscall_get_ticks();
+        int cursor_visible = 1;
+
+        for (int i = 0; i < max_params; i++) {
+                input[i][0] = 0;
+        }
+
+        while (1) {
+                char c = getchar();
+
+                uint64_t now = syscall_get_ticks();
+                if (now - last_blink > 25) {
+                        erase_cursor(shell_status.cursor.x, shell_status.cursor.y);
+                        cursor_visible = !cursor_visible;
+                        draw_cursor(shell_status.cursor.x, shell_status.cursor.y, cursor_visible);
+                        last_blink = now;
+                }
+
+                if (c == 0) continue;
+
+                erase_cursor(shell_status.cursor.x, shell_status.cursor.y);
+                cursor_visible = 1;
+
+                if (c == '\n') {
+                        if (buf_idx > 0) {
+                                buffer[buf_idx] = 0;
+                                int j = 0;
+                                for (int i = 0; i <= buf_idx && j < 256; i++, j++) {
+                                        input[current_param][j] = buffer[i];
+                                }
+                                input[current_param][j] = 0;
+                                param_count++;
+                        }
+                        putchar('\n');
+                        shell_status.cursor.x = 0;
+                        shell_status.cursor.y++;
+                        return param_count;
+                }
+
+                if (c == '\b') {
+                        if (buf_idx > 0) {
+                                buf_idx--;
+                                putchar('\b');
+                                shell_status.cursor.x--;
+                                if (shell_status.cursor.x < 0) {
+                                        shell_status.cursor.x = (SCREEN_WIDTH / FONT_WIDTH) - 1;
+                                        shell_status.cursor.y--;
+                                }
+                        }
+                        continue;
+                }
+
+                if (c == ' ' && buf_idx > 0) {
+                        buffer[buf_idx] = 0;
+                        int j = 0;
+                        for (int i = 0; i <= buf_idx && j < 256; i++, j++) {
+                                input[current_param][j] = buffer[i];
+                        }
+                        input[current_param][j] = 0;
+                        current_param++;
+                        param_count++;
+                        buf_idx = 0;
+
+                        if (current_param >= max_params) {
+                                while (getchar() != '\n');
+                                putchar('\n');
+                                shell_status.cursor.x = 0;
+                                shell_status.cursor.y++;
+                                return param_count;
+                        }
+                        putchar(' ');
+                        shell_status.cursor.x++;
+                        continue;
+                }
+
+                if (buf_idx < MAX_CHARS - 1) {
+                        buffer[buf_idx++] = c;
+                        putchar(c);
+                        shell_status.cursor.x++;
+
+                        if (shell_status.cursor.x >= SCREEN_WIDTH / FONT_WIDTH) {
+                                shell_status.cursor.x = 0;
+                                shell_status.cursor.y++;
+                        }
+                }
         }
 }
 
