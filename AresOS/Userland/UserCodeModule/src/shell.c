@@ -79,18 +79,17 @@ static uint8_t lastest_prompt_idx() {
 static void add_to_history(const command_t *command, uint32_t params) {
         shell_status.prompts.prompt_history[lastest_prompt_idx()].cmd = command;
         int i;
-        while (params > 1) {
-                for (i = 0; shell_status.prompts.user_input[params][i] &&
+        for (int p = 1; p < params; p++) {
+                for (i = 0; shell_status.prompts.user_input[p][i] &&
                             i < MAX_CHARS - 1;
                      i++) {
                         shell_status.prompts
                             .prompt_history[lastest_prompt_idx()]
-                            .args[params - 1][i] =
-                            shell_status.prompts.user_input[params][i];
+                            .args[p - 1][i] =
+                            shell_status.prompts.user_input[p][i];
                 }
                 shell_status.prompts.prompt_history[lastest_prompt_idx()]
-                    .args[params - 1][i] = '\0';
-                params--;
+                    .args[p - 1][i] = '\0';
         }
 }
 
