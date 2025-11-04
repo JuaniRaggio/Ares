@@ -1,5 +1,6 @@
 #pragma once
 
+#include <lib.h>
 #include <regs.h>
 #include <stdint.h>
 #include <syscalls_numbers.h>
@@ -37,6 +38,11 @@ static inline uint64_t syscall_get_ticks(void) {
 /* Obtiene los segundos transcurridos */
 static inline uint64_t syscall_get_seconds(void) {
         return _syscall3(SYS_GET_SECONDS, 0, 0, 0);
+}
+
+/* Puts */
+static inline uint64_t syscall_get_time(s_time *time) {
+        return _syscall3(SYS_GET_TIME, (uint64_t)time, 0, 0);
 }
 
 /* Obtiene la resolución de pantalla */

@@ -1,4 +1,6 @@
 /* syscalls.c - Kernel syscall implementations */
+#include "lib.h"
+#include <stdint.h>
 #include <syscalls.h>
 
 regs_snapshot_t saved_regs = {0};

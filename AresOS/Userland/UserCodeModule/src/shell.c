@@ -1,4 +1,5 @@
 #include "configuration.h"
+#include "lib.h"
 #include <commands.h>
 #include <shell.h>
 #include <stdint.h>
@@ -41,6 +42,7 @@ static const char *const welcome_msg_shell =
     "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@AresSystem@@@"
     "@@@@@\n";
 static const char *const input_prompt = " > ";
+static s_time start_time;
 
 static void sync_cursor_pos(void);
 static uint8_t lastest_prompt_idx();
@@ -307,8 +309,13 @@ static void sync_cursor_pos(void) {
         shell_status.cursor.y = y;
 }
 
-int shell(void) {
+void init_shell(void) {
         clear_cmd();
+        syscall_get_time(&start_time);
+}
+
+int shell(void) {
+        init_shell();
 
         printf(welcome_msg_shell);
         printf(helper_msg);

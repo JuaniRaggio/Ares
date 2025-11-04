@@ -30,7 +30,6 @@ sys_get_time_wrapper:
     push rbp
     mov rbp, rsp
 
-    ; RDI already contains the pointer to s_time
     call sys_get_time
 
     mov rsp, rbp
