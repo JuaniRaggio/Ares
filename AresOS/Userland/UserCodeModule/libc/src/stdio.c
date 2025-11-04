@@ -156,6 +156,17 @@ int printf(const char *format, ...) {
                                 }
                                 break;
                         }
+                        case 'x': {
+                                int num = va_arg(args, int);
+                                char buf[32];
+                                itoa(num, buf, 16);
+                                char *s = buf;
+                                while (*s) {
+                                        putchar(*s++);
+                                        count++;
+                                }
+                                break;
+                        }
                         default:
                                 putchar('%');
                                 putchar(*p);
