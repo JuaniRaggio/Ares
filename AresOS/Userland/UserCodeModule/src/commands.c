@@ -1,5 +1,6 @@
 #include <commands.h>
 #include <configuration.h>
+#include <tron.h>
 
 typedef struct {
         cursor_shape shape;
@@ -164,4 +165,8 @@ int cursor_cmd(char *type) {
                 return 0;
         }
         return 1;
+}
+
+void tron_cmd(void) {
+        tron_game();
 }
