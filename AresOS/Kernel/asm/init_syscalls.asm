@@ -32,10 +32,8 @@ init_syscalls:
     shr rdx, 32                  ; RDX = bits 63:32
     wrmsr
 
-    ; 4. FMASK: Máscara de RFLAGS (flags a limpiar al entrar)
-    mov ecx, 0xC0000084          ; IA32_FMASK
-    mov eax, 0x00000200          ; Bit 9 = IF (Interrupt Flag)
-    ; mov eax, 0x00000700         ; IF | DF | TF
+    mov ecx, 0xC0000084
+    xor eax, eax
     xor edx, edx
     wrmsr
 

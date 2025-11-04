@@ -34,12 +34,9 @@ static void setup_IDT_entry(int index, uint64_t offset);
 void load_idt() {
         setup_IDT_entry(ID_TIMER_TICK, (uint64_t)&_irq00Handler);
         setup_IDT_entry(ID_KEYBOARD, (uint64_t)&_irq01Handler);
-
         setup_IDT_entry(ID_DIVISION_BY_ZERO, (uint64_t)&_exception0Handler);
-
         picMasterMask(0xFC);
         picSlaveMask(0xFF);
-
         _sti();
 }
 
