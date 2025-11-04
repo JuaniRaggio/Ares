@@ -1,3 +1,9 @@
+section .data
+global current_stdout_color
+global current_stderr_color
+current_stdout_color: db 0x0F
+current_stderr_color: db 0x04
+
 section .text
 global sys_write
 extern ncPrintChar
@@ -30,9 +36,9 @@ sys_write:
     mov rbx, rdx        ; rbx = save original length
 
 .loop_stdout:
-    movzx edi, byte [r12]   ; load character from buffer
-    mov sil, 0x0F           ; white color
-    call ncPrintChar        ; ncPrintChar(char, color)
+    movzx edi, byte [r12]
+    mov sil, byte [rel current_stdout_color]
+    call ncPrintChar
 
     inc r12                 ; next character
     dec r13                 ; decrement counter (r13 is preserved across calls)
@@ -56,8 +62,8 @@ sys_write:
     mov rbx, rdx        ; rbx = save original length
 
 .loop_stderr:
-    movzx edi, byte [r12]   ; load character from buffer
-    mov sil, 0x04           ; red color
+    movzx edi, byte [r12]
+    mov sil, byte [rel current_stderr_color]
     call ncPrintChar
 
     inc r12                 ; next character
