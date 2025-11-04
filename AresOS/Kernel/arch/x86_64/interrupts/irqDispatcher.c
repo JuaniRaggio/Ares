@@ -3,25 +3,25 @@
 #include <drivers/time.h>
 #include <naiveConsole.h>
 
-void int_20(void);
-void int_21(void);
+void int_20(uint64_t *stack_ptr);
+void int_21(uint64_t *stack_ptr);
 void kbd_handler();
 
-typedef void (*interruption_signature)(void);
+typedef void (*interruption_signature)(uint64_t *stack_ptr);
 
 static interruption_signature ints[] = {int_20, int_21};
 
-void irqDispatcher(uint64_t irq) {
-        ints[irq]();
+void irqDispatcher(uint64_t irq, uint64_t *stack_ptr) {
+        ints[irq](stack_ptr);
 }
 
-void int_20(void) {
+void int_20(uint64_t *stack_ptr) {
         // ncPrintOld("TIMERTICK ");
         timer_handler();
 }
 
-void int_21(void) {
-        uint8_t c = keyboard_handler();
+void int_21(uint64_t *stack_ptr) {
+        uint8_t c = keyboard_handler(stack_ptr);
 
         if (c != 0) {
                 // ncPrintCharText(c, BLACK_WHITE);
