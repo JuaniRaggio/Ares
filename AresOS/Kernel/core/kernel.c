@@ -79,6 +79,7 @@ static inline void restore_cursor() {
 int main() {
         video_init();          // Inicializa el modo gráfico (o VGA)
         load_idt();            // Inicializa la IDT
+        timer_init();          // Captura tiempo inicial del RTC
         init_syscalls();       // Configura SYSCALL/SYSRET
         setup_user_segments(); // Carga nueva GDT con segmentos de usuario
 

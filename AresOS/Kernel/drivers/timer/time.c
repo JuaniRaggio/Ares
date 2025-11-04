@@ -1,17 +1,42 @@
 #include <drivers/time.h>
+#include <lib.h>
 
-static uint64_t ticks = 0;
+static uint64_t start_seconds = 0;
+static uint64_t start_minutes = 0;
+static uint64_t start_hours = 0;
 
 void timer_handler() {
-        ticks++;
+        /* Not used - we read from RTC instead */
 }
 
-uint64_t ticks_elapsed() {
-        return ticks;
+void timer_init(void) {
+        /* Capture initial time from RTC */
+        start_seconds = get_current_seconds();
+        start_minutes = get_current_minutes();
+        start_hours = get_current_hour();
 }
 
 uint64_t seconds_elapsed() {
-        return ticks / 18;
+        /* Read current time from RTC */
+        uint64_t curr_seconds = get_current_seconds();
+        uint64_t curr_minutes = get_current_minutes();
+        uint64_t curr_hours = get_current_hour();
+
+        /* Convert to total seconds since start */
+        uint64_t curr_total = curr_hours * 3600 + curr_minutes * 60 + curr_seconds;
+        uint64_t start_total = start_hours * 3600 + start_minutes * 60 + start_seconds;
+
+        /* Handle day wraparound (86400 seconds in a day) */
+        if (curr_total < start_total) {
+                curr_total += 86400;
+        }
+
+        return curr_total - start_total;
+}
+
+uint64_t ticks_elapsed() {
+        /* Approximate ticks as seconds * 18 for compatibility */
+        return seconds_elapsed() * 18;
 }
 
 void sleep(int seconds) {
