@@ -1,8 +1,8 @@
 # ARES Recursive Experimental System
 
-<!-- <p align="center"> -->
-<!--   <img src="assets/ares_godlike.webp" alt="ITBA" width="500"> -->
-<!-- </p> -->
+<p align="center">
+  <img src="assets/ares_godlike.webp" alt="ITBA" width="500">
+</p>
 
 ## Configuración del entorno de desarrollo
 
