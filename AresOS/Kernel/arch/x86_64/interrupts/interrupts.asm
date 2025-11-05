@@ -19,6 +19,30 @@ GLOBAL _exception6Handler
 
 EXTERN irqDispatcher
 EXTERN exceptionDispatcher
+EXTERN getStackBase
+
+struc regs
+        _rip: resq 1
+        _rsp: resq 1
+        _rax: resq 1
+        _rbx: resq 1
+        _rcx: resq 1
+        _rdx: resq 1
+        _rbp: resq 1
+        _rdi: resq 1
+        _rsi: resq 1
+        _r8:  resq 1
+        _r9:  resq 1
+        _r10: resq 1
+        _r11: resq 1
+        _r12: resq 1
+        _r13: resq 1
+        _r14: resq 1
+        _r15: resq 1
+        _cs:  resq 1
+        _rflags: resq 1
+        _ss:  resq 1
+endstruc
 
 SECTION .text
 
@@ -76,14 +100,51 @@ SECTION .text
 
 
 %macro exceptionHandler 1
-	pushState
+        cli
+        pushState
 
-	mov rdi, %1 ; pasaje de parametro (exception number)
-	mov rsi, rsp ; pasar el stack pointer para captura de registros
-	call exceptionDispatcher
+        ; guardamos los valores de los registros generales
+        mov [regs + _rax], rax
+        mov [regs + _rbx], rbx      
+        mov [regs + _rcx], rcx  
+        mov [regs + _rdx], rdx      
+        mov [regs + _rbp], rbp      
+        mov [regs + _rdi], rdi      
+        mov [regs + _rsi], rsi    
+        mov [regs + _r8], r8
+        mov [regs + _r9], r9
+        mov [regs + _r10], r10
+        mov [regs + _r11], r11
+        mov [regs + _r12], r12
+        mov [regs + _r13], r13
+        mov [regs + _r14], r14
+        mov [regs + _r15], r15
 
-	popState
-	iretq
+        mov QWORD [regs + _rip], [rsp + 8*15]
+
+        mov [regs + 8*15], rax      
+        mov rax, [rsp + 8*16]					; CS guardado por la CPU
+        mov [regs + 8*16], rax      
+        mov rax, [rsp + 8*17] 				  	; RFLAGS guardado por la CPU
+        mov [regs + 8*17], rax		  
+        mov rax, [rsp + 8*18]				   	; RSP guardado por la CPU
+        mov [regs + 8*18], rax    
+        mov rax, [rsp + 8*19]					; SS guardado por la CPU
+        mov [regs + 8*19], rax
+
+        mov rdi, %1                             ; Parametros para exceptionDispatcher
+        mov rsi, regs
+
+        call exceptionDispatcher
+
+        popState
+        call getStackBase
+        mov [rsp+24], rax ; El StackBase
+        mov rax, userland
+        mov [rsp], rax ; PISO la dirección de retorno
+
+        sti
+        iretq
 %endmacro
 
 
