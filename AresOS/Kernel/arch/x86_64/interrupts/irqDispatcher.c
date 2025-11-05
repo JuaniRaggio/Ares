@@ -5,7 +5,6 @@
 
 void int_20(uint64_t *stack_ptr);
 void int_21(uint64_t *stack_ptr);
-void kbd_handler();
 
 typedef void (*interruption_signature)(uint64_t *stack_ptr);
 

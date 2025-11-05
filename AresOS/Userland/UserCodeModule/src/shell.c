@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <syscalls.h>
 
+#define INVALID_INPUT 0
+#define VALID_INPUT 1
 #define TRUE 1
 #define FALSE !TRUE
 #define for_ever for (;;)
@@ -96,9 +98,6 @@ shell_attributes shell_status = {
 static uint8_t lastest_prompt_idx() {
         return shell_status.prompts.lastest_prompt_idx;
 }
-
-#define INVALID_INPUT 0
-#define VALID_INPUT 1
 
 static void add_to_history(const command_t *command, uint32_t params) {
         shell_status.prompts.prompt_history[lastest_prompt_idx()].cmd = command;

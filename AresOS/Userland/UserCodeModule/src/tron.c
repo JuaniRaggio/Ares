@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <syscalls.h>
 #include <tron.h>
@@ -46,8 +47,8 @@ typedef struct {
 static game_state_t game;
 
 void tron_init(void) {
-        for (int y = 0; y < GRID_HEIGHT; y++) {
-                for (int x = 0; x < GRID_WIDTH; x++) {
+        for (uint16_t y = 0; y < GRID_HEIGHT; y++) {
+                for (uint16_t x = 0; x < GRID_WIDTH; x++) {
                         game.grid[y][x] = 0;
                 }
         }

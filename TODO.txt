@@ -8,7 +8,7 @@ Este archivo mantiene:
 
 Dudas para Fede
 -------------------------------------------------------------------------------
-- [ ] Ver el tema de los segmentos de codigo y dato
+- [X] Ver el tema de los segmentos de codigo y dato
 
 
 Notas pre-entrega
@@ -16,7 +16,7 @@ Notas pre-entrega
 Chequear de cumplir estas cosas antes de hacer la version final para la entrega
 - [X] No usar funciones de la biblioteca estandar
 - [X] Documentacion de funciones
-- [ ] Boton para ver registros
+- [X] Boton para ver registros
 - [ ] Ver asciinema para el video de la demostracion
 
 
