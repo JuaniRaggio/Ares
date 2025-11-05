@@ -2,7 +2,10 @@
 
 #include <stdint.h>
 
-/* Estructura de registros en el kernel */
+/**
+ * CPU register snapshot structure
+ * Used to capture and store the state of all general-purpose registers
+ */
 typedef struct {
         uint64_t rip;
         uint64_t rsp;

@@ -12,9 +12,6 @@
 #define ever (;;)
 #define TIME_FMT_LENGTH 7
 
-// ======================================================
-// Secciones del kernel y módulos
-// ======================================================
 extern uint8_t text;
 extern uint8_t rodata;
 extern uint8_t data;
@@ -31,9 +28,6 @@ static void *const userDataModuleAddress = (void *)0x500000;
 
 typedef int (*EntryPoint)();
 
-// ======================================================
-// Funciones auxiliares de inicialización
-// ======================================================
 void clearBSS(void *bssAddress, uint64_t bssSize) {
         memset(bssAddress, 0, bssSize);
 }
@@ -72,20 +66,17 @@ static inline void restore_cursor() {
         gfxCursorY = 0;
 }
 
-// ======================================================
-// MAIN DEL KERNEL
-// ======================================================
 
 int main() {
-        video_init();          // Inicializa el modo gráfico (o VGA)
-        load_idt();            // Inicializa la IDT
-        timer_init();          // Captura tiempo inicial del RTC
-        init_syscalls();       // Configura SYSCALL/SYSRET
-        setup_user_segments(); // Carga nueva GDT con segmentos de usuario
+        video_init();
+        load_idt();
+        timer_init();
+        init_syscalls();
+        setup_user_segments();
 
         if (videoMode == 1) {
-                clearScreen(0x000000); // Pantalla negra limpia
-                ncClear();             // Limpia buffer de texto del ncPrint
+                clearScreen(0x000000);
+                ncClear();
 
                 const char *msg1 = "[MODO VIDEO ACTIVADO]\n";
                 const char *msg2 = "Kernel funcionando correctamente.\n";
@@ -106,11 +97,6 @@ int main() {
                                 putPixel(x, y, 0x003300);
                         }
                 }
-                // Funciona bien el ncPrint !
-                // ncPrint(msg1, VGA_WHITE);
-                // ncPrint(msg2, VGA_WHITE);
-
-                // Mensajes en pantalla
                 for (int i = 0; msg1[i]; i++)
                         drawChar(msg1[i], startX1 + i * font->width, startY,
                                  0x00FF00, font);
@@ -125,9 +111,6 @@ int main() {
                 ncNewline();
         }
 
-        // Lo hago asi porque sabemos que no va a cambiar el formato, siempre
-        // van a ser dos posiciones para las horas y dos para los minutos a
-        // menos de que seas un enfermo mental
         char buffer[TIME_FMT_LENGTH];
         s_time time = get_current_time();
         buffer[0]   = time.hours / 10 + '0';
@@ -146,11 +129,10 @@ int main() {
 
         sleep(3);
 
-        clearScreen(0x000000); // Pantalla negra limpia
-        ncClear();             // Limpia buffer de texto del ncPrint
+        clearScreen(0x000000);
+        ncClear();
         restore_cursor();
 
-        // OK!
         ncPrint("UserCodeModule begins at: ", VGA_WHITE);
         ncPrintHex((uint64_t)userCodeModuleAddress);
         ncPrint("\n", VGA_WHITE);

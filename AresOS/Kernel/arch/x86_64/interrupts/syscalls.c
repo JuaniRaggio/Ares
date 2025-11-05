@@ -1,4 +1,3 @@
-/* syscalls.c - Kernel syscall implementations */
 #include "lib.h"
 #include <stdint.h>
 #include <syscalls.h>
@@ -32,12 +31,10 @@ uint64_t sys_get_ticks(void) {
         return ticks_elapsed();
 }
 
-/* SYS_GET_SECONDS - Returns elapsed seconds */
 uint64_t sys_get_seconds(void) {
         return seconds_elapsed();
 }
 
-/* SYS_GET_RESOLUTION - Returns screen resolution */
 uint64_t sys_get_resolution(uint32_t *width, uint32_t *height) {
         if (width == NULL || height == NULL) {
                 return 0;

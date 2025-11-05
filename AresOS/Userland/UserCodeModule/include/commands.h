@@ -29,16 +29,69 @@ typedef enum {
 static const char *const invalid_command = "Invalid command!\n";
 static const char *const wrong_params    = "Invalid number of parameters\n";
 
+/**
+ * Displays list of available commands
+ */
 void help(void);
+
+/**
+ * Shows current system time
+ */
 void show_time(void);
+
+/**
+ * Clears the screen
+ */
 void clear_cmd(void);
+
+/**
+ * Prints captured CPU register information
+ */
 void print_info_reg(void);
+
+/**
+ * Shows manual for a specific command
+ * @param command Command name
+ */
 void man(char *command);
+
+/**
+ * Prints memory dump from specified address
+ * @param pos Memory address (as string)
+ */
 void print_mem(char *pos);
+
+/**
+ * Displays command history
+ * @param history Array of command history
+ */
 void history_cmd(char **history);
+
+/**
+ * Gets the index of a command by name
+ * @param command Command name
+ * @return Command index or INVALID_COMMAND_NAME
+ */
 int get_command_index(char *command);
+
+/**
+ * Performs integer division
+ * @param num Numerator (as string)
+ * @param div Divisor (as string)
+ * @return 0 on success, -1 on error
+ */
 int div_cmd(char *num, char *div);
+
+/**
+ * Changes cursor shape
+ * @param type Cursor type (block, hollow, line, underline)
+ * @return 0 on success, -1 on error
+ */
 int cursor_cmd(char *type);
+
+/**
+ * Launches the Tron game
+ */
 void tron_cmd(void);
 
 typedef enum {
