@@ -78,7 +78,8 @@ SECTION .text
 %macro exceptionHandler 1
 	pushState
 
-	mov rdi, %1 ; pasaje de parametro
+	mov rdi, %1 ; pasaje de parametro (exception number)
+	mov rsi, rsp ; pasar el stack pointer para captura de registros
 	call exceptionDispatcher
 
 	popState

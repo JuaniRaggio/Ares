@@ -67,6 +67,9 @@ void print_info_reg(void) {
         printf("      R13: 0x%x\n", regs.r13);
         printf("      R14: 0x%x\n", regs.r14);
         printf("      R15: 0x%x\n", regs.r15);
+        printf("      CS:     0x%x\n", regs.cs);
+        printf("      SS:     0x%x\n", regs.ss);
+        printf("      RFLAGS: 0x%x\n", regs.rflags);
 }
 
 int get_command_index(char *command) {

@@ -18,6 +18,9 @@ struc regs
         _r13: resq 1
         _r14: resq 1
         _r15: resq 1
+        _cs:  resq 1
+        _rflags: resq 1
+        _ss:  resq 1
 endstruc
 
 .bss
@@ -26,25 +29,22 @@ register_snapshot: resb regs_size
 .text
 
 ; @param: void
-; @return: struc regs with all register values
-get_register_values:
-    mov qword [register_snapshot + _rax], rax
-    mov qword [register_snapshot + _rbx], rbx
-    mov qword [register_snapshot + _rcx], rcx
-    mov qword [register_snapshot + _rdx], rdx
-    mov qword [register_snapshot + _rsi], rsi
-    mov qword [register_snapshot + _rdi], rdi
-    mov qword [register_snapshot + _rbp], rbp
-    mov qword [register_snapshot + _rsp], rsp
-    mov qword [register_snapshot + _r8],  r8
-    mov qword [register_snapshot + _r9],  r9
-    mov qword [register_snapshot + _r10], r10
-    mov qword [register_snapshot + _r11], r11
-    mov qword [register_snapshot + _r12], r12
-    mov qword [register_snapshot + _r13], r13
-    mov qword [register_snapshot + _r14], r14
-    mov qword [register_snapshot + _r15], r15
+; @return: struc regs with all register values from last interrupt/exception
+; Note: This function calls the kernel to get the saved register state
+extern sys_get_register_array
 
+get_register_values:
+    push rbp
+    mov rbp, rsp
+
+    ; Call kernel syscall to get saved registers
+    lea rdi, [register_snapshot]
+    call sys_get_register_array
+
+    ; Return pointer to snapshot
     lea rax, [register_snapshot]
+
+    mov rsp, rbp
+    pop rbp
     ret
 
