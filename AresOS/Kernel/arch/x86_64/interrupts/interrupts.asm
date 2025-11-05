@@ -103,45 +103,47 @@ SECTION .text
         cli
         pushState
 
-        ; guardamos los valores de los registros generales
-        mov [regs + _rax], rax
-        mov [regs + _rbx], rbx      
-        mov [regs + _rcx], rcx  
-        mov [regs + _rdx], rdx      
-        mov [regs + _rbp], rbp      
-        mov [regs + _rdi], rdi      
-        mov [regs + _rsi], rsi    
-        mov [regs + _r8], r8
-        mov [regs + _r9], r9
-        mov [regs + _r10], r10
-        mov [regs + _r11], r11
-        mov [regs + _r12], r12
-        mov [regs + _r13], r13
-        mov [regs + _r14], r14
-        mov [regs + _r15], r15
+        ; Guardar registros de propósito general directamente
+        mov QWORD [regs + _rax], rax
+        mov QWORD [regs + _rbx], rbx
+        mov QWORD [regs + _rcx], rcx
+        mov QWORD [regs + _rdx], rdx
+        mov QWORD [regs + _rbp], rbp
+        mov QWORD [regs + _rdi], rdi
+        mov QWORD [regs + _rsi], rsi
+        mov QWORD [regs + _r8], r8
+        mov QWORD [regs + _r9], r9
+        mov QWORD [regs + _r10], r10
+        mov QWORD [regs + _r11], r11
+        mov QWORD [regs + _r12], r12
+        mov QWORD [regs + _r13], r13
+        mov QWORD [regs + _r14], r14
+        mov QWORD [regs + _r15], r15
 
-        mov QWORD [regs + _rip], [rsp + 8*15]
+        ; Guardar registros guardados por la CPU (RIP, CS, RFLAGS, RSP, SS)
+        ; Estos están en el stack porque la CPU los pushea automáticamente
+        mov rax, QWORD [rsp + 15*8]
+        mov QWORD [regs + _rip], rax
+        mov rax, QWORD [rsp + 16*8]
+        mov QWORD [regs + _cs], rax
+        mov rax, QWORD [rsp + 17*8]
+        mov QWORD [regs + _rflags], rax
+        mov rax, QWORD [rsp + 18*8]
+        mov QWORD [regs + _rsp], rax
+        mov rax, QWORD [rsp + 19*8]
+        mov QWORD [regs + _ss], rax
 
-        mov [regs + 8*15], rax      
-        mov rax, [rsp + 8*16]					; CS guardado por la CPU
-        mov [regs + 8*16], rax      
-        mov rax, [rsp + 8*17] 				  	; RFLAGS guardado por la CPU
-        mov [regs + 8*17], rax		  
-        mov rax, [rsp + 8*18]				   	; RSP guardado por la CPU
-        mov [regs + 8*18], rax    
-        mov rax, [rsp + 8*19]					; SS guardado por la CPU
-        mov [regs + 8*19], rax
-
-        mov rdi, %1                             ; Parametros para exceptionDispatcher
-        mov rsi, regs
+        ; Llamar a exceptionDispatcher
+        mov rdi, %1                  ; Número de excepción
+        lea rsi, [regs]              ; Puntero a la struct de registros
 
         call exceptionDispatcher
 
         popState
         call getStackBase
-        mov [rsp+24], rax ; El StackBase
+        mov [rsp+24], rax            ; El StackBase
         mov rax, userland
-        mov [rsp], rax ; PISO la dirección de retorno
+        mov [rsp], rax               ; PISO la dirección de retorno
 
         sti
         iretq
@@ -220,3 +222,4 @@ haltcpu:
 
 SECTION .bss
 	aux resq 1
+	regs: resb regs_size
