@@ -3,11 +3,14 @@
 #include <tron.h>
 
 /* Game grid dimensions and rendering */
-#define GRID_WIDTH 40
-#define GRID_HEIGHT 30
-#define CELL_SIZE 20
-#define GAME_SPEED_TICKS 5 /* ~3.6 updates per second (5/18.2) */
+#define MAX_GRID_WIDTH 128
+#define MAX_GRID_HEIGHT 96
+#define CELL_SIZE 16
 #define for_ever for (;;)
+
+/* Actual game dimensions (set at runtime) */
+static uint32_t GRID_WIDTH  = 40;
+static uint32_t GRID_HEIGHT = 30;
 
 /* Color definitions - bright and visible */
 #define PLAYER1_COLOR 0x00FF00    /* Bright green */
@@ -33,7 +36,7 @@ typedef struct {
 } player_t;
 
 typedef struct {
-        uint8_t grid[GRID_HEIGHT][GRID_WIDTH];
+        uint8_t grid[MAX_GRID_HEIGHT][MAX_GRID_WIDTH];
         player_t player1;
         player_t player2;
         uint8_t game_over;
@@ -70,77 +73,32 @@ void tron_init(void) {
         game.grid[game.player2.y][game.player2.x] = 2;
 }
 
-void draw_player_with_direction(int grid_x, int grid_y, uint32_t color,
-                                direction_t dir) {
-        /* Draw the main cell */
-        int px = grid_x * CELL_SIZE;
-        int py = grid_y * CELL_SIZE;
-
-        syscall_draw_rect(px, py, CELL_SIZE, CELL_SIZE, color);
-
-        /* Draw directional indicator - a brighter rectangle pointing in
-         * direction */
-        uint32_t bright_color = 0xFFFFFF; /* White indicator */
-        int indicator_size    = CELL_SIZE / 3;
-        int center_offset     = (CELL_SIZE - indicator_size) / 2;
-
-        int ind_x = px + center_offset;
-        int ind_y = py + center_offset;
-
-        /* Adjust indicator position based on direction */
-        switch (dir) {
-        case DIR_UP:
-                ind_y = py + 2; /* Top of cell */
-                syscall_draw_rect(ind_x, ind_y, indicator_size,
-                                  indicator_size / 2, bright_color);
-                break;
-        case DIR_DOWN:
-                ind_y = py + CELL_SIZE - indicator_size / 2 - 2; /* Bottom */
-                syscall_draw_rect(ind_x, ind_y, indicator_size,
-                                  indicator_size / 2, bright_color);
-                break;
-        case DIR_LEFT:
-                ind_x = px + 2; /* Left side */
-                syscall_draw_rect(ind_x, ind_y, indicator_size / 2,
-                                  indicator_size, bright_color);
-                break;
-        case DIR_RIGHT:
-                ind_x =
-                    px + CELL_SIZE - indicator_size / 2 - 2; /* Right side */
-                syscall_draw_rect(ind_x, ind_y, indicator_size / 2,
-                                  indicator_size, bright_color);
-                break;
-        }
-}
-
 void tron_render(void) {
-        /* Simple full redraw - draw every cell based on grid state */
+        /* Full redraw - draw everything every frame */
         for (int y = 0; y < GRID_HEIGHT; y++) {
                 for (int x = 0; x < GRID_WIDTH; x++) {
                         uint32_t color = BACKGROUND_COLOR;
 
-                        /* Determine color based on cell content */
+                        /* Check trail */
                         if (game.grid[y][x] == 1) {
                                 color = TRAIL_COLOR_P1;
                         } else if (game.grid[y][x] == 2) {
                                 color = TRAIL_COLOR_P2;
                         }
 
-                        /* Draw the cell */
+                        /* Check players - override trail color */
+                        if (game.player1.alive && x == game.player1.x &&
+                            y == game.player1.y) {
+                                color = PLAYER1_COLOR;
+                        } else if (game.player2.alive && x == game.player2.x &&
+                                   y == game.player2.y) {
+                                color = PLAYER2_COLOR;
+                        }
+
+                        /* Draw cell */
                         syscall_draw_rect(x * CELL_SIZE, y * CELL_SIZE,
                                           CELL_SIZE, CELL_SIZE, color);
                 }
-        }
-
-        /* Draw players with directional indicators on top */
-        if (game.player1.alive) {
-                draw_player_with_direction(game.player1.x, game.player1.y,
-                                           PLAYER1_COLOR, game.player1.dir);
-        }
-
-        if (game.player2.alive) {
-                draw_player_with_direction(game.player2.x, game.player2.y,
-                                           PLAYER2_COLOR, game.player2.dir);
         }
 }
 
@@ -276,6 +234,20 @@ void tron_show_menu(void) {
 }
 
 void tron_game(void) {
+        /* Get screen resolution */
+        uint32_t screen_width, screen_height;
+        syscall_get_resolution(&screen_width, &screen_height);
+
+        /* Calculate grid dimensions to fill screen */
+        GRID_WIDTH  = screen_width / CELL_SIZE;
+        GRID_HEIGHT = screen_height / CELL_SIZE;
+
+        /* Clamp to max values */
+        if (GRID_WIDTH > MAX_GRID_WIDTH)
+                GRID_WIDTH = MAX_GRID_WIDTH;
+        if (GRID_HEIGHT > MAX_GRID_HEIGHT)
+                GRID_HEIGHT = MAX_GRID_HEIGHT;
+
         /* Show menu and wait for start */
         tron_show_menu();
 
@@ -283,8 +255,8 @@ void tron_game(void) {
         tron_init();
 
         /* Variables for game timing */
-        uint64_t last_update  = syscall_get_ticks();
-        uint8_t frame_counter = 0;
+        uint64_t delay_counter   = 0;
+        uint64_t update_interval = 200000; /* Adjust this for speed */
 
         /* Initial render - draw the starting state */
         tron_render();
@@ -304,18 +276,16 @@ void tron_game(void) {
                         tron_handle_input(c);
                 }
 
-                /* Automatic movement - players move constantly */
-                uint64_t now = syscall_get_ticks();
-                if (now - last_update >= GAME_SPEED_TICKS) {
+                /* Simple delay counter for movement timing */
+                delay_counter++;
+                if (delay_counter >= update_interval) {
+                        delay_counter = 0;
+
                         /* Update player positions (automatic movement) */
                         tron_update();
 
                         /* Render the new state */
                         tron_render();
-
-                        /* Update timing */
-                        last_update = now;
-                        frame_counter++;
                 }
         }
 
@@ -332,7 +302,6 @@ void tron_game(void) {
                 printf("  Player %d wins!\n\n", game.winner);
         }
 
-        printf("  Total frames: %d\n\n", frame_counter);
         printf("  Press any key to return to shell...\n");
 
         /* Wait for keypress */
