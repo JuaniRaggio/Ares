@@ -218,8 +218,5 @@ haltcpu:
 	hlt
 	ret
 
-
-
-SECTION .bss
-	aux resq 1
-	regs: resb regs_size
+SECTION .rodata
+	userland equ 0x400000
