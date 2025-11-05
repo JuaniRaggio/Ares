@@ -7,7 +7,7 @@ MODULE_ELF=0000-userCodeModule.elf
 SOURCES=$(wildcard [^_]*.c) $(wildcard src/*.c) $(wildcard libc/src/*.c)
 
 # Fuentes ASM
-ASM_SOURCES=asm/syscall.asm asm/usr_lib.asm
+ASM_SOURCES=asm/syscall.asm
 ASM_OBJECTS=$(ASM_SOURCES:.asm=.o)
 
 INCLUDE_FLAGS=-Ilibc/include -Iinclude
