@@ -66,7 +66,6 @@ static inline void restore_cursor() {
         gfxCursorY = 0;
 }
 
-
 int main() {
         video_init();
         load_idt();

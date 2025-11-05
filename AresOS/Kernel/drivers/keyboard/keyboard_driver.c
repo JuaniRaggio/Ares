@@ -87,7 +87,7 @@ void capture_registers(uint64_t *stack_ptr) {
          * [4] = r11, [5] = r10, [6] = r9, [7] = r8,
          * [8] = rsi, [9] = rdi, [10] = rbp, [11] = rdx,
          * [12] = rcx, [13] = rbx, [14] = rax
-         * After pushState stack: RIP, CS, RFLAGS, RSP, SS
+         * After pushState, CPU pushes: RIP, CS, RFLAGS, RSP, SS
          */
 
         saved_regs.r15 = stack_ptr[0];
@@ -106,7 +106,12 @@ void capture_registers(uint64_t *stack_ptr) {
         saved_regs.rbx = stack_ptr[13];
         saved_regs.rax = stack_ptr[14];
 
-        /* RIP and RSP are in the interrupt stack frame */
-        saved_regs.rip = stack_ptr[15]; // RIP saved by interrupt
-        saved_regs.rsp = stack_ptr[18]; // RSP saved by interrupt
+        /* Registers saved by CPU in interrupt stack frame */
+        saved_regs.rip    = stack_ptr[15]; // RIP
+        saved_regs.cs     = stack_ptr[16]; // CS
+        saved_regs.rflags = stack_ptr[17]; // RFLAGS
+        saved_regs.rsp    = stack_ptr[18]; // RSP
+        saved_regs.ss     = stack_ptr[19]; // SS
+
+        ncPrint("\n[Registers captured with Ctrl+R]\n", VGA_GREEN);
 }
