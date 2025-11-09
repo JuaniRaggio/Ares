@@ -1,7 +1,5 @@
 #include <commands.h>
 #include <shell.h>
-#include <status_codes.h>
-#include <stdio.h>
 
 extern shell_attributes shell_status;
 

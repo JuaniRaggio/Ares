@@ -3,6 +3,7 @@
 #include <configuration.h>
 #include <lib.h>
 #include <regs.h>
+#include <status_codes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <syscalls.h>

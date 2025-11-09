@@ -81,37 +81,30 @@ uint8_t buffer_next() {
 }
 
 void capture_registers(uint64_t *stack_ptr) {
-        /*
-         * Stack layout (from lower to higher addresses):
-         * [0] = r15, [1] = r14, [2] = r13, [3] = r12,
-         * [4] = r11, [5] = r10, [6] = r9, [7] = r8,
-         * [8] = rsi, [9] = rdi, [10] = rbp, [11] = rdx,
-         * [12] = rcx, [13] = rbx, [14] = rax
-         * After pushState, CPU pushes: RIP, CS, RFLAGS, RSP, SS
-         */
 
-        saved_regs.r15 = stack_ptr[0];
-        saved_regs.r14 = stack_ptr[1];
-        saved_regs.r13 = stack_ptr[2];
-        saved_regs.r12 = stack_ptr[3];
-        saved_regs.r11 = stack_ptr[4];
-        saved_regs.r10 = stack_ptr[5];
-        saved_regs.r9  = stack_ptr[6];
-        saved_regs.r8  = stack_ptr[7];
-        saved_regs.rsi = stack_ptr[8];
-        saved_regs.rdi = stack_ptr[9];
-        saved_regs.rbp = stack_ptr[10];
-        saved_regs.rdx = stack_ptr[11];
-        saved_regs.rcx = stack_ptr[12];
-        saved_regs.rbx = stack_ptr[13];
-        saved_regs.rax = stack_ptr[14];
+        _register_snapshot(stack_ptr);
 
-        /* Registers saved by CPU in interrupt stack frame */
-        saved_regs.rip    = stack_ptr[15]; // RIP
-        saved_regs.cs     = stack_ptr[16]; // CS
-        saved_regs.rflags = stack_ptr[17]; // RFLAGS
-        saved_regs.rsp    = stack_ptr[18]; // RSP
-        saved_regs.ss     = stack_ptr[19]; // SS
+        // saved_regs.r15 = stack_ptr[0];
+        // saved_regs.r14 = stack_ptr[1];
+        // saved_regs.r13 = stack_ptr[2];
+        // saved_regs.r12 = stack_ptr[3];
+        // saved_regs.r11 = stack_ptr[4];
+        // saved_regs.r10 = stack_ptr[5];
+        // saved_regs.r9  = stack_ptr[6];
+        // saved_regs.r8  = stack_ptr[7];
+        // saved_regs.rsi = stack_ptr[8];
+        // saved_regs.rdi = stack_ptr[9];
+        // saved_regs.rbp = stack_ptr[10];
+        // saved_regs.rdx = stack_ptr[11];
+        // saved_regs.rcx = stack_ptr[12];
+        // saved_regs.rbx = stack_ptr[13];
+        // saved_regs.rax = stack_ptr[14];
+        //
+        // saved_regs.rip    = stack_ptr[15]; // RIP
+        // saved_regs.cs     = stack_ptr[16]; // CS
+        // saved_regs.rflags = stack_ptr[17]; // RFLAGS
+        // saved_regs.rsp    = stack_ptr[18]; // RSP
+        // saved_regs.ss     = stack_ptr[19]; // SS
 
         ncPrint("\n[Registers captured with Ctrl+R]\n", VGA_GREEN);
 }

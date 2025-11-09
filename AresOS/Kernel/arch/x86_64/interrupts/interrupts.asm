@@ -100,10 +100,9 @@ SECTION .text
 
 
 %macro exceptionHandler 1
-        cli
+        _cli
         pushState
 
-        ; Guardar registros de propósito general directamente
         mov QWORD [regs + _rax], rax
         mov QWORD [regs + _rbx], rbx
         mov QWORD [regs + _rcx], rcx
@@ -120,8 +119,6 @@ SECTION .text
         mov QWORD [regs + _r14], r14
         mov QWORD [regs + _r15], r15
 
-        ; Guardar registros guardados por la CPU (RIP, CS, RFLAGS, RSP, SS)
-        ; Estos están en el stack porque la CPU los pushea automáticamente
         mov rax, QWORD [rsp + 15*8]
         mov QWORD [regs + _rip], rax
         mov rax, QWORD [rsp + 16*8]
@@ -145,7 +142,7 @@ SECTION .text
         mov rax, userland
         mov [rsp], rax               ; PISO la dirección de retorno
 
-        sti
+        _sti
         iretq
 %endmacro
 
