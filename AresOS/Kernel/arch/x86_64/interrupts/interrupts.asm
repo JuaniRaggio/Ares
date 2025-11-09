@@ -100,7 +100,7 @@ SECTION .text
 
 
 %macro exceptionHandler 1
-        _cli
+        cli
         pushState
 
         mov QWORD [regs_buffer + _rax], rax
@@ -142,7 +142,7 @@ SECTION .text
         mov rax, userland
         mov [rsp], rax               ; PISO la dirección de retorno
 
-        _sti
+        sti
         iretq
 %endmacro
 

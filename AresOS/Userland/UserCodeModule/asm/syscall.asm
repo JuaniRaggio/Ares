@@ -16,3 +16,5 @@ _syscall3:
 
 _syscall0:
     mov rax, rdi
+    syscall
+    ret
