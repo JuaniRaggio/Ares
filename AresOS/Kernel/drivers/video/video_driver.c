@@ -1,28 +1,30 @@
+#include <colors.h>
 #include <drivers/video_driver.h>
 
+/**
+ * VBE Mode Info Structure
+ * Contains video mode information provided by the bootloader
+ * Only includes fields actually used by the system
+ */
 struct vbe_mode_info_structure {
-        uint16_t attributes; // deprecated, only bit 7 should be of interest to
-        // you, and it indicates the mode supports a linear
-        // frame buffer.
-        uint8_t window_a;     // deprecated
-        uint8_t window_b;     // deprecated
-        uint16_t granularity; // deprecated; used while calculating bank numbers
+        uint16_t attributes;
+        uint8_t window_a;
+        uint8_t window_b;
+        uint16_t granularity;
         uint16_t window_size;
         uint16_t segment_a;
         uint16_t segment_b;
-        uint32_t win_func_ptr; // deprecated; used to switch banks from
-        // protected mode without returning to real mode
-        uint16_t pitch;  // number of bytes per horizontal line
-        uint16_t width;  // width in pixels
-        uint16_t height; // height in pixels
-        uint8_t w_char;  // unused...
-        uint8_t y_char;  // ...
+        uint32_t win_func_ptr;
+        uint16_t pitch;  // Bytes per horizontal line
+        uint16_t width;  // Screen width in pixels
+        uint16_t height; // Screen height in pixels
+        uint8_t w_char;
+        uint8_t y_char;
         uint8_t planes;
-        uint8_t bpp;   // bits per pixel in this mode
-        uint8_t banks; // deprecated; total number of banks in this mode
+        uint8_t bpp; // Bits per pixel
+        uint8_t banks;
         uint8_t memory_model;
-        uint8_t bank_size; // deprecated; size of a bank, almost always 64 KB
-        // but may be 16 KB...
+        uint8_t bank_size;
         uint8_t image_pages;
         uint8_t reserved0;
 
@@ -36,11 +38,9 @@ struct vbe_mode_info_structure {
         uint8_t reserved_position;
         uint8_t direct_color_attributes;
 
-        uint64_t framebuffer; // physical address of the linear frame buffer;
-        // write here to draw to the screen
+        uint64_t framebuffer; // Physical address of linear framebuffer
         uint32_t off_screen_mem_off;
-        uint16_t off_screen_mem_size; // size of memory in the framebuffer but
-        // not being displayed on the screen
+        uint16_t off_screen_mem_size;
         uint8_t reserved1[206];
 } __attribute__((packed));
 
@@ -48,9 +48,9 @@ typedef struct vbe_mode_info_structure *VBEInfoPtr;
 
 VBEInfoPtr VBE_mode_info = (VBEInfoPtr)0x0000000000005C00;
 
-// ------------------------------------------------------------
-// Variables globales
-// ------------------------------------------------------------
+/**
+ * Global video state variables
+ */
 uint8_t videoMode      = 0;
 uint32_t *framebuffer  = 0;
 uint8_t *videoTextBase = (uint8_t *)VIDEO_ADDR_TEXT;
@@ -73,9 +73,10 @@ uint32_t screenHeight = SCREEN_HEIGHT;
 uint8_t bytesPerPixel = 4;
 uint8_t fontScale     = 1;
 
-// ------------------------------------------------------------
-// Inicialización del video
-// ------------------------------------------------------------
+/**
+ * Initialize video subsystem
+ * Sets up framebuffer and screen parameters based on VBE mode info
+ */
 void video_init(void) {
         if (VBE_mode_info->framebuffer != 0 && VBE_mode_info->width > 0 &&
             VBE_mode_info->height > 0) {
@@ -92,12 +93,15 @@ void video_init(void) {
         registerFont(&font_ubuntu_mono);
         setFontByName("Ubuntu Mono");
 
-        clearScreen(0x000000);
+        clearScreen(BLACK);
 }
 
-// ------------------------------------------------------------
-// Dibuja un píxel en coordenadas (x, y)
-// ------------------------------------------------------------
+/**
+ * Draw a pixel at coordinates (x, y)
+ * @param x X coordinate
+ * @param y Y coordinate
+ * @param hexColor Color in RGB format (0xRRGGBB)
+ */
 void putPixel(uint64_t x, uint64_t y, uint32_t hexColor) {
         uint8_t *framebuffer = (uint8_t *)VBE_mode_info->framebuffer;
         uint64_t offset =
@@ -115,9 +119,14 @@ void putMultPixel(uint32_t hexColor, uint64_t x, uint64_t y, int mult) {
         }
 }
 
-// ------------------------------------------------------------
-// Dibuja un carácter usando la fuente bitmap
-// ------------------------------------------------------------
+/**
+ * Draw a character using bitmap font
+ * @param c Character to draw
+ * @param x X coordinate
+ * @param y Y coordinate
+ * @param color Character color in RGB format
+ * @param font Pointer to bitmap font structure
+ */
 void drawChar(char c, int x, int y, uint32_t color, const bmp_font_t *font) {
         if (font == NULL)
                 return;
@@ -140,31 +149,34 @@ void drawChar(char c, int x, int y, uint32_t color, const bmp_font_t *font) {
         }
 }
 
-// ------------------------------------------------------------
-// Conversión de color VGA (4 bits) a RGB
-// ------------------------------------------------------------
+/**
+ * Convert VGA color (4-bit) to RGB
+ * @param color VGA color code
+ * @return RGB color value (0xRRGGBB)
+ */
 uint32_t vgaToRGB(uint8_t color) {
         switch (color & 0x0F) {
         case 0x00:
-                return 0x000000; // negro
+                return 0x000000; // Black
         case 0x01:
-                return 0x0000FF; // azul
+                return 0x0000FF; // Blue
         case 0x02:
-                return 0x00FF00; // verde
+                return 0x00FF00; // Green
         case 0x04:
-                return 0xFF0000; // rojo
+                return 0xFF0000; // Red
         case 0x07:
-                return 0xC0C0C0; // gris
+                return 0xC0C0C0; // Gray
         case 0x0F:
-                return 0xFFFFFF; // blanco
+                return 0xFFFFFF; // White
         default:
                 return 0xAAAAAA;
         }
 }
 
-// ------------------------------------------------------------
-// Limpia toda la pantalla con un color
-// ------------------------------------------------------------
+/**
+ * Clear entire screen with a specific color
+ * @param color RGB color value (0xRRGGBB)
+ */
 void clearScreen(uint32_t color) {
         uint32_t pitch = VBE_mode_info->pitch;
 
@@ -180,9 +192,10 @@ void clearScreen(uint32_t color) {
         }
 }
 
-// ------------------------------------------------------------
-// Dibuja un patrón de prueba (degradé)
-// ------------------------------------------------------------
+/**
+ * Draw a test pattern (gradient)
+ * Used for debugging and display testing
+ */
 void drawTestPattern(void) {
         uint32_t pitch = VBE_mode_info->pitch;
         uint8_t *base  = (uint8_t *)(uint64_t)VBE_mode_info->framebuffer;
@@ -260,9 +273,14 @@ void screen_buffer_redraw(void) {
         }
 }
 
-// ------------------------------------------------------------
-// Dibuja un rectángulo relleno
-// ------------------------------------------------------------
+/**
+ * Draw a filled rectangle
+ * @param x X coordinate of top-left corner
+ * @param y Y coordinate of top-left corner
+ * @param width Rectangle width in pixels
+ * @param height Rectangle height in pixels
+ * @param color Fill color in RGB format (0xRRGGBB)
+ */
 void drawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
               uint32_t color) {
         for (uint16_t i = 0; i < height; i++) {

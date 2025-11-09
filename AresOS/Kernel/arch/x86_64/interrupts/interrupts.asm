@@ -85,8 +85,8 @@ SECTION .text
 %macro irqHandlerMaster 1
 	pushState
 
-	mov rdi, %1 ; pasaje de parametro
-	mov rsi, rsp ; pasar el stack pointer para captura de registros
+	mov rdi, %1 ; parameter passing
+	mov rsi, rsp ; pass stack pointer for register capture
 	call irqDispatcher
 
 	; signal pic EOI (End of Interrupt)
@@ -103,23 +103,23 @@ SECTION .text
         cli
         pushState
 
-        ; Copiar registros del stack a regs_buffer de forma segura
-        mov rsi, rsp                ; Origen = stack
-        lea rdi, [regs_buffer]      ; Destino = buffer
-        mov rcx, 20                 ; 20 registros (qwords)
-        rep movsq                   ; Copiar eficientemente
+        ; Copy registers from stack to regs_buffer safely
+        mov rsi, rsp                ; Source = stack
+        lea rdi, [regs_buffer]      ; Destination = buffer
+        mov rcx, 20                 ; 20 registers (qwords)
+        rep movsq                   ; Copy efficiently
 
-        ; Llamar a exceptionDispatcher
-        mov rdi, %1                 ; Número de excepción
-        lea rsi, [regs_buffer]      ; Puntero a la copia segura
+        ; Call exceptionDispatcher
+        mov rdi, %1                 ; Exception number
+        lea rsi, [regs_buffer]      ; Pointer to safe copy
 
         call exceptionDispatcher
 
         popState
         call getStackBase
-        mov [rsp+24], rax            ; El StackBase
+        mov [rsp+24], rax            ; The StackBase
         mov rax, userland
-        mov [rsp], rax               ; PISO la dirección de retorno
+        mov [rsp], rax               ; Overwrite return address
 
         sti
         iretq

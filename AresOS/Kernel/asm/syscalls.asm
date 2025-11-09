@@ -12,20 +12,20 @@ extern sys_write, sys_exit
 
 ; -------------------------------------------
 ; syscall_entry:
-;  Punto de entrada cuando el usuario ejecuta SYSCALL
-;  Convención de registros (x86_64):
-;    RAX = número de syscall
+;  Entry point when user executes SYSCALL
+;  Register convention (x86_64):
+;    RAX = syscall number
 ; -------------------------------------------
 
 syscall_entry:
-    swapgs                      ; cambiar a datos del kernel
-    mov r15, rsp                ; guardar user RSP temporalmente en r15
-    mov rsp, kernel_stack_top   ; cambiar a kernel stack
+    swapgs                      ; switch to kernel data
+    mov r15, rsp                ; save user RSP temporarily in r15
+    mov rsp, kernel_stack_top   ; switch to kernel stack
 
-    ; Armar el stack frame
-    push r15                    ; guardar user RSP
-    push rcx                    ; guardar user RIP (dirección de retorno)
-    push r11                    ; guardar user RFLAGS
+    ; Build stack frame
+    push r15                    ; save user RSP
+    push rcx                    ; save user RIP (return address)
+    push r11                    ; save user RFLAGS
 
     push rbx
     push rbp
@@ -33,37 +33,37 @@ syscall_entry:
     push r13
     push r14
 
-    ; syscall number está en RAX
+    ; syscall number is in RAX
     mov rbx, rax
 
-    ; Buscar la función en la tabla de syscalls
+    ; Look up function in syscalls table
     lea rcx, [rel syscalls_table]
-    shl rbx, 3                  ; rbx * 8 (cada puntero es 8 bytes)
+    shl rbx, 3                  ; rbx * 8 (each pointer is 8 bytes)
     add rcx, rbx
 
     mov rbx, [rcx]
     test rbx, rbx
     jz .unknown_syscall
 
-    ; Los argumentos ya están en RDI, RSI, RDX correctamente
-    ; Llamar a la función de syscall
+    ; Arguments are already in RDI, RSI, RDX correctly
+    ; Call syscall function
     call rbx
     jmp .done
 
 .unknown_syscall:
-    mov rax, -1                 ; retornar error
+    mov rax, -1                 ; return error
     jmp .done
 
 .done:
-    ; Restaurar registros en orden inverso
+    ; Restore registers in reverse order
     pop r14
     pop r13
     pop r12
     pop rbp
     pop rbx
-    pop r11                     ; restaurar user RFLAGS
-    pop rcx                     ; restaurar user RIP
-    pop rsp                     ; restaurar user RSP
+    pop r11                     ; restore user RFLAGS
+    pop rcx                     ; restore user RIP
+    pop rsp                     ; restore user RSP
 
     swapgs
-    sysretq                     ; retornar a user mode
+    sysretq                     ; return to user mode
