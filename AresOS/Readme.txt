@@ -1,31 +1,41 @@
-x64BareBones is a basic setup to develop operating systems for the Intel 64 bits architecture.
-
-The final goal of the project is to provide an entry point for a kernel and the possibility to load extra binary modules separated from the main kernel.
+Ares Recursive Experimental System - AresOS
+===============================================================================
 
 Environment setup:
-1- Install the following packages before building the Toolchain and Kernel:
+1. Install the following packages before building the Toolchain and Kernel:
 
-nasm qemu gcc make
+- nasm
+- qemu
+- gcc 
+- make
+- docker
 
-2- Build the Toolchain
+2. Download docker image
 
-Execute the following commands on the x64BareBones project directory:
+/Ares/AresOS
+> docker pull agodio/itba-so:2.0
 
-  user@linux:$ cd Toolchain
-  user@linux:$ make all
+3. Initialize container (inside the Ares/AresOS directory)
+/Ares/AresOS
+> docker run -d -v ${PWD}:/root --security-opt seccomp:unconfined -it \
+  --name ARES agodio/itba-so:2.0
 
-3- Build the Kernel
+4. We have both clean and build scripts for this project 
+(inside the Ares/AresOS directory)
 
-From the x64BareBones project directory run:
+- Cleanup:
+  /Ares/AresOS
+  > ./clean_in_container.sh ARES
 
-  user@linux:$ make all
+- Build:
+  /Ares/AresOS
+  > ./compile_in_container.sh ARES
 
-4- Run the kernel
+5. After building the project
+(inside the Ares/AresOS directory)
 
-From the x64BareBones project directory run:
+- Run:
+  /Ares/AresOS
+  > ./run.sh
 
-  user@linux:$ ./run.sh
-
-
-Author: Rodrigo Rearden (RowDaBoat)
-Collaborator: Augusto Nizzo McIntosh
+===============================================================================
