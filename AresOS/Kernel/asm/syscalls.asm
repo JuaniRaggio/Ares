@@ -67,3 +67,4 @@ syscall_entry:
 
     swapgs
     sysretq                     ; return to user mode
+
