@@ -17,7 +17,7 @@ The project demonstrates core operating system concepts including:
 
 ## Getting Started
 
-For detailed instructions on building and running the operating system, please refer to the [`readme.txt`](AresOS/readme.txt) file located in the `AresOS` directory.
+For detailed instructions on building and running the operating system, please refer to the [`Readme.txt`](AresOS/Readme.txt) file located in the `AresOS` directory.
 
 ## Development Environment Setup
 
