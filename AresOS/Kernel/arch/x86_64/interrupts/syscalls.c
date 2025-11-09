@@ -46,10 +46,12 @@ uint64_t sys_get_resolution(uint32_t *width, uint32_t *height) {
         return 0;
 }
 
-extern regs_snapshot_t get_register_snapshot(void);
-
-regs_snapshot_t sys_get_register_array(void) {
-        return get_register_snapshot();
+uint64_t sys_get_register_array(regs_snapshot_t *regs) {
+        if (regs == NULL) {
+                return 0;
+        }
+        *regs = saved_regs;
+        return 0;
 }
 
 uint64_t sys_set_font_size(uint8_t scale) {

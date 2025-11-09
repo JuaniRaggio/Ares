@@ -4,7 +4,6 @@ GLOBAL get_current_hour
 GLOBAL get_current_seconds
 GLOBAL get_input
 GLOBAL _load_idt_register
-GLOBAL get_register_snapshot
 
 struc regs
         _r15: resq 1
@@ -161,33 +160,7 @@ get_input:
     in al, 0x60
     ret
 
-get_register_snapshot:
-    mov qword [regs_snapshot + _r15], r15
-    mov qword [regs_snapshot + _r14], r14
-    mov qword [regs_snapshot + _r13], r13
-    mov qword [regs_snapshot + _r12], r12
-    mov qword [regs_snapshot + _r11], r11
-    mov qword [regs_snapshot + _r10], r10
-    mov qword [regs_snapshot + _r9], r9
-    mov qword [regs_snapshot + _r8], r8
-    mov qword [regs_snapshot + _rsi], rsi
-    mov qword [regs_snapshot + _rdi], rsi
-    mov qword [regs_snapshot + _rbp], rbp
-    mov qword [regs_snapshot + _rdx], rdx
-    mov qword [regs_snapshot + _rcx], rcx
-    mov qword [regs_snapshot + _rbx], rbx
-    mov qword [regs_snapshot + _rax], rax
-    mov qword [regs_snapshot + _rip], rip
-    mov qword [regs_snapshot + _cs], cs
-    mov qword [regs_snapshot + _rflags], rflags
-    mov qword [regs_snapshot + _rsp], rsp
-    mov qword [regs_snapshot + _ss], ss
-    ret
-
 _load_idt_register:
     ; RDI points to IDTR structure (limit + base address)
     lidt [rdi]
     ret
-
-section .bss
-    regs_snapshot resq 20

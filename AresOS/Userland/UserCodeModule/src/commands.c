@@ -25,7 +25,8 @@ int history_cmd(void) {
 }
 
 int print_info_reg(void) {
-        regs_snapshot_t = syscall_get_register_snapshot();
+        regs_snapshot_t regs;
+        uint64_t ret = syscall_get_register_snapshot(&regs);
         printf("===== Register snapshot: =====\n");
         printf("      RIP:    0x%x\n", regs.rip);
         printf("      RSP:    0x%x\n", regs.rsp);
@@ -47,7 +48,7 @@ int print_info_reg(void) {
         printf("      CS:     0x%x\n", regs.cs);
         printf("      SS:     0x%x\n", regs.ss);
         printf("      RFLAGS: 0x%x\n", regs.rflags);
-        return OK;
+        return ret;
 }
 
 int get_command_index(char *command) {

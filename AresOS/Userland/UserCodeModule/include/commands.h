@@ -227,7 +227,7 @@ static const command_t cursor_command = {
     .description = "Change cursor shape (block, hollow, line, underline)",
     .lambda =
         {
-            .execute.function = (void *)&cursor_cmd,
+            .execute.function = &cursor_cmd,
             .ftype            = function_t,
         },
 };
@@ -237,7 +237,7 @@ static const command_t tron_command = {
     .description = "Play the Tron game (WASD vs IJKL)",
     .lambda =
         {
-            .execute.supplier = (void *)&tron_cmd,
+            .execute.supplier = &tron_cmd,
             .ftype            = supplier_t,
         },
 };

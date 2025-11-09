@@ -14,8 +14,3 @@ _syscall3:
     mov rdx, rcx      ; arg3
     syscall
     ret
-
-_syscall0:
-    mov rax, SYS_GET_REGISTER_ARRAY
-    syscall
-    ret
