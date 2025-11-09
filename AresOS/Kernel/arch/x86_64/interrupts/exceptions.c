@@ -13,46 +13,16 @@ static void zero_division(regs_snapshot_t *regs);
 static void invalid_opcode(regs_snapshot_t *regs);
 static void print_registers(regs_snapshot_t *regs);
 
-void exceptionDispatcher(int exception, uint64_t *stack_frame) {
-        // Extraer registros del stack frame
-        // Stack layout después de pushState:
-        // [0-7]:   r15, [8-15]:  r14, [16-23]: r13, [24-31]: r12
-        // [32-39]: r11, [40-47]: r10, [48-55]: r9,  [56-63]: r8
-        // [64-71]: rsi, [72-79]: rdi, [80-87]: rbp, [88-95]: rdx
-        // [96-103]: rcx, [104-111]: rbx, [112-119]: rax
-        // [120-127]: RIP, [128-135]: CS, [136-143]: RFLAGS
-        // [144-151]: RSP, [152-159]: SS
-
-        regs_snapshot_t regs;
-        regs.r15    = stack_frame[0];
-        regs.r14    = stack_frame[1];
-        regs.r13    = stack_frame[2];
-        regs.r12    = stack_frame[3];
-        regs.r11    = stack_frame[4];
-        regs.r10    = stack_frame[5];
-        regs.r9     = stack_frame[6];
-        regs.r8     = stack_frame[7];
-        regs.rsi    = stack_frame[8];
-        regs.rdi    = stack_frame[9];
-        regs.rbp    = stack_frame[10];
-        regs.rdx    = stack_frame[11];
-        regs.rcx    = stack_frame[12];
-        regs.rbx    = stack_frame[13];
-        regs.rax    = stack_frame[14];
-        regs.rip    = stack_frame[15];
-        regs.cs     = stack_frame[16];
-        regs.rflags = stack_frame[17];
-        regs.rsp    = stack_frame[18];
-        regs.ss     = stack_frame[19];
-
-        saved_regs = regs;
+void exceptionDispatcher(int exception, regs_snapshot_t *regs) {
+        // Los registros ya fueron guardados en regs_buffer por el assembly
+        saved_regs = *regs;
 
         if (exception == ZERO_EXCEPTION_ID)
-                zero_division(&regs);
+                zero_division(regs);
         else if (exception == INVALID_OPCODE_ID)
-                invalid_opcode(&regs);
+                invalid_opcode(regs);
 
-        print_registers(&regs);
+        print_registers(regs);
 }
 
 static void zero_division(regs_snapshot_t *regs) {

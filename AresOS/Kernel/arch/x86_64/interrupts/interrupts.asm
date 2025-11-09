@@ -103,36 +103,36 @@ SECTION .text
         _cli
         pushState
 
-        mov QWORD [regs + _rax], rax
-        mov QWORD [regs + _rbx], rbx
-        mov QWORD [regs + _rcx], rcx
-        mov QWORD [regs + _rdx], rdx
-        mov QWORD [regs + _rbp], rbp
-        mov QWORD [regs + _rdi], rdi
-        mov QWORD [regs + _rsi], rsi
-        mov QWORD [regs + _r8], r8
-        mov QWORD [regs + _r9], r9
-        mov QWORD [regs + _r10], r10
-        mov QWORD [regs + _r11], r11
-        mov QWORD [regs + _r12], r12
-        mov QWORD [regs + _r13], r13
-        mov QWORD [regs + _r14], r14
-        mov QWORD [regs + _r15], r15
+        mov QWORD [regs_buffer + _rax], rax
+        mov QWORD [regs_buffer + _rbx], rbx
+        mov QWORD [regs_buffer + _rcx], rcx
+        mov QWORD [regs_buffer + _rdx], rdx
+        mov QWORD [regs_buffer + _rbp], rbp
+        mov QWORD [regs_buffer + _rdi], rdi
+        mov QWORD [regs_buffer + _rsi], rsi
+        mov QWORD [regs_buffer + _r8], r8
+        mov QWORD [regs_buffer + _r9], r9
+        mov QWORD [regs_buffer + _r10], r10
+        mov QWORD [regs_buffer + _r11], r11
+        mov QWORD [regs_buffer + _r12], r12
+        mov QWORD [regs_buffer + _r13], r13
+        mov QWORD [regs_buffer + _r14], r14
+        mov QWORD [regs_buffer + _r15], r15
 
         mov rax, QWORD [rsp + 15*8]
-        mov QWORD [regs + _rip], rax
+        mov QWORD [regs_buffer + _rip], rax
         mov rax, QWORD [rsp + 16*8]
-        mov QWORD [regs + _cs], rax
+        mov QWORD [regs_buffer + _cs], rax
         mov rax, QWORD [rsp + 17*8]
-        mov QWORD [regs + _rflags], rax
+        mov QWORD [regs_buffer + _rflags], rax
         mov rax, QWORD [rsp + 18*8]
-        mov QWORD [regs + _rsp], rax
+        mov QWORD [regs_buffer + _rsp], rax
         mov rax, QWORD [rsp + 19*8]
-        mov QWORD [regs + _ss], rax
+        mov QWORD [regs_buffer + _ss], rax
 
         ; Llamar a exceptionDispatcher
         mov rdi, %1                  ; Número de excepción
-        lea rsi, [regs]              ; Puntero a la struct de registros
+        lea rsi, [regs_buffer]       ; Puntero a la struct de registros
 
         call exceptionDispatcher
 
@@ -214,6 +214,9 @@ haltcpu:
 	cli
 	hlt
 	ret
+
+SECTION .bss
+regs_buffer: resb 160  ; Buffer para almacenar registros (20 registros x 8 bytes)
 
 SECTION .rodata
 	userland equ 0x400000
