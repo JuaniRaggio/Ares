@@ -14,7 +14,6 @@ static void invalid_opcode(regs_snapshot_t *regs);
 static void print_registers(regs_snapshot_t *regs);
 
 void exceptionDispatcher(int exception, regs_snapshot_t *regs) {
-        // Los registros ya fueron guardados en regs_buffer por el assembly
         saved_regs = *regs;
 
         if (exception == ZERO_EXCEPTION_ID)
@@ -113,10 +112,9 @@ static void print_registers(regs_snapshot_t *regs) {
         ncPrint("\nPress any key to continue...", VGA_CYAN);
 
         char buffer;
-        picMasterMask(0xFD); // Habilitar solo teclado temporalmente
+        picMasterMask(PIC_MASK_KBD_ONLY);
         _sti();
         while (sys_read(STDIN, &buffer, 1) == 0)
                 ;
-        picMasterMask(
-            0xFC); // Restaurar: timer (IRQ0) y teclado (IRQ1) habilitados
+        picMasterMask(PIC_MASK_TIMER_KBD);
 }
