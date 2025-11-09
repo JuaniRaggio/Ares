@@ -139,13 +139,13 @@ static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
         }
 }
 
-// static void erase_cursor(int x, int y) {
-//         uint8_t scale = shell_status.magnification;
-//         int px        = x * shell_status.font_width * scale;
-//         int py        = y * shell_status.font_height * scale;
-//         syscall_draw_rect(px, py, shell_status.font_width * scale,
-//                           shell_status.font_height * scale, BLACK);
-// }
+static void erase_cursor(int x, int y) {
+        uint8_t scale = shell_status.magnification;
+        int px        = x * shell_status.font_width * scale;
+        int py        = y * shell_status.font_height * scale;
+        syscall_draw_rect(px, py, shell_status.font_width * scale,
+                          shell_status.font_height * scale, BLACK);
+}
 
 int shell_read_line(char input[][256], int max_params) {
         char buffer[MAX_CHARS];
@@ -165,12 +165,17 @@ int shell_read_line(char input[][256], int max_params) {
 
                 if (c == 0) {
                         uint64_t now = syscall_get_ticks();
-                        if (now - last_blink > CURSOR_BLINK_TICKS &&
-                            !cursor_visible) {
-                                draw_cursor(shell_status.cursor.x,
-                                            shell_status.cursor.y, 1);
-                                cursor_visible = 1;
-                                last_blink     = now;
+                        if (now - last_blink > CURSOR_BLINK_TICKS) {
+                                if (cursor_visible) {
+                                        erase_cursor(shell_status.cursor.x,
+                                                     shell_status.cursor.y);
+                                        cursor_visible = 0;
+                                } else {
+                                        draw_cursor(shell_status.cursor.x,
+                                                    shell_status.cursor.y, 1);
+                                        cursor_visible = 1;
+                                }
+                                last_blink = now;
                         }
                         continue;
                 }
@@ -215,6 +220,10 @@ int shell_read_line(char input[][256], int max_params) {
 
                 if (c == '\b') {
                         if (buf_idx > 0) {
+                                if (cursor_visible) {
+                                        erase_cursor(shell_status.cursor.x,
+                                                     shell_status.cursor.y);
+                                }
                                 buf_idx--;
                                 putchar('\b');
                                 sync_cursor_pos();
@@ -227,6 +236,10 @@ int shell_read_line(char input[][256], int max_params) {
                 }
 
                 if (c == ' ' && buf_idx > 0) {
+                        if (cursor_visible) {
+                                erase_cursor(shell_status.cursor.x,
+                                             shell_status.cursor.y);
+                        }
                         buffer[buf_idx] = 0;
                         int j           = 0;
                         for (int i = 0; i <= buf_idx && j < MAX_CHARS;
