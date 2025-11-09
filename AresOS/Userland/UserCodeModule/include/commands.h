@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <syscalls.h>
+#include <tron.h>
 
 #define MAX_CHARS 256
 #define NULL 0
@@ -31,41 +32,47 @@ static const char *const wrong_params    = "Invalid number of parameters\n";
 
 /**
  * Displays list of available commands
+ * @return: status code
  */
-void help(void);
+int help(void);
 
 /**
  * Shows current system time
+ * @return: status code
  */
-void show_time(void);
+int show_time(void);
 
 /**
  * Clears the screen
+ * @return: status code
  */
-void clear_cmd(void);
+int clear_cmd(void);
 
 /**
  * Prints captured CPU register information
+ * @return: status code
  */
-void print_info_reg(void);
+int print_info_reg(void);
 
 /**
  * Shows manual for a specific command
  * @param command Command name
+ * @return: status code
  */
-void man(char *command);
+int man(char *command);
 
 /**
  * Prints memory dump from specified address
  * @param pos Memory address (as string)
+ * @return: status code
  */
-void print_mem(char *pos);
+int print_mem(char *pos);
 
 /**
  * Displays command history
- * @param history Array of command history
+ * @return: status code
  */
-void history_cmd(char **history);
+int history_cmd(void);
 
 /**
  * Gets the index of a command by name
@@ -91,8 +98,9 @@ int cursor_cmd(char *type);
 
 /**
  * Launches the Tron game
+ * @return: status code
  */
-void tron_cmd(void);
+int tron_cmd(void);
 
 typedef enum {
         supplier_t = 0,
@@ -128,7 +136,7 @@ static const command_t help_command = {
     .description = "List all available commands",
     .lambda =
         {
-            .execute.supplier = (void *)&help,
+            .execute.supplier = &help,
             .ftype            = supplier_t,
         },
 };
@@ -138,7 +146,7 @@ static const command_t man_command = {
     .description = "Show manual for a specific command",
     .lambda =
         {
-            .execute.function = (void *)&man,
+            .execute.function = &man,
             .ftype            = function_t,
         },
 };
@@ -148,7 +156,7 @@ static const command_t inforeg_command = {
     .description = "Display captured CPU registers",
     .lambda =
         {
-            .execute.supplier = (void *)&print_info_reg,
+            .execute.supplier = &print_info_reg,
             .ftype            = supplier_t,
         },
 };
@@ -158,7 +166,7 @@ static const command_t time_command = {
     .description = "Show system elapsed time",
     .lambda =
         {
-            .execute.supplier = (void *)&show_time,
+            .execute.supplier = &show_time,
             .ftype            = supplier_t,
         },
 };
@@ -168,7 +176,7 @@ static const command_t div_command = {
     .description = "Integer division of two numbers",
     .lambda =
         {
-            .execute.bi_function = (void *)&div_cmd,
+            .execute.bi_function = &div_cmd,
             .ftype               = bi_function_t,
         },
 };
@@ -178,7 +186,7 @@ static const command_t clear_command = {
     .description = "Clear the entire screen",
     .lambda =
         {
-            .execute.supplier = (void *)&clear_cmd,
+            .execute.supplier = &clear_cmd,
             .ftype            = supplier_t,
         },
 };
@@ -188,7 +196,7 @@ static const command_t print_mem_command = {
     .description = "Memory dump of 32 bytes from an address",
     .lambda =
         {
-            .execute.function = (void *)&print_mem,
+            .execute.function = &print_mem,
             .ftype            = function_t,
         },
 };
@@ -198,8 +206,8 @@ static const command_t history_command = {
     .description = "Show command history",
     .lambda =
         {
-            .execute.supplier = (void *)&history_cmd,
-            .ftype            = function_t,
+            .execute.supplier = &history_cmd,
+            .ftype            = supplier_t,
         },
 };
 

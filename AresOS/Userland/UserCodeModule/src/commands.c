@@ -1,53 +1,32 @@
-#include "lib.h"
-#include "syscalls.h"
 #include <commands.h>
-#include <configuration.h>
-#include <math.h>
 #include <shell.h>
+#include <status_codes.h>
 #include <stdio.h>
-#include <tron.h>
-
-typedef struct {
-        cursor_shape shape;
-        uint32_t color;
-        uint8_t border_width;
-        uint8_t line_width;
-        uint8_t underline_height;
-        uint8_t x, y;
-        uint8_t head, tail;
-        uint8_t focused;
-} shell_cursor;
-
-typedef struct {
-        uint8_t lastest_prompt_idx;
-        char user_input[3][256];
-        void *prompt_history;
-} prompt_data;
-
-typedef struct {
-        char buffer[1024 * 768];
-        uint8_t magnification;
-        float font_size;
-        uint32_t font_color;
-        uint32_t background_color;
-        prompt_data prompts;
-        shell_cursor cursor;
-} shell_attributes;
 
 extern shell_attributes shell_status;
 
-void history_cmd(char **history) {
-        int count = 0;
+int history_cmd(void) {
+        if (shell_status.prompts.lastest_prompt_idx == 0) {
+                printf("Empty history!\n");
+                return EMPTY;
+        }
         printf("Command history:\n");
-        for (int i = 0; i < HISTORY_SIZE && history[i][0] != 0; i++) {
-                printf("%d: %s\n", ++count, history[i]);
+        for (int i = 0; i < shell_status.prompts.lastest_prompt_idx; i++) {
+                printf("%s", shell_status.prompts.prompt_history[i]);
+                for (int j = 0; j < max_parameters; ++j) {
+                        if (shell_status.prompts.prompt_history[i].args[j] !=
+                            NULL) {
+                                printf(" %s",
+                                       shell_status.prompts.prompt_history[i]
+                                           .args[j]);
+                        }
+                }
+                putchar('\n');
         }
-        if (count == 0) {
-                printf("No commands in history\n");
-        }
+        return OK;
 }
 
-void print_info_reg(void) {
+int print_info_reg(void) {
         regs_snapshot_t regs;
         syscall_get_register_snapshot(&regs);
         printf("===== Register snapshot: =====\n");
@@ -71,6 +50,7 @@ void print_info_reg(void) {
         printf("      CS:     0x%x\n", regs.cs);
         printf("      SS:     0x%x\n", regs.ss);
         printf("      RFLAGS: 0x%x\n", regs.rflags);
+        return OK;
 }
 
 int get_command_index(char *command) {
@@ -82,12 +62,13 @@ int get_command_index(char *command) {
         return INVALID_COMMAND_NAME;
 }
 
-void help(void) {
+int help(void) {
         printf("Available commands:\n");
         for (int i = 0; i < QTY_COMMANDS && commands[i]->name != 0; i++) {
                 printf("  %s: %s\n", commands[i]->name,
                        commands[i]->description);
         }
+        return OK;
 }
 
 int div_cmd(char *num_str, char *div_str) {
@@ -97,7 +78,7 @@ int div_cmd(char *num_str, char *div_str) {
         for (int i = 0; div_str[i] >= '0' && div_str[i] <= '9'; i++)
                 div = div * 10 + (div_str[i] - '0');
         printf("%d / %d = %d\n", num, div, num / div);
-        return 1;
+        return OK;
 }
 
 s_time get_elapsed_time(s_time current_time) {
@@ -129,7 +110,7 @@ s_time get_elapsed_time(s_time current_time) {
         return elapsed;
 }
 
-void show_time(void) {
+int show_time(void) {
         s_time time;
         syscall_get_time(&time);
         printf("Current time: %d:%d:%d\n", time.hours, time.minutes,
@@ -138,13 +119,15 @@ void show_time(void) {
         s_time elapsed = get_elapsed_time(time);
         printf("Time elapsed: %d:%d:%d\n", elapsed.hours, elapsed.minutes,
                elapsed.seconds);
+        return OK;
 }
 
-void clear_cmd(void) {
+int clear_cmd(void) {
         syscall_clear();
+        return OK;
 }
 
-void print_mem(char *pos_str) {
+int print_mem(char *pos_str) {
         uint64_t addr = 0;
 
         if (pos_str[0] == '0' && (pos_str[1] == 'x' || pos_str[1] == 'X'))
@@ -170,17 +153,19 @@ void print_mem(char *pos_str) {
                 if ((i + 1) % 8 == 0)
                         printf("\n");
         }
+        return OK;
 }
 
-void man(char *command) {
+int man(char *command) {
         int idx = get_command_index(command);
-        if (idx != -1) {
-                printf("Command: %s\n", commands[idx]->name);
-                printf("Description: %s\n", commands[idx]->description);
-                printf("Parameters: %d\n", commands[idx]->lambda.ftype);
-        } else {
+        if (idx == -1) {
                 printf(invalid_command);
+                return INVALID_INPUT;
         }
+        printf("Command: %s\n", commands[idx]->name);
+        printf("Description: %s\n", commands[idx]->description);
+        printf("Parameters: %d\n", commands[idx]->lambda.ftype);
+        return OK;
 }
 
 int cursor_cmd(char *type) {
@@ -200,11 +185,12 @@ int cursor_cmd(char *type) {
                 printf("Invalid cursor type or not supported yet. Current "
                        "options: block, hollow, line, underline\nTo add a new "
                        "cursor type, contact support@ares.com");
-                return 0;
+                return INVALID_INPUT;
         }
-        return 1;
+        return OK;
 }
 
-void tron_cmd(void) {
+int tron_cmd(void) {
         tron_game();
+        return OK;
 }

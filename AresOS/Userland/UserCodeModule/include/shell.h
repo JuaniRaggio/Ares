@@ -1,5 +1,7 @@
 #pragma once
 
+#include <commands.h>
+#include <configuration.h>
 #include <lib.h>
 #include <stdint.h>
 
@@ -10,6 +12,34 @@
 #define ZOOM_OUT_CHAR 0x02
 #define MIN_FONT_SCALE 1
 #define MAX_FONT_SCALE 5
+
+typedef struct {
+        cursor_shape shape;
+        uint32_t color;
+        uint8_t border_width;
+        uint8_t line_width;
+        uint8_t underline_height;
+        uint8_t x, y;
+        uint8_t head, tail;
+        uint8_t focused;
+} shell_cursor;
+
+typedef struct {
+        uint8_t lastest_prompt_idx;
+        char user_input[max_parameters][MAX_CHARS];
+        composed_command_t prompt_history[HISTORY_SIZE];
+} prompt_data;
+
+typedef struct {
+        char buffer[SCREEN_SIZE];
+        uint8_t magnification;
+        uint8_t font_height;
+        uint8_t font_width;
+        uint32_t font_color;
+        uint32_t background_color;
+        prompt_data prompts;
+        shell_cursor cursor;
+} shell_attributes;
 
 /**
  * Displays the shell input prompt
@@ -33,7 +63,7 @@ int shell(void);
  * @param max_params Maximum number of parameters
  * @return Number of parameters read
  */
-int shell_read_line(char input[][256], int max_params);
+int shell_read_line(char input[][MAX_CHARS], int max_params);
 
 /**
  * Gets the time when the shell was started

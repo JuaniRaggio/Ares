@@ -1,12 +1,11 @@
-#include "colors.h"
-#include "time.h"
-#include <core/moduleLoader.h>
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
 #include <idtLoader.h>
 #include <interrupts.h>
 #include <lib.h>
+#include <moduleLoader.h>
 #include <naiveConsole.h>
+#include <time.h>
 #include <video_driver.h>
 
 #define ever (;;)

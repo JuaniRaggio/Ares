@@ -2,14 +2,11 @@
 
 #include <stdint.h>
 
-// #define DEFAULT_PROMPT_S 32
 #define DEFAULT_HISTORY_S 10
-// #define PROMPT_SIZE DEFAULT_PROMPT_S
 #define HISTORY_SIZE DEFAULT_HISTORY_S
 
 #define SCREEN_WIDTH 1024
 #define SCREEN_HEIGHT 768
-// #define CELL_SIZE 10
 #define SCREEN_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT)
 
 #define BLACK 0x0

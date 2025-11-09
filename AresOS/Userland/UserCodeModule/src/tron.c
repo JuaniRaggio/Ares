@@ -1,3 +1,4 @@
+#include <status_codes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <syscalls.h>
@@ -234,7 +235,7 @@ void tron_show_menu(void) {
         }
 }
 
-void tron_game(void) {
+int tron_game(void) {
         /* Get screen resolution */
         uint32_t screen_width, screen_height;
         syscall_get_resolution(&screen_width, &screen_height);
@@ -271,7 +272,7 @@ void tron_game(void) {
                 if (c != 0) {
                         if (c == 'q' || c == 'Q') {
                                 syscall_clear();
-                                return;
+                                return ABORT;
                         }
                         /* Change direction based on input */
                         tron_handle_input(c);
@@ -311,4 +312,5 @@ void tron_game(void) {
         getchar();
 
         syscall_clear();
+        return OK;
 }

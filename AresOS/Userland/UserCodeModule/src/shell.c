@@ -1,13 +1,11 @@
-#include "configuration.h"
-#include "lib.h"
 #include <commands.h>
+#include <lib.h>
 #include <shell.h>
+#include <status_codes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <syscalls.h>
 
-#define INVALID_INPUT 0
-#define VALID_INPUT 1
 #define TRUE 1
 #define FALSE !TRUE
 #define for_ever for (;;)
@@ -50,36 +48,11 @@ static void sync_cursor_pos(void);
 static uint8_t lastest_prompt_idx();
 static void add_to_history(const command_t *command, uint32_t params);
 
-typedef struct {
-        cursor_shape shape;
-        uint32_t color;
-        uint8_t border_width;
-        uint8_t line_width;
-        uint8_t underline_height;
-        uint8_t x, y;
-        uint8_t head, tail;
-        uint8_t focused;
-} shell_cursor;
-
-typedef struct {
-        uint8_t lastest_prompt_idx;
-        char user_input[max_parameters][MAX_CHARS];
-        composed_command_t prompt_history[HISTORY_SIZE];
-} prompt_data;
-
-typedef struct {
-        char buffer[SCREEN_SIZE];
-        uint8_t magnification;
-        float font_size;
-        uint32_t font_color;
-        uint32_t background_color;
-        prompt_data prompts;
-        shell_cursor cursor;
-} shell_attributes;
-
 shell_attributes shell_status = {
     .magnification    = MIN_FONT_SCALE,
     .prompts          = (prompt_data){0},
+    .font_height      = FONT_HEIGHT,
+    .font_width       = FONT_WIDTH,
     .font_color       = default_font_color,
     .background_color = default_background_color,
     .cursor =
@@ -122,9 +95,9 @@ static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
 
         uint8_t scale = shell_status.magnification;
 
-        uint16_t px           = x * FONT_WIDTH * scale;
-        uint16_t py           = y * FONT_HEIGHT * scale;
-        uint32_t cursor_color = WHITE;
+        uint16_t px           = x * shell_status.font_width * scale;
+        uint16_t py           = y * shell_status.font_height * scale;
+        uint32_t cursor_color = shell_status.cursor.color;
 
         uint8_t border_width     = shell_status.cursor.border_width * scale;
         uint8_t line_width       = shell_status.cursor.line_width * scale;
@@ -132,40 +105,46 @@ static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
 
         switch (shell_status.cursor.shape) {
         case block:
-                syscall_draw_rect(px, py, FONT_WIDTH * scale,
-                                  FONT_HEIGHT * scale, cursor_color);
+                syscall_draw_rect(px, py, shell_status.font_width * scale,
+                                  shell_status.font_height * scale,
+                                  cursor_color);
                 break;
         case hollow:
-                syscall_draw_rect(px, py, FONT_WIDTH * scale, border_width,
+                syscall_draw_rect(px, py, shell_status.font_width * scale,
+                                  border_width, cursor_color);
+                syscall_draw_rect(
+                    px, py + shell_status.font_height * scale - border_width,
+                    shell_status.font_width * scale, border_width,
+                    cursor_color);
+                syscall_draw_rect(px, py, border_width,
+                                  shell_status.font_height * scale,
                                   cursor_color);
-                syscall_draw_rect(px, py + FONT_HEIGHT * scale - border_width,
-                                  FONT_WIDTH * scale, border_width,
-                                  cursor_color);
-                syscall_draw_rect(px, py, border_width, FONT_HEIGHT * scale,
-                                  cursor_color);
-                syscall_draw_rect(px + FONT_WIDTH * scale - border_width, py,
-                                  border_width, FONT_HEIGHT * scale,
-                                  cursor_color);
+                syscall_draw_rect(
+                    px + shell_status.font_width * scale - border_width, py,
+                    border_width, shell_status.font_height * scale,
+                    cursor_color);
                 break;
         case line:
-                syscall_draw_rect(px, py, line_width, FONT_HEIGHT * scale,
+                syscall_draw_rect(px, py, line_width,
+                                  shell_status.font_height * scale,
                                   cursor_color);
                 break;
         case underline:
-                syscall_draw_rect(
-                    px, py + FONT_HEIGHT * scale - underline_height,
-                    FONT_WIDTH * scale, underline_height, cursor_color);
+                syscall_draw_rect(px,
+                                  py + shell_status.font_height * scale -
+                                      underline_height,
+                                  shell_status.font_width * scale,
+                                  underline_height, cursor_color);
                 break;
         }
 }
 
 static void erase_cursor(int x, int y) {
         uint8_t scale = shell_status.magnification;
-
-        int px = x * FONT_WIDTH * scale;
-        int py = y * FONT_HEIGHT * scale;
-        syscall_draw_rect(px, py, FONT_WIDTH * scale, FONT_HEIGHT * scale,
-                          BLACK);
+        int px        = x * shell_status.font_width * scale;
+        int py        = y * shell_status.font_height * scale;
+        syscall_draw_rect(px, py, shell_status.font_width * scale,
+                          shell_status.font_height * scale, BLACK);
 }
 
 int shell_read_line(char input[][256], int max_params) {
@@ -354,5 +333,5 @@ int shell(void) {
                         break;
                 }
         }
-        return 0;
+        return OK;
 }
