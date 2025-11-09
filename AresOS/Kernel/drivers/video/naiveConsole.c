@@ -115,14 +115,13 @@ void ncPrintChar(char c, uint8_t color) {
         if (videoMode == 0)
                 ncPrintCharText(c, color);
         else {
-                screen_buffer_add_char(c);
-
                 uint32_t rgb     = vgaToRGB(color);
                 bmp_font_t *font = getFont();
                 if (font == NULL)
                         return;
 
                 if (c == '\n') {
+                        screen_buffer_add_char(c);
                         gfxCursorX = 0;
                         gfxCursorY += font->height * fontScale;
                         if (gfxCursorY + font->height * fontScale >=
@@ -134,6 +133,17 @@ void ncPrintChar(char c, uint8_t color) {
                         return;
                 }
 
+                if (c == '\b') {
+                        if (gfxCursorX >= font->width * fontScale) {
+                                gfxCursorX -= font->width * fontScale;
+                                drawRect(gfxCursorX, gfxCursorY,
+                                         font->width * fontScale,
+                                         font->height * fontScale, 0x000000);
+                        }
+                        return;
+                }
+
+                screen_buffer_add_char(c);
                 drawChar(c, gfxCursorX, gfxCursorY, rgb, font);
                 gfxCursorX += font->width * fontScale;
                 if (gfxCursorX + font->width * fontScale >= SCREEN_WIDTH) {

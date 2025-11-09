@@ -27,7 +27,7 @@ static char ascii_table[][TABLE_SIZE] = {
         /* 0x0B */ '0',           // 0 (zero) pressed
         /* 0x0C */ '-',           // – pressed
         /* 0x0D */ '=',           // = pressed
-        /* 0x0E */ NON_PRINTABLE, // Backspace pressed (control char, optional)
+        /* 0x0E */ '\b',          // Backspace pressed
         /* 0x0F */ '\t',          // Tab pressed
         /* 0x10 */ 'q',           // Q pressed
         /* 0x11 */ 'w',           // W pressed
@@ -78,19 +78,19 @@ static char ascii_table[][TABLE_SIZE] = {
     {
         /* 0x00 */ NON_PRINTABLE,
         /* 0x01 */ NON_PRINTABLE,
-        /* 0x02 */ '!', // shift + 1 = !
-        /* 0x03 */ '@', // shift + 2 = @
-        /* 0x04 */ '#', // shift + 3 = #
-        /* 0x05 */ '$', // shift + 4 = $
-        /* 0x06 */ '%', // shift + 5 = %
-        /* 0x07 */ '^', // shift + 6 = ^
-        /* 0x08 */ '&', // shift + 7 = &
-        /* 0x09 */ '*', // shift + 8 = *
-        /* 0x0A */ '(', // shift + 9 = (
-        /* 0x0B */ ')', // shift + 0 = )
-        /* 0x0C */ '_', // shift + - = _
-        /* 0x0D */ '+', // shift + = = +
-        /* 0x0E */ NON_PRINTABLE,
+        /* 0x02 */ '!',  // shift + 1 = !
+        /* 0x03 */ '@',  // shift + 2 = @
+        /* 0x04 */ '#',  // shift + 3 = #
+        /* 0x05 */ '$',  // shift + 4 = $
+        /* 0x06 */ '%',  // shift + 5 = %
+        /* 0x07 */ '^',  // shift + 6 = ^
+        /* 0x08 */ '&',  // shift + 7 = &
+        /* 0x09 */ '*',  // shift + 8 = *
+        /* 0x0A */ '(',  // shift + 9 = (
+        /* 0x0B */ ')',  // shift + 0 = )
+        /* 0x0C */ '_',  // shift + - = _
+        /* 0x0D */ '+',  // shift + = = +
+        /* 0x0E */ '\b', // Backspace (same as without Shift)
         /* 0x0F */ '\t',
         /* 0x10 */ 'Q',
         /* 0x11 */ 'W',
