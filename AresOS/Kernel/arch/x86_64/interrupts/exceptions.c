@@ -44,67 +44,79 @@ static void print_registers(regs_snapshot_t *regs) {
 
         ncPrint("RAX: 0x", VGA_WHITE);
         ncPrintHex(regs->rax);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  RBX: 0x", VGA_WHITE);
         ncPrintHex(regs->rbx);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  RCX: 0x", VGA_WHITE);
         ncPrintHex(regs->rcx);
-        ncNewline();
+        ncPrint("\n", VGA_WHITE);
 
         ncPrint("RDX: 0x", VGA_WHITE);
         ncPrintHex(regs->rdx);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  RSI: 0x", VGA_WHITE);
         ncPrintHex(regs->rsi);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  RDI: 0x", VGA_WHITE);
         ncPrintHex(regs->rdi);
-        ncNewline();
+        ncPrint("\n", VGA_WHITE);
 
         ncPrint("RBP: 0x", VGA_WHITE);
         ncPrintHex(regs->rbp);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  RSP: 0x", VGA_WHITE);
         ncPrintHex(regs->rsp);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  RIP: 0x", VGA_WHITE);
         ncPrintHex(regs->rip);
-        ncNewline();
+        ncPrint("\n", VGA_WHITE);
 
         ncPrint("R8:  0x", VGA_WHITE);
         ncPrintHex(regs->r8);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  R9:  0x", VGA_WHITE);
         ncPrintHex(regs->r9);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  R10: 0x", VGA_WHITE);
         ncPrintHex(regs->r10);
-        ncNewline();
+        ncPrint("\n", VGA_WHITE);
 
         ncPrint("R11: 0x", VGA_WHITE);
         ncPrintHex(regs->r11);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  R12: 0x", VGA_WHITE);
         ncPrintHex(regs->r12);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  R13: 0x", VGA_WHITE);
         ncPrintHex(regs->r13);
-        ncNewline();
+        ncPrint("\n", VGA_WHITE);
 
         ncPrint("R14: 0x", VGA_WHITE);
         ncPrintHex(regs->r14);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  R15: 0x", VGA_WHITE);
         ncPrintHex(regs->r15);
-        ncNewline();
+        ncPrint("\n", VGA_WHITE);
 
         ncPrint("CS:     0x", VGA_WHITE);
         ncPrintHex(regs->cs);
+        ncPrint("\n", VGA_WHITE);
         ncPrint("  SS:     0x", VGA_WHITE);
         ncPrintHex(regs->ss);
-        ncNewline();
+        ncPrint("\n", VGA_WHITE);
 
         ncPrint("RFLAGS: 0x", VGA_WHITE);
         ncPrintHex(regs->rflags);
-        ncNewline();
+        ncPrint("\n", VGA_WHITE);
 
         ncPrint("\nPress any key to continue...", VGA_CYAN);
 
         char buffer;
-        picMasterMask(0xFD);
+        picMasterMask(0xFD); // Habilitar solo teclado temporalmente
         _sti();
         while (sys_read(STDIN, &buffer, 1) == 0)
                 ;
-        _cli();
-        picMasterMask(0xFF);
+        picMasterMask(
+            0xFC); // Restaurar: timer (IRQ0) y teclado (IRQ1) habilitados
 }
