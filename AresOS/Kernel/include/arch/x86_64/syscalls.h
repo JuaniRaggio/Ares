@@ -69,7 +69,7 @@ uint64_t sys_get_resolution(uint32_t *width, uint32_t *height);
  * @param regs Pointer to structure to store register snapshot
  * @return 0 on success
  */
-uint64_t sys_get_register_array(regs_snapshot_t *regs);
+regs_snapshot_t sys_get_register_array(void);
 
 /**
  * Sets the font size

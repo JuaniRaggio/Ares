@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <syscalls_numbers.h>
 
+extern regs_snapshot_t _syscall0(void);
 extern uint64_t _syscall3(uint64_t n, uint64_t a1, uint64_t a2, uint64_t a3);
 
 /**
@@ -88,8 +89,8 @@ static inline uint64_t syscall_get_resolution(uint32_t *width,
  * @param regs Pointer to register snapshot structure
  * @return 0 on success
  */
-static inline uint64_t syscall_get_register_snapshot(regs_snapshot_t *regs) {
-        return _syscall3(SYS_GET_REGISTER_ARRAY, (uint64_t)regs, 0, 0);
+static inline regs_snapshot_t syscall_get_register_snapshot() {
+        return _syscall0();
 }
 
 /**

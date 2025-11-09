@@ -22,25 +22,25 @@ EXTERN exceptionDispatcher
 EXTERN getStackBase
 
 struc regs
-        _rip: resq 1
-        _rsp: resq 1
-        _rax: resq 1
-        _rbx: resq 1
-        _rcx: resq 1
-        _rdx: resq 1
-        _rbp: resq 1
-        _rdi: resq 1
-        _rsi: resq 1
-        _r8:  resq 1
-        _r9:  resq 1
-        _r10: resq 1
-        _r11: resq 1
-        _r12: resq 1
-        _r13: resq 1
-        _r14: resq 1
         _r15: resq 1
+        _r14: resq 1
+        _r13: resq 1
+        _r12: resq 1
+        _r11: resq 1
+        _r10: resq 1
+        _r9:  resq 1
+        _r8:  resq 1
+        _rsi: resq 1
+        _rdi: resq 1
+        _rbp: resq 1
+        _rdx: resq 1
+        _rcx: resq 1
+        _rbx: resq 1
+        _rax: resq 1
+        _rip: resq 1
         _cs:  resq 1
         _rflags: resq 1
+        _rsp: resq 1
         _ss:  resq 1
 endstruc
 
@@ -103,36 +103,15 @@ SECTION .text
         cli
         pushState
 
-        mov QWORD [regs_buffer + _rax], rax
-        mov QWORD [regs_buffer + _rbx], rbx
-        mov QWORD [regs_buffer + _rcx], rcx
-        mov QWORD [regs_buffer + _rdx], rdx
-        mov QWORD [regs_buffer + _rbp], rbp
-        mov QWORD [regs_buffer + _rdi], rdi
-        mov QWORD [regs_buffer + _rsi], rsi
-        mov QWORD [regs_buffer + _r8], r8
-        mov QWORD [regs_buffer + _r9], r9
-        mov QWORD [regs_buffer + _r10], r10
-        mov QWORD [regs_buffer + _r11], r11
-        mov QWORD [regs_buffer + _r12], r12
-        mov QWORD [regs_buffer + _r13], r13
-        mov QWORD [regs_buffer + _r14], r14
-        mov QWORD [regs_buffer + _r15], r15
-
-        mov rax, QWORD [rsp + 15*8]
-        mov QWORD [regs_buffer + _rip], rax
-        mov rax, QWORD [rsp + 16*8]
-        mov QWORD [regs_buffer + _cs], rax
-        mov rax, QWORD [rsp + 17*8]
-        mov QWORD [regs_buffer + _rflags], rax
-        mov rax, QWORD [rsp + 18*8]
-        mov QWORD [regs_buffer + _rsp], rax
-        mov rax, QWORD [rsp + 19*8]
-        mov QWORD [regs_buffer + _ss], rax
+        ; Copiar registros del stack a regs_buffer de forma segura
+        mov rsi, rsp                ; Origen = stack
+        lea rdi, [regs_buffer]      ; Destino = buffer
+        mov rcx, 20                 ; 20 registros (qwords)
+        rep movsq                   ; Copiar eficientemente
 
         ; Llamar a exceptionDispatcher
-        mov rdi, %1                  ; Número de excepción
-        lea rsi, [regs_buffer]       ; Puntero a la struct de registros
+        mov rdi, %1                 ; Número de excepción
+        lea rsi, [regs_buffer]      ; Puntero a la copia segura
 
         call exceptionDispatcher
 

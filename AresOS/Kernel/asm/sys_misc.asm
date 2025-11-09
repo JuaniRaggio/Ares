@@ -20,11 +20,7 @@ sys_get_resolution_wrapper:
     ret
 
 sys_get_register_array_wrapper:
-    push rbp
-    mov rbp, rsp
     call sys_get_register_array
-    mov rsp, rbp
-    pop rbp
     ret
 
 sys_set_font_size_wrapper:

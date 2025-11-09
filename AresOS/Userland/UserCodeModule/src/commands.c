@@ -25,8 +25,7 @@ int history_cmd(void) {
 }
 
 int print_info_reg(void) {
-        regs_snapshot_t regs;
-        syscall_get_register_snapshot(&regs);
+        regs_snapshot_t = syscall_get_register_snapshot();
         printf("===== Register snapshot: =====\n");
         printf("      RIP:    0x%x\n", regs.rip);
         printf("      RSP:    0x%x\n", regs.rsp);
