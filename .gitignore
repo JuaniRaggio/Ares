@@ -1,6 +1,8 @@
 .DS_Store
 .vscode
 *.pdf
+compile_commands.json
+compile_flags.txt
 
 # Build artifacts
 x64BareBones/Kernel/build/
