@@ -156,20 +156,20 @@ void drawChar(char c, int x, int y, uint32_t color, const bmp_font_t *font) {
  */
 uint32_t vgaToRGB(uint8_t color) {
         switch (color & 0x0F) {
-        case 0x00:
-                return 0x000000; // Black
-        case 0x01:
-                return 0x0000FF; // Blue
-        case 0x02:
-                return 0x00FF00; // Green
-        case 0x04:
-                return 0xFF0000; // Red
-        case 0x07:
-                return 0xC0C0C0; // Gray
-        case 0x0F:
-                return 0xFFFFFF; // White
+        case VGA_BLACK:
+                return BLACK;
+        case VGA_BLUE:
+                return BLUE;
+        case VGA_GREEN:
+                return GREEN;
+        case VGA_RED:
+                return RED;
+        case VGA_GRAY:
+                return LIGHT_GRAY;
+        case VGA_WHITE:
+                return WHITE;
         default:
-                return 0xAAAAAA;
+                return DARK_GRAY;
         }
 }
 
@@ -254,7 +254,7 @@ void screen_buffer_redraw(void) {
 
         uint32_t lines_that_fit = screenHeight / (font->height * fontScale);
 
-        clearScreen(0x000000);
+        clearScreen(BLACK);
         gfxCursorX = 0;
         gfxCursorY = 0;
 
