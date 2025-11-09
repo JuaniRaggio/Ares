@@ -4,9 +4,6 @@
 #include <naiveConsole.h>
 #include <regs.h>
 
-#define ZERO_EXCEPTION_ID 0x00
-#define INVALID_OPCODE_ID 0x06
-
 extern regs_snapshot_t saved_regs;
 
 static void zero_division(regs_snapshot_t *regs);

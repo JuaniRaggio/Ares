@@ -12,8 +12,8 @@ int history_cmd(void) {
         for (int i = 0; i < shell_status.prompts.lastest_prompt_idx; i++) {
                 printf("%s", shell_status.prompts.prompt_history[i]);
                 for (int j = 0; j < max_parameters; ++j) {
-                        if (shell_status.prompts.prompt_history[i].args[j] !=
-                            NULL) {
+                        if (shell_status.prompts.prompt_history[i].args[j][0] !=
+                            0) {
                                 printf(" %s",
                                        shell_status.prompts.prompt_history[i]
                                            .args[j]);

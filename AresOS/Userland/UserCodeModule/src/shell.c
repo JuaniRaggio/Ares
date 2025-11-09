@@ -139,13 +139,13 @@ static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
         }
 }
 
-static void erase_cursor(int x, int y) {
-        uint8_t scale = shell_status.magnification;
-        int px        = x * shell_status.font_width * scale;
-        int py        = y * shell_status.font_height * scale;
-        syscall_draw_rect(px, py, shell_status.font_width * scale,
-                          shell_status.font_height * scale, BLACK);
-}
+// static void erase_cursor(int x, int y) {
+//         uint8_t scale = shell_status.magnification;
+//         int px        = x * shell_status.font_width * scale;
+//         int py        = y * shell_status.font_height * scale;
+//         syscall_draw_rect(px, py, shell_status.font_width * scale,
+//                           shell_status.font_height * scale, BLACK);
+// }
 
 int shell_read_line(char input[][256], int max_params) {
         char buffer[MAX_CHARS];

@@ -36,7 +36,7 @@ struct vbe_mode_info_structure {
         uint8_t reserved_position;
         uint8_t direct_color_attributes;
 
-        uint32_t framebuffer; // physical address of the linear frame buffer;
+        uint64_t framebuffer; // physical address of the linear frame buffer;
         // write here to draw to the screen
         uint32_t off_screen_mem_off;
         uint16_t off_screen_mem_size; // size of memory in the framebuffer but

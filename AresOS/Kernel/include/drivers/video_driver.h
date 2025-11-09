@@ -4,6 +4,7 @@
 #include <font.h>
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
+#include <naiveConsole.h>
 #include <stdint.h>
 
 #define NULL ((void *)0)
@@ -27,7 +28,7 @@ extern uint32_t screenWidth;
 extern uint32_t screenHeight;
 extern uint8_t bytesPerPixel;
 extern uint8_t fontScale;
-static uint8_t *limit = (uint8_t *)0xB8FA0;
+// static uint8_t *limit = (uint8_t *)0xB8FA0;
 
 /**
  * Initializes the video subsystem
