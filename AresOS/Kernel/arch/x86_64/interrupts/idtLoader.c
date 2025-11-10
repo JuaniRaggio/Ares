@@ -14,8 +14,6 @@
 // Exception IDs
 #define ID_DIVISION_BY_ZERO 0x00
 #define ID_INVALID_OPCODE 0x06
-#define ID_DOUBLE_FAULT 0x08
-#define ID_GENERAL_PROTECTION 0x0D
 
 #pragma pack(push) /* Push current alignment */
 #pragma pack(1)    /* Align following structures to 1 byte */
@@ -44,13 +42,13 @@ static IDTR idtr;
 
 extern void _load_idt_register(IDTR *idtr);
 
-static void setup_IDT_entry(int index, uint64_t offset, int ist);
+static void setup_IDT_entry(int index, uint64_t offset);
 
 void load_idt() {
-        setup_IDT_entry(ID_TIMER_TICK, (uint64_t)&_irq00Handler, 1);
-        setup_IDT_entry(ID_KEYBOARD, (uint64_t)&_irq01Handler, 0);
-        setup_IDT_entry(ID_DIVISION_BY_ZERO, (uint64_t)&_exception0Handler, 0);
-        setup_IDT_entry(ID_INVALID_OPCODE, (uint64_t)&_exception6Handler, 0);
+        setup_IDT_entry(ID_TIMER_TICK, (uint64_t)&_irq00Handler);
+        setup_IDT_entry(ID_KEYBOARD, (uint64_t)&_irq01Handler);
+        setup_IDT_entry(ID_DIVISION_BY_ZERO, (uint64_t)&_exception0Handler);
+        setup_IDT_entry(ID_INVALID_OPCODE, (uint64_t)&_exception6Handler);
 
         idtr.base  = (uint64_t)&idt;
         idtr.limit = sizeof(idt) - 1;
@@ -58,12 +56,12 @@ void load_idt() {
         _load_idt_register(&idtr);
 }
 
-static void setup_IDT_entry(int index, uint64_t offset, int ist) {
+static void setup_IDT_entry(int index, uint64_t offset) {
         idt[index].selector   = 0x08;
         idt[index].offset_l   = offset & 0xFFFF;
         idt[index].offset_m   = (offset >> 16) & 0xFFFF;
         idt[index].offset_h   = (offset >> 32) & 0xFFFFFFFF;
         idt[index].access     = ACS_INT;
-        idt[index].cero       = ist;
+        idt[index].cero       = 0;
         idt[index].other_cero = (uint64_t)0;
 }

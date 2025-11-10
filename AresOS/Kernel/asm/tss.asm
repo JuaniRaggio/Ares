@@ -5,11 +5,6 @@ global tss_size
 
 extern kernel_stack_top
 
-section .bss
-align 16
-ist1_stack: resb 4096
-ist1_stack_top:
-
 section .data
 align 16
 
@@ -19,7 +14,7 @@ tss64:
     dq 0                ; RSP1
     dq 0                ; RSP2
     dq 0                ; Reserved
-    dq ist1_stack_top   ; IST1
+    dq 0                ; IST1
     dq 0                ; IST2
     dq 0                ; IST3
     dq 0                ; IST4
