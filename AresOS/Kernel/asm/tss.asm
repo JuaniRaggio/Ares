@@ -1,20 +1,34 @@
 BITS 64
 global setup_tss
 global tss64
+global tss_size
 
 extern kernel_stack_top
+
+section .bss
+align 16
+ist1_stack: resb 4096
+ist1_stack_top:
 
 section .data
 align 16
 
 tss64:
-    dd 0
-    dq kernel_stack_top
-    times 11 dq 0
-    dd 0
-    dd 0
-    dw 0
-    dw 0
+    dd 0                ; Reserved
+    dq kernel_stack_top ; RSP0
+    dq 0                ; RSP1
+    dq 0                ; RSP2
+    dq 0                ; Reserved
+    dq ist1_stack_top   ; IST1
+    dq 0                ; IST2
+    dq 0                ; IST3
+    dq 0                ; IST4
+    dq 0                ; IST5
+    dq 0                ; IST6
+    dq 0                ; IST7
+    dq 0                ; Reserved
+    dw 104              ; I/O Map Base Address, must be size of TSS or greater
+    dw 0                ; Reserved
 
 tss_size equ $ - tss64
 

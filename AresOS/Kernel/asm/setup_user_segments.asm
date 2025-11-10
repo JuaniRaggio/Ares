@@ -4,6 +4,7 @@
 BITS 64
 global setup_user_segments
 extern tss64
+extern tss_size
 
 section .data
 align 16
@@ -30,7 +31,7 @@ gdt64_new:
 ; Entrada 5 (0x28): TSS Descriptor (16 bytes en 64-bit)
 ; Este descriptor requiere 2 entradas de 8 bytes
 tss_descriptor:
-    dw 0x0067                ; Limit (bits 0-15): tamaño del TSS - 1
+    dw tss_size - 1          ; Limit (bits 0-15): tamaño del TSS - 1
     dw 0x0000                ; Base (bits 0-15) - se llenara en runtime
     db 0x00                  ; Base (bits 16-23)
     db 0x89                  ; Type = Available TSS (0x9), Present (0x80)

@@ -20,6 +20,7 @@ extern uint8_t endOfKernelBinary;
 extern uint8_t endOfKernel;
 extern void init_syscalls(void);
 extern void setup_user_segments(void);
+extern void setup_tss(void);
 extern void jump_to_userland(void *entry_point);
 
 static const uint64_t PageSize           = 0x1000;
@@ -68,11 +69,17 @@ static inline void restore_cursor() {
 
 int main() {
         video_init();
-        load_idt();
         timer_init();
+        load_idt();
         init_syscalls();
         setup_user_segments();
         setup_tss();
+
+        // Everything is set up, now we can enable interrupts
+        picMasterMask(PIC_MASK_TIMER_KBD);
+        picSlaveMask(PIC_MASK_ALL);
+        _sti();
+
         clearScreen(BLACK);
         bmp_font_t *font = &font_ubuntu_mono;
         setFont(font);
