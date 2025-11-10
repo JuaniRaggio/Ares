@@ -114,3 +114,14 @@ void screen_buffer_redraw(void);
  * Clears the screen buffer
  */
 void screen_buffer_clear(void);
+
+/**
+ * Updates the FPS counter (call this every frame)
+ */
+void update_fps_counter(void);
+
+/**
+ * Gets the current FPS value
+ * @return Current frames per second
+ */
+uint64_t get_current_fps(void);
