@@ -289,3 +289,28 @@ void drawRect(uint16_t x, uint16_t y, uint16_t width, uint16_t height,
                 }
         }
 }
+
+/**
+ * FPS counter implementation
+ */
+static uint64_t frame_count        = 0;
+static uint64_t last_fps_update_ms = 0;
+static uint64_t current_fps        = 0;
+
+void update_fps_counter(void) {
+        frame_count++;
+
+        uint64_t current_time_ms = get_time_ms();
+        uint64_t elapsed         = current_time_ms - last_fps_update_ms;
+
+        /* Update FPS every second (1000 ms) */
+        if (elapsed >= 1000) {
+                current_fps        = (frame_count * 1000) / elapsed;
+                frame_count        = 0;
+                last_fps_update_ms = current_time_ms;
+        }
+}
+
+uint64_t get_current_fps(void) {
+        return current_fps;
+}
