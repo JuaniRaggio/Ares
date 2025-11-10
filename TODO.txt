@@ -18,10 +18,13 @@ Chequear de cumplir estas cosas antes de hacer la version final para la entrega
 - [X] Documentacion de funciones
 - [X] Boton para ver registros
 
+
 Importante
 -------------------------------------------------------------------------------
-+ [ ] Deberiamos tambien hacer JumpToUserland cuando hacemos excepciones?
-+ [ ] Y cuando hacemos syscalls?
++ [X] Deberiamos tambien hacer JumpToUserland cuando hacemos excepciones?
+  No
++ [X] Y cuando hacemos syscalls?
+  No
 
 
 In progress
@@ -42,6 +45,7 @@ In progress
 - [X] Mapear un keybind con print_registers para mostrar registros en cualquier
       momento
 
+
 Issues
 -------------------------------------------------------------------------------
 - [X] No podemos usar next(), hasNext() para leer del keyboard driver, esta mal
@@ -53,6 +57,7 @@ Issues
 
 - [X] El cursor hace lo que quiere, no es dificil lo que hay que corregir pero
       ya no me da la cabeza, estoy muy cansado
+
 
 Done tasks
 -------------------------------------------------------------------------------

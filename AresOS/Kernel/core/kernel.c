@@ -76,7 +76,6 @@ int main() {
 
         bmp_font_t *font = &font_ubuntu_mono;
         setFont(font);
- 
 
         char buffer[TIME_FMT_LENGTH];
         s_time time = get_current_time();
@@ -93,7 +92,6 @@ int main() {
         ncPrint(buffer, VGA_WHITE);
         ncPrint(buffer, VGA_WHITE);
         ncPrint(buffer, VGA_WHITE);
-
 
         restore_cursor();
 
