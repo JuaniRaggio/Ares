@@ -27,8 +27,8 @@ gdt64_new:
     ; Base=0, Limit=0, Type=Data, DPL=3
     dq 0x0000F20000000000
 
-    ; Entrada 5 (0x28): TSS Descriptor (16 bytes en 64-bit)
-    ; Este descriptor requiere 2 entradas de 8 bytes
+; Entrada 5 (0x28): TSS Descriptor (16 bytes en 64-bit)
+; Este descriptor requiere 2 entradas de 8 bytes
 tss_descriptor:
     dw 0x0067                ; Limit (bits 0-15): tamaño del TSS - 1
     dw 0x0000                ; Base (bits 0-15) - se llenara en runtime
@@ -49,6 +49,15 @@ section .text
 
 ; void setup_user_segments(void);
 setup_user_segments:
+; Escribir la direccion base del TSS en el descriptor
+    lea rax, [rel tss64]
+    mov [rel tss_descriptor + 2], ax       ; Base bits 0-15
+    shr rax, 16
+    mov [rel tss_descriptor + 4], al       ; Base bits 16-23
+    shr rax, 8
+    mov [rel tss_descriptor + 7], al       ; Base bits 24-31
+    shr rax, 8
+    mov [rel tss_descriptor + 8], eax      ; Base bits 32-63
     ; Cargar la nueva GDT
     lgdt [rel gdt64_ptr]
 

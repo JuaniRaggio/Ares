@@ -72,6 +72,7 @@ int main() {
         timer_init();
         init_syscalls();
         setup_user_segments();
+        setup_tss();
         clearScreen(BLACK);
         bmp_font_t *font = &font_ubuntu_mono;
         setFont(font);
