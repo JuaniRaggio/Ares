@@ -1,3 +1,5 @@
+#include "colors.h"
+#include "naiveConsole.h"
 #include <drivers/time.h>
 #include <lib.h>
 
@@ -5,7 +7,16 @@ static uint64_t start_seconds = 0;
 static uint64_t start_minutes = 0;
 static uint64_t start_hours   = 0;
 
-/* PIT timer tick counter (IRQ 0 fires ~18.2 times per second) */
+/* PIT ports */
+#define PIT_CHANNEL0 0x40
+#define PIT_COMMAND 0x43
+
+/* PIT frequency configuration */
+#define PIT_FREQUENCY 1193182 /* Base frequency in Hz */
+#define TICKS_PER_SECOND 1000 /* Target: 1000 Hz (1ms per tick) */
+#define PIT_DIVISOR (PIT_FREQUENCY / TICKS_PER_SECOND)
+
+/* PIT timer tick counter (IRQ 0 fires at TICKS_PER_SECOND Hz) */
 static volatile uint64_t tick_counter = 0;
 
 void timer_init(void) {
@@ -14,6 +25,20 @@ void timer_init(void) {
         start_minutes = get_current_minutes();
         start_hours   = get_current_hour();
         tick_counter  = 0;
+
+        /* Initialize PIT (Programmable Interval Timer)
+         * Command byte: 0x36
+         * - Channel 0 (bits 7-6: 00)
+         * - Access mode: lobyte/hibyte (bits 5-4: 11)
+         * - Mode 3: square wave (bits 3-1: 011)
+         * - Binary mode (bit 0: 0)
+         */
+        outb(PIT_COMMAND, 0x36);
+
+        /* Set divisor for 1000 Hz (1ms resolution) */
+        outb(PIT_CHANNEL0, (uint8_t)(PIT_DIVISOR & 0xFF)); /* Low byte */
+        outb(PIT_CHANNEL0,
+             (uint8_t)((PIT_DIVISOR >> 8) & 0xFF)); /* High byte */
 }
 
 uint64_t seconds_elapsed() {
@@ -26,6 +51,7 @@ uint64_t seconds_elapsed() {
 
 void timer_handler() {
         tick_counter++;
+        ncPrint("TIMERTICK", VGA_WHITE);
 }
 
 uint64_t ticks_elapsed() {
@@ -39,7 +65,5 @@ void sleep(int seconds) {
 }
 
 uint64_t get_time_ms() {
-        /* Calculate milliseconds using ticks */
-        /* PIT ticks at ~18.2 Hz, so each tick is ~54.9 ms */
         return (tick_counter * 549) / 10;
 }

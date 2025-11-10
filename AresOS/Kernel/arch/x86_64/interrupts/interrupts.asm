@@ -12,6 +12,7 @@ GLOBAL _irq02Handler
 GLOBAL _irq03Handler
 GLOBAL _irq04Handler
 GLOBAL _irq05Handler
+GLOBAL _irq08Handler
 
 
 GLOBAL _exception0Handler
@@ -92,6 +93,22 @@ SECTION .text
 	; signal pic EOI (End of Interrupt)
 	mov al, 20h
 	out 20h, al
+
+	popState
+	iretq
+%endmacro
+
+%macro irqHandlerSlave 1
+	pushState
+
+	mov rdi, %1 ; parameter passing
+	mov rsi, rsp ; pass stack pointer for register capture
+	call irqDispatcher
+
+	; signal pic EOI to both slave and master
+	mov al, 20h
+	out 0A0h, al  ; Slave PIC
+	out 20h, al   ; Master PIC
 
 	popState
 	iretq
@@ -180,6 +197,9 @@ _irq04Handler:
 _irq05Handler:
 	irqHandlerMaster 5
 
+;RTC (Real-Time Clock) - IRQ 8
+_irq08Handler:
+	irqHandlerSlave 8
 
 ;Zero Division Exception
 _exception0Handler:

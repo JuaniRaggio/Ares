@@ -8,7 +8,7 @@
 #include <time.h>
 #include <video_driver.h>
 
-#define ever (;;)
+#define for_ever for (;;)
 #define TIME_FMT_LENGTH 7
 
 extern uint8_t text;
@@ -71,38 +71,10 @@ int main() {
         timer_init();
         init_syscalls();
         setup_user_segments();
-
         clearScreen(0x000000);
-
         bmp_font_t *font = &font_ubuntu_mono;
         setFont(font);
-
-        char buffer[TIME_FMT_LENGTH];
-        s_time time = get_current_time();
-        buffer[0]   = time.hours / 10 + '0';
-        buffer[1]   = (time.hours % 10 + '0');
-        buffer[2]   = ':';
-        buffer[3]   = time.minutes / 10 + '0';
-        buffer[4]   = time.minutes % 10 + '0';
-        buffer[5]   = '\n';
-        buffer[6]   = 0;
-        ncPrint(buffer, VGA_WHITE);
-        ncPrint(buffer, VGA_WHITE);
-        ncPrint(buffer, VGA_WHITE);
-        ncPrint(buffer, VGA_WHITE);
-        ncPrint(buffer, VGA_WHITE);
-        ncPrint(buffer, VGA_WHITE);
-
-        restore_cursor();
-
-        ncPrint("UserCodeModule begins at: ", VGA_WHITE);
-        ncPrintHex((uint64_t)userCodeModuleAddress);
-        ncPrint("\n", VGA_WHITE);
-        ncPrint("OK!", VGA_WHITE);
-
-        jump_to_userland(userCodeModuleAddress);
-
-        while (1)
-                haltcpu();
+        // jump_to_userland(userCodeModuleAddress);
+        for_ever haltcpu();
         return 0;
 }

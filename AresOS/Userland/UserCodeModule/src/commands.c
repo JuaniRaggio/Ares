@@ -188,6 +188,10 @@ int cursor_cmd(char *type) {
         return OK;
 }
 
+int benchmark_cmd(void) {
+        return 0;
+}
+
 int tron_cmd(void) {
         tron_game();
         return OK;
