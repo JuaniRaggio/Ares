@@ -51,7 +51,6 @@ uint64_t seconds_elapsed() {
 
 void timer_handler() {
         tick_counter++;
-        ncPrint("TIMERTICK", VGA_WHITE);
 }
 
 uint64_t ticks_elapsed() {

@@ -1,3 +1,4 @@
+#include "colors.h"
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
 #include <idtLoader.h>
@@ -71,10 +72,11 @@ int main() {
         timer_init();
         init_syscalls();
         setup_user_segments();
-        clearScreen(0x000000);
+        clearScreen(BLACK);
         bmp_font_t *font = &font_ubuntu_mono;
         setFont(font);
-        // jump_to_userland(userCodeModuleAddress);
-        for_ever haltcpu();
+        restore_cursor();
+        jump_to_userland(userCodeModuleAddress);
+        for_ever _hlt();
         return 0;
 }
