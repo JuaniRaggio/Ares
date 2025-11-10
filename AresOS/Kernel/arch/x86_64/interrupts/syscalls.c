@@ -9,11 +9,10 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t count) {
         if (fd != 0 || count == 0 || buf == NULL) {
                 return 0;
         }
-        if (buffer_has_next()) {
+        uint64_t i = 0;
+        while (buffer_has_next() && i++ < count)
                 buf[0] = buffer_next();
-                return 1;
-        }
-        return 0;
+        return i;
 }
 
 uint64_t sys_clear(void) {
@@ -38,7 +37,7 @@ uint64_t sys_get_seconds(void) {
 
 uint64_t sys_get_resolution(uint32_t *width, uint32_t *height) {
         if (width == NULL || height == NULL) {
-                return 0;
+                return 1;
         }
         // TODO: implement when video data access is available
         *width  = 1024;
@@ -102,8 +101,9 @@ uint64_t sys_set_text_color(uint8_t color, uint8_t stream) {
 uint64_t sys_set_bg_color(uint8_t color) {
         if (videoMode == 1) {
                 clearScreen(vgaToRGB(color));
+                return 0;
         }
-        return 0;
+        return 1;
 }
 
 uint64_t sys_get_cursor_pos(int *x, int *y) {
@@ -122,8 +122,8 @@ uint64_t sys_redraw_screen(void) {
 
 uint64_t sys_get_time(s_time *time) {
         if (time == NULL) {
-                return 0;
+                return 1;
         }
         *time = get_current_time();
-        return 1;
+        return 0;
 }
