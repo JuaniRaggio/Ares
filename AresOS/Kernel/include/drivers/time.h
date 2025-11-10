@@ -31,4 +31,16 @@ uint64_t seconds_elapsed();
  */
 void sleep(int seconds);
 
+/**
+ * Reads the CPU Time Stamp Counter (TSC)
+ * @return 64-bit cycle counter value
+ */
+uint64_t read_tsc(void);
+
+/**
+ * Gets milliseconds elapsed since boot (approximate)
+ * @return Milliseconds elapsed
+ */
+uint64_t get_time_ms(void);
+
 #endif

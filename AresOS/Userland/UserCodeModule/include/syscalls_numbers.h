@@ -17,5 +17,8 @@ typedef enum {
         SYS_GET_CURSOR_POS,
         SYS_REDRAW_SCREEN,
         SYS_GET_TIME,
+        SYS_GET_RDTSC,
+        SYS_GET_TIME_MS,
+        SYS_GET_FPS,
         SYS_MAX,
 } syscall_codes;

@@ -133,6 +133,24 @@ uint64_t sys_redraw_screen(void);
 uint64_t sys_get_time(s_time *time);
 
 /**
+ * Gets the CPU Time Stamp Counter (for high-precision benchmarking)
+ * @return 64-bit TSC value
+ */
+uint64_t sys_get_rdtsc(void);
+
+/**
+ * Gets milliseconds elapsed since boot
+ * @return Milliseconds elapsed
+ */
+uint64_t sys_get_time_ms(void);
+
+/**
+ * Gets current frames per second (FPS)
+ * @return Current FPS value
+ */
+uint64_t sys_get_fps(void);
+
+/**
  * Initializes the syscall subsystem
  */
 void init_syscalls(void);

@@ -37,3 +37,9 @@ void sleep(int seconds) {
         while (seconds_elapsed() - initial_seconds < seconds)
                 ;
 }
+
+uint64_t get_time_ms() {
+        /* Calculate milliseconds using ticks */
+        /* PIT ticks at ~18.2 Hz, so each tick is ~54.9 ms */
+        return (tick_counter * 549) / 10;
+}

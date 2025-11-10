@@ -127,3 +127,15 @@ uint64_t sys_get_time(s_time *time) {
         *time = get_current_time();
         return 0;
 }
+
+uint64_t sys_get_rdtsc(void) {
+        return read_tsc();
+}
+
+uint64_t sys_get_time_ms(void) {
+        return get_time_ms();
+}
+
+uint64_t sys_get_fps(void) {
+        return get_current_fps();
+}
