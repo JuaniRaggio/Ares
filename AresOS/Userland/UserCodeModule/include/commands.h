@@ -93,6 +93,12 @@ int tron_cmd(void);
  */
 int trigger_opcode_cmd(void);
 
+/**
+ * Runs performance benchmarks
+ * @return: status code
+ */
+int benchmark_cmd(void);
+
 typedef enum {
         CMD_HELP,
         CMD_MAN,
@@ -106,6 +112,7 @@ typedef enum {
         CMD_CURSOR,
         CMD_TRON,
         CMD_TRIGGER_OPCODE,
+        CMD_BENCHMARK,
         QTY_COMMANDS
 } command_index;
 
@@ -259,8 +266,19 @@ static const command_t trigger_opcode = {
         },
 };
 
+static const command_t benchmark_command = {
+    .name        = "benchmark",
+    .description = "Run performance benchmarks",
+    .lambda =
+        {
+            .ftype            = supplier_t,
+            .execute.supplier = &benchmark_cmd,
+        },
+};
+
 static const command_t *const commands[QTY_COMMANDS] = {
-    &help_command, &man_command,    &inforeg_command,   &time_command,
-    &div_command,  &clear_command,  &print_mem_command, &history_command,
-    &exit_command, &cursor_command, &tron_command,      &trigger_opcode,
+    &help_command,      &man_command,    &inforeg_command,   &time_command,
+    &div_command,       &clear_command,  &print_mem_command, &history_command,
+    &exit_command,      &cursor_command, &tron_command,      &trigger_opcode,
+    &benchmark_command,
 };

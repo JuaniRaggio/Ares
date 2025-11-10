@@ -6,6 +6,7 @@
 #include <font_ubuntu_mono.h>
 #include <naiveConsole.h>
 #include <stdint.h>
+#include <time.h>
 
 #define NULL ((void *)0)
 

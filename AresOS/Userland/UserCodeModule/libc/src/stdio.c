@@ -130,6 +130,33 @@ int printf(const char *format, ...) {
         while (*p) {
                 if (*p == '%') {
                         p++;
+                        /* Check for 'll' modifier (long long) */
+                        if (*p == 'l' && *(p + 1) == 'l') {
+                                p += 2;
+                                if (*p == 'u') {
+                                        uint64_t num = va_arg(args, uint64_t);
+                                        char buf[32];
+                                        utoa(num, buf, 10);
+                                        char *s = buf;
+                                        while (*s) {
+                                                putchar(*s++);
+                                                count++;
+                                        }
+                                        p++;
+                                        continue;
+                                } else if (*p == 'd') {
+                                        int64_t num = va_arg(args, int64_t);
+                                        char buf[32];
+                                        itoa(num, buf, 10);
+                                        char *s = buf;
+                                        while (*s) {
+                                                putchar(*s++);
+                                                count++;
+                                        }
+                                        p++;
+                                        continue;
+                                }
+                        }
                         switch (*p) {
                         case 'c': {
                                 char c = (char)va_arg(args, int);
