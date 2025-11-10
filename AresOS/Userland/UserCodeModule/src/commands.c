@@ -193,9 +193,8 @@ int tron_cmd(void) {
         return OK;
 }
 
-extern void opcode_asm(void);
-
 int trigger_opcode_cmd(void) {
+        extern void opcode_asm(void);
         opcode_asm();
         return OK;
 }
