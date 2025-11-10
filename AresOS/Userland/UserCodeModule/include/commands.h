@@ -13,22 +13,6 @@
 #define NULL 0
 #define INVALID_COMMAND_NAME -1
 
-typedef enum {
-        CMD_HELP,
-        CMD_MAN,
-        CMD_INFOREG,
-        CMD_TIME,
-        CMD_DIV,
-        CMD_CLEAR,
-        CMD_PRINTMEM,
-        CMD_HISTORY,
-        CMD_EXIT,
-        CMD_CURSOR,
-        CMD_TRON,
-        CMD_TRIGGER_OPCODE,
-        QTY_COMMANDS
-} command_index;
-
 static const char *const invalid_command = "Invalid command!\n";
 static const char *const wrong_params    = "Invalid number of parameters\n";
 
@@ -108,6 +92,22 @@ int tron_cmd(void);
  * Triggers OPCode exception (6)
  */
 int trigger_opcode_cmd(void);
+
+typedef enum {
+        CMD_HELP,
+        CMD_MAN,
+        CMD_INFOREG,
+        CMD_TIME,
+        CMD_DIV,
+        CMD_CLEAR,
+        CMD_PRINTMEM,
+        CMD_HISTORY,
+        CMD_EXIT,
+        CMD_CURSOR,
+        CMD_TRON,
+        CMD_TRIGGER_OPCODE,
+        QTY_COMMANDS
+} command_index;
 
 typedef enum {
         supplier_t = 0,
@@ -262,4 +262,5 @@ static const command_t trigger_opcode = {
 static const command_t *const commands[QTY_COMMANDS] = {
     &help_command, &man_command,    &inforeg_command,   &time_command,
     &div_command,  &clear_command,  &print_mem_command, &history_command,
-    &exit_command, &cursor_command, &tron_command,      &trigger_opcode};
+    &exit_command, &cursor_command, &tron_command,      &trigger_opcode,
+};
