@@ -51,9 +51,6 @@ void load_idt() {
         setup_IDT_entry(ID_KEYBOARD, (uint64_t)&_irq01Handler, 0);
         setup_IDT_entry(ID_DIVISION_BY_ZERO, (uint64_t)&_exception0Handler, 0);
         setup_IDT_entry(ID_INVALID_OPCODE, (uint64_t)&_exception6Handler, 0);
-        setup_IDT_entry(ID_DOUBLE_FAULT, (uint64_t)&_exception8Handler, 1);
-        setup_IDT_entry(ID_GENERAL_PROTECTION, (uint64_t)&_exception13Handler,
-                        0);
 
         idtr.base  = (uint64_t)&idt;
         idtr.limit = sizeof(idt) - 1;
