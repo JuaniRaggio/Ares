@@ -72,42 +72,11 @@ int main() {
         init_syscalls();
         setup_user_segments();
 
-        if (videoMode == 1) {
-                clearScreen(0x000000);
-                ncClear();
+        clearScreen(0x000000);
 
-                const char *msg1 = "[MODO VIDEO ACTIVADO]\n";
-                const char *msg2 = "Kernel funcionando correctamente.\n";
-
-                bmp_font_t *font = &font_ubuntu_mono;
-                setFont(font);
-                int msg1_len = strlen(msg1);
-                int msg2_len = strlen(msg2);
-
-                int startX1 = (screenWidth - msg1_len * font->width) / 2;
-                int startX2 = (screenWidth - msg2_len * font->width) / 2;
-                int startY  = (screenHeight / 2) - font->height;
-
-                for (int y = startY - 10; y < startY + 2 * font->height + 20;
-                     y++) {
-                        for (int x = startX1 - 20;
-                             x < startX1 + msg1_len * font->width + 20; x++) {
-                                putPixel(x, y, 0x003300);
-                        }
-                }
-                for (int i = 0; msg1[i]; i++)
-                        drawChar(msg1[i], startX1 + i * font->width, startY,
-                                 0x00FF00, font);
-
-                for (int i = 0; msg2[i]; i++)
-                        drawChar(msg2[i], startX2 + i * font->width,
-                                 startY + font->height + 10, 0xCCCCCC, font);
-        } else {
-                ncPrintOld("[MODO TEXTO ACTIVADO]");
-                ncNewline();
-                ncPrintOld("Kernel funcionando correctamente.");
-                ncNewline();
-        }
+        bmp_font_t *font = &font_ubuntu_mono;
+        setFont(font);
+ 
 
         char buffer[TIME_FMT_LENGTH];
         s_time time = get_current_time();
@@ -125,10 +94,7 @@ int main() {
         ncPrint(buffer, VGA_WHITE);
         ncPrint(buffer, VGA_WHITE);
 
-        sleep(3);
 
-        clearScreen(0x000000);
-        ncClear();
         restore_cursor();
 
         ncPrint("UserCodeModule begins at: ", VGA_WHITE);
