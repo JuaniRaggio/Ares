@@ -14,6 +14,14 @@ Notas pre-entrega
 
 Importante
 -------------------------------------------------------------------------------
++ Analizar, probar y comparar:
+    - [ ] Medicion de FPS
+    - [ ] Rendimiento/Tiempos de procesamiento
+    - [ ] Tiempos de acceso a hardware
+  Para las siguientes plataformas:
+    - [ ] QEMU
+    - [ ] Hardware fisico en al menos 2 maquinas (dar detalles de HW)
+    - [ ] Virtual Box
 
 In progress
 -------------------------------------------------------------------------------
