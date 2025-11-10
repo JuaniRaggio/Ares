@@ -4,6 +4,7 @@ GLOBAL get_current_hour
 GLOBAL get_current_seconds
 GLOBAL get_input
 GLOBAL _load_idt_register
+GLOBAL read_tsc
 
 struc regs
         _r15: resq 1
@@ -163,4 +164,12 @@ get_input:
 _load_idt_register:
     ; RDI points to IDTR structure (limit + base address)
     lidt [rdi]
+    ret
+
+; Read Time Stamp Counter (TSC)
+; Returns 64-bit cycle counter in RAX
+read_tsc:
+    rdtsc                ; EDX:EAX = TSC
+    shl rdx, 32          ; Shift high 32 bits to upper half
+    or rax, rdx          ; Combine into 64-bit value in RAX
     ret

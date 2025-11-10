@@ -16,6 +16,9 @@ extern sys_set_bg_color_wrapper
 extern sys_get_cursor_pos_wrapper
 extern sys_redraw_screen_wrapper
 extern sys_get_time_wrapper
+extern sys_get_rdtsc_wrapper
+extern sys_get_time_ms_wrapper
+extern sys_get_fps_wrapper
 
 syscalls_table:
     dq sys_write              ; 0: SYS_WRITE
@@ -34,4 +37,7 @@ syscalls_table:
     dq sys_get_cursor_pos_wrapper ; 13: SYS_GET_CURSOR_POS
     dq sys_redraw_screen_wrapper ; 14: SYS_REDRAW_SCREEN
     dq sys_get_time_wrapper ; 15: SYS_GET_TIME
+    dq sys_get_rdtsc_wrapper ; 16: SYS_GET_RDTSC
+    dq sys_get_time_ms_wrapper ; 17: SYS_GET_TIME_MS
+    dq sys_get_fps_wrapper ; 18: SYS_GET_FPS
 
