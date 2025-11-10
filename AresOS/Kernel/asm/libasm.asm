@@ -5,6 +5,8 @@ GLOBAL get_current_seconds
 GLOBAL get_input
 GLOBAL _load_idt_register
 GLOBAL read_tsc
+GLOBAL outb
+GLOBAL inb
 
 struc regs
         _r15: resq 1

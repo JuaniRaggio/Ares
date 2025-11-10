@@ -12,9 +12,9 @@ static uint64_t start_hours   = 0;
 #define PIT_COMMAND 0x43
 
 /* PIT frequency configuration */
-#define PIT_FREQUENCY 1193182 /* Base frequency in Hz */
-#define TICKS_PER_SECOND 1000 /* Target: 1000 Hz (1ms per tick) */
-#define PIT_DIVISOR (PIT_FREQUENCY / TICKS_PER_SECOND)
+#define PIT_FREQUENCY 1193182
+#define TICKS_PER_SECOND 18 /* ~18.2 Hz (55ms per tick) */
+#define PIT_DIVISOR 65536   /* Max divisor for ~18.2 Hz */
 
 /* PIT timer tick counter (IRQ 0 fires at TICKS_PER_SECOND Hz) */
 static volatile uint64_t tick_counter = 0;
@@ -35,10 +35,10 @@ void timer_init(void) {
          */
         outb(PIT_COMMAND, 0x36);
 
-        /* Set divisor for 1000 Hz (1ms resolution) */
-        outb(PIT_CHANNEL0, (uint8_t)(PIT_DIVISOR & 0xFF)); /* Low byte */
-        outb(PIT_CHANNEL0,
-             (uint8_t)((PIT_DIVISOR >> 8) & 0xFF)); /* High byte */
+        /* Set divisor for ~18.2 Hz (55ms per tick)
+         * Divisor 65536 (0x10000) is written as 0x00 0x00 */
+        outb(PIT_CHANNEL0, 0x00); /* Low byte */
+        outb(PIT_CHANNEL0, 0x00); /* High byte */
 }
 
 uint64_t seconds_elapsed() {
@@ -65,5 +65,8 @@ void sleep(int seconds) {
 }
 
 uint64_t get_time_ms() {
+        /* Convert ticks to milliseconds
+         * At 18.2 Hz, each tick ≈ 54.9 ms
+         * ms = ticks * 549 / 10 */
         return (tick_counter * 549) / 10;
 }
