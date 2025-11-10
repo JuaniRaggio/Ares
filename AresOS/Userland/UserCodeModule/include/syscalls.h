@@ -164,3 +164,27 @@ static inline uint64_t syscall_get_cursor_pos(int *x, int *y) {
 static inline uint64_t syscall_redraw_screen(void) {
         return _syscall3(SYS_REDRAW_SCREEN, 0, 0, 0);
 }
+
+/**
+ * Gets the CPU Time Stamp Counter (for high-precision benchmarking)
+ * @return 64-bit TSC value (CPU cycles)
+ */
+static inline uint64_t syscall_get_rdtsc(void) {
+        return _syscall3(SYS_GET_RDTSC, 0, 0, 0);
+}
+
+/**
+ * Gets milliseconds elapsed since boot
+ * @return Milliseconds elapsed
+ */
+static inline uint64_t syscall_get_time_ms(void) {
+        return _syscall3(SYS_GET_TIME_MS, 0, 0, 0);
+}
+
+/**
+ * Gets current frames per second (FPS)
+ * @return Current FPS value
+ */
+static inline uint64_t syscall_get_fps(void) {
+        return _syscall3(SYS_GET_FPS, 0, 0, 0);
+}
