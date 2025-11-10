@@ -17,25 +17,29 @@ Chequear de cumplir estas cosas antes de hacer la version final para la entrega
 - [X] No usar funciones de la biblioteca estandar
 - [X] Documentacion de funciones
 - [X] Boton para ver registros
-- [ ] Ver asciinema para el video de la demostracion
+
+Importante
+-------------------------------------------------------------------------------
++ [ ] Deberiamos tambien hacer JumpToUserland cuando hacemos excepciones?
++ [ ] Y cuando hacemos syscalls?
 
 
 In progress
 -------------------------------------------------------------------------------
-- [ ] Shell (Userland)
+- [X] Shell (Userland)
         - [X] _start de nuestro OS. Cuando arranque en modo video que empiece
           en la terminal
-        - [ ] poder escribir y que se muestre en pantalla
+        - [X] poder escribir y que se muestre en pantalla
         - [X] interprete de comandos
         - [X] ejecucion de comandos
         - [X] help de comandos
-        - [ ] terminar print_registers y mapearlo a un keybind
-        - [ ] implementar printf de alguna forma
+        - [X] terminar print_registers y mapearlo a un keybind
+        - [X] implementar printf de alguna forma
 
 - [X] SYS_GET_RESOLUTION
 - [X] SYS_SET_FONT_SIZE: integrarlo con fontManager si es que queremos usar eso
 - [X] SYS_DRAW_RECT: funcionalidad en video_driver
-- [ ] Mapear un keybind con print_registers para mostrar registros en cualquier
+- [X] Mapear un keybind con print_registers para mostrar registros en cualquier
       momento
 
 Issues
@@ -47,7 +51,7 @@ Issues
       + Es un comando
       + Bananas en pijamas
 
-- [ ] El cursor hace lo que quiere, no es dificil lo que hay que corregir pero
+- [X] El cursor hace lo que quiere, no es dificil lo que hay que corregir pero
       ya no me da la cabeza, estoy muy cansado
 
 Done tasks
