@@ -192,3 +192,10 @@ int tron_cmd(void) {
         tron_game();
         return OK;
 }
+
+extern void opcode_asm(void);
+
+int trigger_opcode_cmd(void) {
+        opcode_asm();
+        return OK;
+}

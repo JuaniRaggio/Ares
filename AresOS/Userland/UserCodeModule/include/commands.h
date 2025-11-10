@@ -25,6 +25,7 @@ typedef enum {
         CMD_EXIT,
         CMD_CURSOR,
         CMD_TRON,
+        CMD_TRIGGER_OPCODE,
         QTY_COMMANDS
 } command_index;
 
@@ -103,6 +104,11 @@ int cursor_cmd(char *type);
  */
 int tron_cmd(void);
 
+/**
+ * Triggers OPCode exception (6)
+ */
+int trigger_opcode_cmd(void);
+
 typedef enum {
         supplier_t = 0,
         function_t,
@@ -132,6 +138,7 @@ typedef struct {
         char args[max_parameters - 1][MAX_CHARS];
 } composed_command_t;
 
+// Don't move to .c, shell.c depends of this
 static const command_t help_command = {
     .name        = "help",
     .description = "List all available commands",
@@ -242,8 +249,17 @@ static const command_t tron_command = {
         },
 };
 
+static const command_t trigger_opcode = {
+    .name        = "opcode",
+    .description = "Triggers an invalid opcode exception",
+    .lambda =
+        {
+            .ftype            = supplier_t,
+            .execute.supplier = &trigger_opcode_cmd,
+        },
+};
+
 static const command_t *const commands[QTY_COMMANDS] = {
     &help_command, &man_command,    &inforeg_command,   &time_command,
     &div_command,  &clear_command,  &print_mem_command, &history_command,
-    &exit_command, &cursor_command, &tron_command,
-};
+    &exit_command, &cursor_command, &tron_command,      &trigger_opcode};
