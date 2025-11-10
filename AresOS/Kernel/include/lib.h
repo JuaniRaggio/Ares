@@ -102,4 +102,24 @@ char *strcpy(char *dest, const char *src);
  */
 char *strncpy(char *dest, const char *src, uint64_t n);
 
+/**
+ * Reads the CPU Time Stamp Counter
+ * @return 64-bit TSC value
+ */
+uint64_t read_tsc(void);
+
+/**
+ * Writes a byte to an I/O port
+ * @param port Port number
+ * @param value Byte value to write
+ */
+void outb(uint16_t port, uint8_t value);
+
+/**
+ * Reads a byte from an I/O port
+ * @param port Port number
+ * @return Byte value read from port
+ */
+uint8_t inb(uint16_t port);
+
 #endif
