@@ -175,3 +175,21 @@ read_tsc:
     shl rdx, 32          ; Shift high 32 bits to upper half
     or rax, rdx          ; Combine into 64-bit value in RAX
     ret
+
+; Write byte to I/O port
+; RDI = port (uint16_t)
+; RSI = value (uint8_t)
+outb:
+    mov dx, di           ; Port number to DX
+    mov al, sil          ; Value to AL
+    out dx, al           ; Write AL to port DX
+    ret
+
+; Read byte from I/O port
+; RDI = port (uint16_t)
+; Returns value in AL (zero-extended to RAX)
+inb:
+    mov dx, di           ; Port number to DX
+    xor rax, rax         ; Clear RAX
+    in al, dx            ; Read from port DX into AL
+    ret
