@@ -308,7 +308,6 @@ int shell(void) {
         printf(welcome_msg_shell);
         printf(helper_msg);
         sync_cursor_pos();
-        printf("%llu", syscall_get_ticks());
 
         for_ever {
                 printf(input_prompt);
