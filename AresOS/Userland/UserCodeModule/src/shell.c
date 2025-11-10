@@ -180,25 +180,21 @@ int shell_read_line(char input[][256], int max_params) {
                         continue;
                 }
 
-                if (c == ZOOM_IN_CHAR) {
-                        if (shell_status.magnification < MAX_FONT_SCALE) {
-                                shell_status.magnification++;
-                                syscall_set_font_size(
-                                    shell_status.magnification);
-                                syscall_redraw_screen();
-                                sync_cursor_pos();
-                        }
+                if (c == ZOOM_IN_CHAR &&
+                    shell_status.magnification < MAX_FONT_SCALE) {
+                        shell_status.magnification++;
+                        syscall_set_font_size(shell_status.magnification);
+                        syscall_redraw_screen();
+                        sync_cursor_pos();
                         continue;
                 }
 
-                if (c == ZOOM_OUT_CHAR) {
-                        if (shell_status.magnification > MIN_FONT_SCALE) {
-                                shell_status.magnification--;
-                                syscall_set_font_size(
-                                    shell_status.magnification);
-                                syscall_redraw_screen();
-                                sync_cursor_pos();
-                        }
+                if (c == ZOOM_OUT_CHAR &&
+                    shell_status.magnification > MIN_FONT_SCALE) {
+                        shell_status.magnification--;
+                        syscall_set_font_size(shell_status.magnification);
+                        syscall_redraw_screen();
+                        sync_cursor_pos();
                         continue;
                 }
 
@@ -218,20 +214,18 @@ int shell_read_line(char input[][256], int max_params) {
                         return param_count;
                 }
 
-                if (c == '\b') {
-                        if (buf_idx > 0) {
-                                if (cursor_visible) {
-                                        erase_cursor(shell_status.cursor.x,
-                                                     shell_status.cursor.y);
-                                }
-                                buf_idx--;
-                                putchar('\b');
-                                sync_cursor_pos();
-                                draw_cursor(shell_status.cursor.x,
-                                            shell_status.cursor.y, 1);
-                                cursor_visible = 1;
-                                last_blink     = syscall_get_ticks();
+                if (c == '\b' && buf_idx > 0) {
+                        if (cursor_visible) {
+                                erase_cursor(shell_status.cursor.x,
+                                             shell_status.cursor.y);
                         }
+                        buf_idx--;
+                        putchar('\b');
+                        sync_cursor_pos();
+                        draw_cursor(shell_status.cursor.x,
+                                    shell_status.cursor.y, 1);
+                        cursor_visible = 1;
+                        last_blink     = syscall_get_ticks();
                         continue;
                 }
 

@@ -62,7 +62,7 @@ int get_command_index(char *command) {
 
 int help(void) {
         printf("Available commands:\n");
-        for (int i = 0; i < QTY_COMMANDS && commands[i] != 0; i++) {
+        for (int i = 0; i < QTY_COMMANDS; i++) {
                 printf("  %s: %s\n", commands[i]->name,
                        commands[i]->description);
         }
