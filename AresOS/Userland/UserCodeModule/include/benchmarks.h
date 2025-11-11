@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdio.h>
 
 typedef struct {
         uint64_t sample_count;       // Number of frames measured

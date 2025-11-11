@@ -176,26 +176,15 @@ keyboard_data keyboard_benchmark(uint32_t num_keys) {
                 uint64_t wait_start_ms, key_detected_ms;
                 char c;
 
-                /* Start timing - waiting for key */
                 syscall_get_time_ms(&wait_start_ms);
 
-                /* Poll for keypress */
-                do {
-                        c = getchar();
-                } while (c == 0);
+                syscall_read(STDIN, &c, 1);
 
-                /* Key detected - measure time */
                 syscall_get_time_ms(&key_detected_ms);
 
-                /* Calculate latency from start of polling to key detection */
-                /* Note: This measures polling latency, not true hardware
-                 * latency */
                 uint64_t latency_ms = key_detected_ms - wait_start_ms;
                 uint64_t latency_us = latency_ms * 1000;
 
-                /* For a more accurate hardware latency, we'd need to measure
-                 * from IRQ to userspace, but this gives us a good approximation
-                 */
                 if (latency_us < min_latency) {
                         min_latency = latency_us;
                 }
@@ -210,7 +199,6 @@ keyboard_data keyboard_benchmark(uint32_t num_keys) {
                        num_keys, (c >= 32 && c <= 126) ? c : '?', latency_us);
         }
 
-        /* Calculate statistics */
         collected_data.key_presses    = key_count;
         collected_data.min_latency_us = min_latency;
         collected_data.max_latency_us = max_latency;
@@ -219,7 +207,6 @@ keyboard_data keyboard_benchmark(uint32_t num_keys) {
         collected_data.missed_events =
             0; /* Not tracking this in current impl */
 
-        /* Restore screen */
         syscall_redraw_screen();
 
         return collected_data;

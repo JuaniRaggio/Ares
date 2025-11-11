@@ -5,6 +5,15 @@
 #include <stdint.h>
 #include <syscalls.h>
 
+#define MAX_CHARS 256
+#define EOF (-1)
+
+typedef enum {
+        STDIN = 0,
+        STDOUT,
+        STDERR,
+} stdcodes;
+
 /**
  * Prints formatted output to stdout
  * @param format Format string
