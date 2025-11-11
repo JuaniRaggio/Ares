@@ -60,6 +60,34 @@ int printf(const char *format, ...) {
                                         continue;
                                 }
                         }
+                        /* Check for 'l' modifier (long) */
+                        else if (*p == 'l') {
+                                p++;
+                                if (*p == 'u') {
+                                        unsigned long num =
+                                            va_arg(args, unsigned long);
+                                        char buf[32];
+                                        utoa(num, buf, 10);
+                                        char *s = buf;
+                                        while (*s) {
+                                                putchar(*s++);
+                                                count++;
+                                        }
+                                        p++;
+                                        continue;
+                                } else if (*p == 'd') {
+                                        long num = va_arg(args, long);
+                                        char buf[32];
+                                        itoa(num, buf, 10);
+                                        char *s = buf;
+                                        while (*s) {
+                                                putchar(*s++);
+                                                count++;
+                                        }
+                                        p++;
+                                        continue;
+                                }
+                        }
                         switch (*p) {
                         case 'c': {
                                 char c = (char)va_arg(args, int);
