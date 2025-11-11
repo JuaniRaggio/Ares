@@ -189,3 +189,23 @@ static inline uint64_t syscall_get_time_ms(uint64_t *time_ms) {
 static inline uint64_t syscall_get_fps(uint64_t *fps) {
         return _syscall3(SYS_GET_FPS, (uint64_t)fps, 0, 0);
 }
+
+/**
+ * Plays a sound with given frequency (blocking)
+ * @param frequency Frequency in Hz
+ * @param duration_ms Duration in milliseconds
+ * @return 0 on success
+ */
+static inline uint64_t syscall_play_sound(uint64_t frequency,
+                                          uint64_t duration_ms) {
+        return _syscall3(SYS_PLAY_SOUND, frequency, duration_ms, 0);
+}
+
+/**
+ * Plays a short beep sound (blocking)
+ * @param frequency Frequency in Hz (typical: 440-880 Hz)
+ * @return 0 on success
+ */
+static inline uint64_t syscall_beep(uint64_t frequency) {
+        return _syscall3(SYS_BEEP, frequency, 0, 0);
+}
