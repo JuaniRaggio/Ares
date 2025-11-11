@@ -16,6 +16,7 @@ x64BareBones/Kernel/bin/
 *.qcow2
 .bash_history
 .cache
+*.elf
 
 #The images
 *.img
