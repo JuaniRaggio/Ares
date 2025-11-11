@@ -10,7 +10,7 @@ fps_data fps_benchmark(uint8_t tests) {
         fps_data collected_data = {
             .total_tests = tests,
             .max_fps     = 0,
-            .min_fps     = -1,
+            .min_fps     = UINT64_MAX,
         };
         syscall_get_time_ms(&start_ms);
         current_ms = start_ms;
@@ -25,19 +25,19 @@ fps_data fps_benchmark(uint8_t tests) {
                 minimize(&collected_data.min_fps, frames_second);
         }
         collected_data.sample_count       = frames;
-        collected_data.total_test_time_ms = start_ms - current_ms;
+        collected_data.total_test_time_ms = current_ms - start_ms;
         collected_data.average_fps =
-            ((double)frames) / collected_data.total_test_time_ms;
+            ((double)frames * 1000) / collected_data.total_test_time_ms;
         return collected_data;
 }
 
 void show_fps_benchmark(fps_data data) {
         printf("\n===== INIT FPS Benchmark Test =====\n");
-        printf("Total test duration: %llu", data.total_test_time_ms);
-        printf("Total tests produced: %llu", data.total_tests);
-        printf("Total frames measured: %llu", data.sample_count);
-        printf("Minimum FPS observed: %llu", data.min_fps);
-        printf("Maximum FPS observed: %llu", data.max_fps);
+        printf("Total test duration: %llu\n", data.total_test_time_ms);
+        printf("Total tests produced: %llu\n", data.total_tests);
+        printf("Total frames measured: %llu\n", data.sample_count);
+        printf("Minimum FPS observed: %llu\n", data.min_fps);
+        printf("Maximum FPS observed: %llu\n", data.max_fps);
         printf("\n===== END  FPS Benchmark Test =====\n");
 }
 
