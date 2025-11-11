@@ -24,13 +24,13 @@ else
     exit 1
 fi
 
-echo "=========================================="
+echo "================================================"
 echo "Running AresOS"
 echo "Image: $IMAGE (format: $FORMAT)"
 if [ "$1" == "-d" ]; then
     echo "Mode: Debug (waiting for GDB connection on port 1234)"
 fi
-echo "=========================================="
+echo "================================================"
 echo ""
 
 # Flag for debugging
