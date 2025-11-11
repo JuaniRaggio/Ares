@@ -49,7 +49,6 @@ fps_data fps_benchmark(uint8_t tests) {
         collected_data.average_fps =
             (frames * 1000 / collected_data.total_test_time_ms);
 
-        /* Restore screen content from text buffer */
         syscall_redraw_screen();
         return collected_data;
 }
@@ -168,10 +167,7 @@ keyboard_data keyboard_benchmark(uint32_t num_keys) {
         };
 
         printf("\n========== Keyboard Benchmark ==========\n");
-        printf("Please press %lu keys...\n", num_keys);
-        printf("(Press any keys to test keyboard latency)\n\n");
 
-        /* Measure latency for each keypress */
         for (uint32_t i = 0; i < num_keys; i++) {
                 uint64_t wait_start_ms, key_detected_ms;
                 char c;
@@ -204,8 +200,6 @@ keyboard_data keyboard_benchmark(uint32_t num_keys) {
         collected_data.max_latency_us = max_latency;
         collected_data.average_latency_us =
             (key_count > 0) ? (total_latency / key_count) : 0;
-        collected_data.missed_events =
-            0; /* Not tracking this in current impl */
 
         syscall_redraw_screen();
 
@@ -218,5 +212,4 @@ void show_keyboard_benchmark(keyboard_data data) {
         printf("Minimum latency: %llu us\n", data.min_latency_us);
         printf("Maximum latency: %llu us\n", data.max_latency_us);
         printf("Average latency: %llu us\n", data.average_latency_us);
-        printf("Missed events: %llu\n", data.missed_events);
 }

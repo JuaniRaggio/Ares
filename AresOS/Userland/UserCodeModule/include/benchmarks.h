@@ -16,7 +16,6 @@ typedef struct {
         uint64_t min_latency_us;     // Minimum latency (microseconds)
         uint64_t max_latency_us;     // Maximum latency
         uint64_t average_latency_us; // Average latency
-        uint64_t missed_events;      // Missed events (if applicable)
 } keyboard_data;
 
 typedef struct {
