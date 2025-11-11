@@ -1,3 +1,4 @@
+#include <drivers/sound.h>
 #include <lib.h>
 #include <regs.h>
 #include <stdint.h>
