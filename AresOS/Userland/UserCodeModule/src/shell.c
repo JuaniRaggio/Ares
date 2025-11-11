@@ -147,7 +147,7 @@ static void erase_cursor(int x, int y) {
                           shell_status.font_height * scale, BLACK);
 }
 
-int shell_read_line(char input[][256], int max_params) {
+int shell_read_line(char input[][MAX_CHARS], int max_params) {
         char buffer[MAX_CHARS];
         int buf_idx       = 0;
         int param_count   = 0;
