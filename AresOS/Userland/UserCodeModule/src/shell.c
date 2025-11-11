@@ -314,9 +314,6 @@ int shell(void) {
         for_ever {
                 uint64_t current_ticks = 0;
                 syscall_get_ticks(&current_ticks);
-                if (current_ticks == 0) {
-                        printf("Ticks == 0 frikitowna");
-                }
                 printf(input_prompt);
                 sync_cursor_pos();
                 char error      = VALID_INPUT;
