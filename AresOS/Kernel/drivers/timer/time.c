@@ -1,9 +1,7 @@
-#include "colors.h"
-#include "naiveConsole.h"
-#include "syscalls.h"
 #include <drivers/time.h>
-#include <lib.h>
 
+/* PIT timer tick counter (IRQ 0 fires at TICKS_PER_SECOND Hz) */
+static uint64_t tick_counter  = 0;
 static uint64_t start_seconds = 0;
 static uint64_t start_minutes = 0;
 static uint64_t start_hours   = 0;
@@ -17,11 +15,8 @@ static uint64_t start_hours   = 0;
 #define TICKS_PER_SECOND 18 /* ~18.2 Hz (55ms per tick) */
 #define PIT_DIVISOR 65536   /* Max divisor for ~18.2 Hz */
 
-/* PIT timer tick counter (IRQ 0 fires at TICKS_PER_SECOND Hz) */
-static uint64_t tick_counter = 0;
-
 void timer_init(void) {
-        /* Capture initial time from RTC */
+        /* Capture initial time */
         start_seconds = get_current_seconds();
         start_minutes = get_current_minutes();
         start_hours   = get_current_hour();
@@ -43,7 +38,6 @@ void timer_init(void) {
 }
 
 uint64_t seconds_elapsed() {
-        /* Read current time from RTC and return total seconds since midnight */
         uint64_t curr_seconds = get_current_seconds();
         uint64_t curr_minutes = get_current_minutes();
         uint64_t curr_hours   = get_current_hour();
@@ -65,8 +59,5 @@ void sleep(int seconds) {
 }
 
 uint64_t get_time_ms() {
-        /* Convert ticks to milliseconds
-         * At 18.2 Hz, each tick ≈ 54.9 ms
-         * ms = ticks * 549 / 10 */
         return (tick_counter * 549) / 10;
 }
