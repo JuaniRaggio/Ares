@@ -16,14 +16,26 @@ typedef struct {
         uint64_t time;
 } timer_data;
 
-void fps_benchmark(void);
+/** FPS testing/benchmarking function
+ */
+fps_data fps_benchmark(void);
 
-void show_fps_benchmark(void);
+/**
+ */
+void show_fps_benchmark(fps_data data);
 
-void timer_benchmark(void);
+/**
+ */
+timer_data timer_benchmark(void);
 
-void show_timer_benchmark(void);
+/**
+ */
+void show_timer_benchmark(timer_data data);
 
-void keyboard_benchmark(void);
+/**
+ */
+keyboard_data keyboard_benchmark(void);
 
-void show_keyboard_benchmark(void);
+/**
+ */
+void show_keyboard_benchmark(keyboard_data data);

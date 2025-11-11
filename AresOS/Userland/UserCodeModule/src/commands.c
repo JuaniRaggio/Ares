@@ -192,14 +192,12 @@ int benchmark_cmd(void) {
             "\n===== Benchmark Completed Successfully =====\n";
         printf("%s", init_benchmark_msg);
 
-        fps_benchmark();
-        show_fps_benchmark();
-        timer_benchmark();
-        show_timer_benchmark();
-
-        // Measure FPS
-        // syscall_get_fps(&fps);
-        // printf("Current FPS: %d frames/second\n", fps);
+        fps_data fps = fps_benchmark();
+        show_fps_benchmark(fps);
+        timer_data timer = timer_benchmark();
+        show_timer_benchmark(timer);
+        keyboard_data keyboard = keyboard_benchmark();
+        show_keyboard_benchmark(keyboard);
 
         // Measure hardware interrupts (timer ticks)
         // syscall_get_ticks(&start_ticks);
