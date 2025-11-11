@@ -1,5 +1,6 @@
 #include "colors.h"
 #include "naiveConsole.h"
+#include "syscalls.h"
 #include <drivers/time.h>
 #include <lib.h>
 
@@ -17,7 +18,7 @@ static uint64_t start_hours   = 0;
 #define PIT_DIVISOR 65536   /* Max divisor for ~18.2 Hz */
 
 /* PIT timer tick counter (IRQ 0 fires at TICKS_PER_SECOND Hz) */
-static volatile uint64_t tick_counter = 0;
+static uint64_t tick_counter = 0;
 
 void timer_init(void) {
         /* Capture initial time from RTC */
