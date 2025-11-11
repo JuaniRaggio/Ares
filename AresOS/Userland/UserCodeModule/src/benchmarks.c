@@ -1,33 +1,60 @@
 #include <benchmarks.h>
+#include <lib.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <syscalls.h>
 
 #define NO_DATA 0
 
+/* Simple pseudo-random number generator for colors */
+static uint32_t rand_state = 12345;
+static uint32_t simple_rand(void) {
+        rand_state = rand_state * 1103515245 + 12345;
+        return (rand_state / 65536) % 32768;
+}
+
 fps_data fps_benchmark(uint8_t tests) {
         uint64_t start_ms, current_ms, inner_start_ms, frames = 0;
+        uint32_t screen_width, screen_height;
+
         fps_data collected_data = {
             .total_tests = tests,
             .max_fps     = 0,
             .min_fps     = UINT64_MAX,
         };
+
+        /* Get screen resolution for drawing */
+        syscall_get_resolution(&screen_width, &screen_height);
+
+        /* Clear screen and show benchmark message */
+        syscall_clear();
+
         syscall_get_time_ms(&start_ms);
         current_ms = start_ms;
+
         for (uint8_t frames_second = 0; tests > 0; --tests) {
                 for (inner_start_ms = current_ms, frames_second = 0;
-                     inner_start_ms + 1000 > current_ms;
+                     current_ms < inner_start_ms + 1000;
                      ++frames_second, ++frames) {
-                        syscall_redraw_screen();
+                        /* Draw random colored rectangles across screen */
+                        uint32_t color = (simple_rand() % 0xFFFFFF);
+                        uint16_t x     = simple_rand() % (screen_width - 100);
+                        uint16_t y     = simple_rand() % (screen_height - 100);
+                        syscall_draw_rect(x, y, 100, 100, color);
+
                         syscall_get_time_ms(&current_ms);
                 }
                 maximize(&collected_data.max_fps, frames_second);
                 minimize(&collected_data.min_fps, frames_second);
         }
+
         collected_data.sample_count       = frames;
         collected_data.total_test_time_ms = current_ms - start_ms;
         collected_data.average_fps =
-            ((double)frames * 1000) / collected_data.total_test_time_ms;
+            (((double)frames * 1000.0) / collected_data.total_test_time_ms);
+
+        syscall_redraw_screen();
+
         return collected_data;
 }
 
