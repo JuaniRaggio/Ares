@@ -17,10 +17,6 @@ jump_to_userland:
     ; Guardar entry point
     mov r15, rdi
 
-    ; Preparar stack para IRETQ (en kernel stack actual)
-    ; IRETQ espera (desde top del stack):
-    ; SS, RSP, RFLAGS, CS, RIP
-
     push 0x23               ; SS (User Data Segment, RPL=3)
     lea rax, [rel user_stack_top]
     push rax                ; RSP (user stack pointer)
