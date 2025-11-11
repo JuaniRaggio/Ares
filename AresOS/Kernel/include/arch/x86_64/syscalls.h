@@ -29,12 +29,14 @@ uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len);
  */
 void sys_exit(uint64_t code);
 
+// FIX THIS BUG AND ALL ITS USAGES
 /**
  * Reads a character from the keyboard buffer
  * @param fd File descriptor (STDIN)
  * @param buf Buffer to store the read character
  * @param count Maximum number of bytes to read
- * @return Number of bytes read
+ * @return status code
+ *        NOT->---Number of bytes read---
  */
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t count);
 
@@ -135,21 +137,24 @@ uint64_t sys_get_time(s_time *time);
 
 /**
  * Gets the CPU Time Stamp Counter (for high-precision benchmarking)
+ * @param rdtsc - output parameter to get CPU Time Stamp Counter
  * @return 64-bit TSC value
  */
-uint64_t sys_get_rdtsc(void);
+uint64_t sys_get_rdtsc(uint64_t *rdtsc);
 
 /**
  * Gets milliseconds elapsed since boot
- * @return Milliseconds elapsed
+ * @param time_ms - output parameter to get time in miliseconds since boot
+ * @return status code
  */
-uint64_t sys_get_time_ms(void);
+uint64_t sys_get_time_ms(uint64_t *time_ms);
 
 /**
  * Gets current frames per second (FPS)
- * @return Current FPS value
+ * @param fps - output parameter to get FPS
+ * @return status code
  */
-uint64_t sys_get_fps(void);
+uint64_t sys_get_fps(uint64_t *fps);
 
 /**
  * Initializes the syscall subsystem

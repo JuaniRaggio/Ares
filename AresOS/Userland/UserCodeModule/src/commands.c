@@ -185,7 +185,44 @@ int cursor_cmd(char *type) {
 }
 
 int benchmark_cmd(void) {
-        return 0;
+        static const char *const init_benchmark_msg =
+            "============ Ares OS Benchmarks ============\n\n";
+        static const char *const end_benchmark_msg =
+            "\n===== Benchmark Completed Successfully =====\n";
+        uint64_t start_ticks, end_ticks;
+        uint64_t fps;
+        uint64_t initial_ms, final_ms;
+
+        printf("%s", init_benchmark_msg);
+
+        // Measure FPS
+        syscall_get_fps(&fps);
+        printf("Current FPS: %d frames/second\n", fps);
+
+        // Measure hardware interrupts (timer ticks)
+        syscall_get_ticks(&start_ticks);
+        syscall_get_time_ms(&initial_ms);
+
+        // Wait approximately 1 second
+        printf("Measuring hardware interrupts for 1 second...\n");
+        uint64_t wait_ms = initial_ms + 1000;
+        uint64_t current_ms;
+        do {
+                syscall_get_time_ms(&current_ms);
+        } while (current_ms < wait_ms);
+
+        syscall_get_ticks(&end_ticks);
+        syscall_get_time_ms(&final_ms);
+
+        uint64_t elapsed_ticks = end_ticks - start_ticks;
+        uint64_t elapsed_ms    = final_ms - initial_ms;
+
+        printf("Hardware timer interrupts: %d ticks in %d ms\n", elapsed_ticks,
+               elapsed_ms);
+        printf("Interrupt rate: ~%d Hz\n", (elapsed_ticks * 1000) / elapsed_ms);
+
+        printf("%s", end_benchmark_msg);
+        return OK;
 }
 
 int tron_cmd(void) {

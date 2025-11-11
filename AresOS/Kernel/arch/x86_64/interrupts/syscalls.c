@@ -132,14 +132,17 @@ uint64_t sys_get_time(s_time *time) {
         return 0;
 }
 
-uint64_t sys_get_rdtsc(void) {
-        return read_tsc();
+uint64_t sys_get_rdtsc(uint64_t *rdtsc) {
+        *rdtsc = read_tsc();
+        return 0;
 }
 
-uint64_t sys_get_time_ms(void) {
-        return get_time_ms();
+uint64_t sys_get_time_ms(uint64_t *time_ms) {
+        *time_ms = get_time_ms();
+        return 0;
 }
 
-uint64_t sys_get_fps(void) {
-        return get_current_fps();
+uint64_t sys_get_fps(uint64_t *fps) {
+        *fps = get_current_fps();
+        return 0;
 }

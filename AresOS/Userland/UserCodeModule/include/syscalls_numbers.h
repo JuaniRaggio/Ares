@@ -20,5 +20,7 @@ typedef enum {
         SYS_GET_RDTSC,
         SYS_GET_TIME_MS,
         SYS_GET_FPS,
+        SYS_PLAY_SOUND,
+        SYS_BEEP,
         SYS_MAX,
 } syscall_codes;

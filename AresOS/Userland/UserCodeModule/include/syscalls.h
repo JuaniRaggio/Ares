@@ -170,22 +170,22 @@ static inline uint64_t syscall_redraw_screen(void) {
  * Gets the CPU Time Stamp Counter (for high-precision benchmarking)
  * @return 64-bit TSC value (CPU cycles)
  */
-static inline uint64_t syscall_get_rdtsc(void) {
-        return _syscall3(SYS_GET_RDTSC, 0, 0, 0);
+static inline uint64_t syscall_get_rdtsc(uint64_t *rdtsc) {
+        return _syscall3(SYS_GET_RDTSC, (uint64_t)rdtsc, 0, 0);
 }
 
 /**
  * Gets milliseconds elapsed since boot
  * @return Milliseconds elapsed
  */
-static inline uint64_t syscall_get_time_ms(void) {
-        return _syscall3(SYS_GET_TIME_MS, 0, 0, 0);
+static inline uint64_t syscall_get_time_ms(uint64_t *time_ms) {
+        return _syscall3(SYS_GET_TIME_MS, (uint64_t)time_ms, 0, 0);
 }
 
 /**
  * Gets current frames per second (FPS)
  * @return Current FPS value
  */
-static inline uint64_t syscall_get_fps(void) {
-        return _syscall3(SYS_GET_FPS, 0, 0, 0);
+static inline uint64_t syscall_get_fps(uint64_t *fps) {
+        return _syscall3(SYS_GET_FPS, (uint64_t)fps, 0, 0);
 }
