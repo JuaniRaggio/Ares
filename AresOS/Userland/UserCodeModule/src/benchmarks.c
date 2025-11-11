@@ -127,15 +127,6 @@ timer_data timer_benchmark(uint32_t duration_ms) {
                 : 0;
         collected_data.max_jitter_us = max_jitter * 1000;
 
-        /* Calculate accuracy percentage */
-        if (collected_data.expected_ticks > 0) {
-                collected_data.accuracy_percent =
-                    (((double)collected_data.actual_ticks * 100.0) /
-                     collected_data.expected_ticks);
-        } else {
-                collected_data.accuracy_percent = 0.0;
-        }
-
         /* Restore screen */
         syscall_redraw_screen();
 
@@ -148,7 +139,6 @@ void show_timer_benchmark(timer_data data) {
         printf("Expected ticks: %llu\n", data.expected_ticks);
         printf("Actual ticks: %llu\n", data.actual_ticks);
         printf("Missed ticks: %llu\n", data.missed_ticks);
-        // printf("Timer accuracy: %.2f%%\n", data.accuracy_percent);
         printf("Max jitter: %llu us\n", data.max_jitter_us);
 }
 
@@ -160,7 +150,6 @@ keyboard_data keyboard_benchmark(uint32_t num_keys) {
 
         keyboard_data collected_data = {
             .key_presses        = num_keys,
-            .missed_events      = 0,
             .min_latency_us     = 0,
             .max_latency_us     = 0,
             .average_latency_us = 0,
