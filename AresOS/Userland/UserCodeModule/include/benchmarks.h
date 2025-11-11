@@ -55,11 +55,10 @@ void show_timer_benchmark(timer_data data);
 
 /**
  * Executes a keyboard benchmark
- * @param num_keys Number of keys to wait for (0 = until timeout)
- * @param timeout_ms Timeout in milliseconds
+ * @param num_keys Number of keyboards desired to test
  * @return Keyboard statistics
  */
-keyboard_data keyboard_benchmark(uint32_t num_keys, uint32_t timeout_ms);
+keyboard_data keyboard_benchmark(uint32_t num_keys);
 
 /**
  * Shows keyboard benchmark results

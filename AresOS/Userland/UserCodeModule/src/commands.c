@@ -194,33 +194,12 @@ int benchmark_cmd(void) {
 
         fps_data fps = fps_benchmark();
         show_fps_benchmark(fps);
+
         timer_data timer = timer_benchmark();
         show_timer_benchmark(timer);
+
         keyboard_data keyboard = keyboard_benchmark();
         show_keyboard_benchmark(keyboard);
-
-        // Measure hardware interrupts (timer ticks)
-        // syscall_get_ticks(&start_ticks);
-        // syscall_get_time_ms(&initial_ms);
-
-        // printf("Measuring hardware interrupts for 1 second...\n");
-        // uint64_t wait_ms = initial_ms + 1000;
-        // uint64_t current_ms;
-        // do {
-        //         syscall_get_time_ms(&current_ms);
-        // } while (current_ms < wait_ms);
-        //
-        // syscall_get_ticks(&end_ticks);
-        // syscall_get_time_ms(&final_ms);
-        //
-        // uint64_t elapsed_ticks = end_ticks - start_ticks;
-        // uint64_t elapsed_ms    = final_ms - initial_ms;
-        //
-        // printf("Hardware timer interrupts: %d ticks in %d ms\n",
-        // elapsed_ticks,
-        //        elapsed_ms);
-        // printf("Interrupt rate: ~%d Hz\n", (elapsed_ticks * 1000) /
-        // elapsed_ms);
 
         printf("%s", end_benchmark_msg);
         return OK;
