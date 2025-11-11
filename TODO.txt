@@ -9,8 +9,11 @@ Este archivo mantiene:
 Dudas para Fede
 -------------------------------------------------------------------------------
 
-Notas pre-entrega
+Tasks extra
 -------------------------------------------------------------------------------
++ [ ] Scrolling
++ [ ] Driver de Sonido
++ [ ] Driver de mouse para hacer scroll
 
 Importante
 -------------------------------------------------------------------------------
