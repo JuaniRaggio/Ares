@@ -227,7 +227,7 @@ int shell_read_line(char input[][256], int max_params) {
                         draw_cursor(shell_status.cursor.x,
                                     shell_status.cursor.y, 1);
                         cursor_visible = 1;
-                        last_blink     = syscall_get_ticks();
+                        syscall_get_ticks(&last_blink);
                         continue;
                 }
 
@@ -259,7 +259,7 @@ int shell_read_line(char input[][256], int max_params) {
                         draw_cursor(shell_status.cursor.x,
                                     shell_status.cursor.y, 1);
                         cursor_visible = 1;
-                        last_blink     = syscall_get_ticks();
+                        syscall_get_ticks(&last_blink);
                         continue;
                 }
 
@@ -270,7 +270,7 @@ int shell_read_line(char input[][256], int max_params) {
                         draw_cursor(shell_status.cursor.x,
                                     shell_status.cursor.y, 1);
                         cursor_visible = 1;
-                        last_blink     = syscall_get_ticks();
+                        syscall_get_ticks(&last_blink);
                 }
         }
 }
@@ -312,7 +312,9 @@ int shell(void) {
         sync_cursor_pos();
 
         for_ever {
-                if (syscall_get_ticks() == 0) {
+                uint64_t current_ticks = 0;
+                syscall_get_ticks(&current_ticks);
+                if (current_ticks == 0) {
                         printf("Ticks == 0 frikitowna");
                 }
                 printf(input_prompt);

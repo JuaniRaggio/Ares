@@ -24,17 +24,20 @@ int scanf(char *fmt, ...) {
         va_start(v, fmt);
 
         char c;
-        uint64_t ticks   = syscall_get_ticks();
+        uint64_t ticks = 0;
+        syscall_get_ticks(&ticks);
         int cursorTicks  = 0;
         char cursorDrawn = 0;
         char buffer[MAX_CHARS];
         uint64_t bIdx = 0;
 
         while ((c = getchar()) != '\n' && bIdx < MAX_CHARS - 1) {
-                cursorTicks = syscall_get_ticks() - ticks;
+                uint64_t current_ticks = 0;
+                syscall_get_ticks(&current_ticks);
+                cursorTicks = current_ticks - ticks;
 
                 if (cursorTicks > CURSOR_FREQ) {
-                        ticks       = syscall_get_ticks();
+                        syscall_get_ticks(&ticks);
                         cursorTicks = 0;
                         if (cursorDrawn) {
                                 putchar('\b');
