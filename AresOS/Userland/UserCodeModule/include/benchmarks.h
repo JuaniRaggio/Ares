@@ -3,11 +3,10 @@
 
 typedef struct {
         uint64_t sample_count;       // Number of frames measured
-        uint64_t min_frame_time_us;  // Minimum frame time (microseconds)
-        uint64_t max_frame_time_us;  // Maximum frame time
         uint64_t total_test_time_ms; // Total test duration
-        double min_fps;              // Minimum FPS observed
-        double max_fps;              // Maximum FPS observed
+        uint64_t total_tests;        // Total tests produced
+        uint64_t min_fps;            // Minimum FPS observed
+        uint64_t max_fps;            // Maximum FPS observed
         double average_fps;          // Average FPS
 } fps_data;
 
@@ -34,7 +33,7 @@ typedef struct {
  * @param duration_ms test duration
  * @return FPS statistics for this specific task
  */
-fps_data fps_benchmark(uint32_t duration_ms);
+fps_data fps_benchmark(uint8_t tests);
 
 /**
  * Show benchmark results

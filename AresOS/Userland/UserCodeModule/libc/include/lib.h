@@ -11,6 +11,14 @@ typedef struct {
         uint8_t seconds;
 } s_time;
 
+static inline void minimize(uint64_t *to_minimize, uint64_t value) {
+        *to_minimize = *to_minimize < value ? *to_minimize : value;
+}
+
+static inline void maximize(uint64_t *to_maximize, uint64_t value) {
+        *to_maximize = *to_maximize > value ? *to_maximize : value;
+}
+
 /**
  * Fills memory with a constant byte
  * @param destination Pointer to memory to fill
