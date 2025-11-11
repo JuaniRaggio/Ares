@@ -195,6 +195,9 @@ int benchmark_cmd(void) {
 
         printf("%s", init_benchmark_msg);
 
+        fps_benchmark();
+        show_fps_benchmark();
+
         // Measure FPS
         syscall_get_fps(&fps);
         printf("Current FPS: %d frames/second\n", fps);
@@ -204,6 +207,8 @@ int benchmark_cmd(void) {
         syscall_get_time_ms(&initial_ms);
 
         // Wait approximately 1 second
+        timer_benchmark();
+        show_timer_benchmark();
         printf("Measuring hardware interrupts for 1 second...\n");
         uint64_t wait_ms = initial_ms + 1000;
         uint64_t current_ms;

@@ -147,3 +147,13 @@ uint64_t sys_get_fps(uint64_t *fps) {
         *fps = get_current_fps();
         return 0;
 }
+
+uint64_t sys_play_sound(uint64_t frequency, uint64_t duration_ms) {
+        playSound(frequency, duration_ms);
+        return 0;
+}
+
+uint64_t sys_beep(uint64_t frequency) {
+        beep(frequency);
+        return 0;
+}
