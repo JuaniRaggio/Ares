@@ -1,9 +1,9 @@
-#include "lib.h"
-#include "regs.h"
+#include <lib.h>
+#include <regs.h>
 #include <stdint.h>
 #include <syscalls.h>
 
-static volatile regs_snapshot_t saved_regs = {0};
+regs_snapshot_t saved_regs = {0};
 
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t count) {
         if (fd != 0 || count == 0 || buf == NULL) {

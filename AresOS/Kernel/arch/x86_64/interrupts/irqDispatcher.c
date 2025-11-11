@@ -23,7 +23,6 @@ void int_20(uint64_t *stack_ptr) {
 
 void int_21(uint64_t *stack_ptr) {
         uint8_t c = keyboard_handler(stack_ptr);
-
         if (c != 0) {
                 update_buffer(c);
         }
