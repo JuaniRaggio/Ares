@@ -1,6 +1,7 @@
 #include <benchmarks.h>
 #include <commands.h>
 #include <shell.h>
+#include <stdint.h>
 
 extern shell_attributes shell_status;
 
@@ -190,9 +191,11 @@ int benchmark_cmd(void) {
             "============ Ares OS Benchmarks ============\n\n";
         static const char *const end_benchmark_msg =
             "\n===== Benchmark Completed Successfully =====\n";
+        static const uint8_t desired_tests = 20;
+
         printf("%s", init_benchmark_msg);
 
-        fps_data fps = fps_benchmark();
+        fps_data fps = fps_benchmark(desired_tests);
         show_fps_benchmark(fps);
 
         timer_data timer = timer_benchmark();

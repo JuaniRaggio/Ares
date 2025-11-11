@@ -30,7 +30,7 @@ typedef struct {
 
 /**
  * Executes a benchmark for FPS during duration_ms time
- * @param duration_ms test duration
+ * @param tests amount of tests desired
  * @return FPS statistics for this specific task
  */
 fps_data fps_benchmark(uint8_t tests);
