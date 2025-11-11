@@ -19,28 +19,32 @@ echo ""
 
 # Verificar que docker esté disponible
 if ! command -v docker &> /dev/null; then
-    echo "ERROR: Docker no está instalado o no está en el PATH"
+    echo "ERROR: Docker is not installed or not in PATH"
+    echo "Please refer to Readme.txt for compilation prerequisites"
     exit 1
 fi
 
 # Verificar que el contenedor exista
 if ! docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    echo "ERROR: El contenedor '$CONTAINER_NAME' no existe"
+    echo "ERROR: Container '$CONTAINER_NAME' does not exist"
     echo ""
-    echo "Contenedores disponibles:"
+    echo "Available containers:"
     docker ps -a --format "  - {{.Names}} ({{.Status}})"
+    echo ""
+    echo "Please refer to Readme.txt for instructions on how to set up the build environment"
     exit 1
 fi
 
 # Verificar que el contenedor esté corriendo
 if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    echo "ADVERTENCIA: El contenedor '$CONTAINER_NAME' no está corriendo"
-    echo "Intentando iniciarlo..."
+    echo "WARNING: Container '$CONTAINER_NAME' is not running"
+    echo "Attempting to start it..."
     docker start "$CONTAINER_NAME" || {
-        echo "ERROR: No se pudo iniciar el contenedor"
+        echo "ERROR: Could not start the container"
+        echo "Please refer to Readme.txt for troubleshooting instructions"
         exit 1
     }
-    echo "Contenedor iniciado correctamente"
+    echo "Container started successfully"
     sleep 1
 fi
 
@@ -66,7 +70,11 @@ if docker exec -it "$CONTAINER_NAME" bash -c "cd $PROJECT_PATH && make $MAKE_TAR
 else
     echo ""
     echo "=========================================="
-    echo "ERROR: La compilación falló"
+    echo "ERROR: Compilation failed"
     echo "=========================================="
+    echo ""
+    echo "Please refer to Readme.txt for detailed compilation instructions"
+    echo "and make sure all prerequisites are properly installed."
+    echo ""
     exit 1
 fi
