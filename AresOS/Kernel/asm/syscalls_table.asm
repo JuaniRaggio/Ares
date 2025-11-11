@@ -19,6 +19,8 @@ extern sys_get_time_wrapper
 extern sys_get_rdtsc_wrapper
 extern sys_get_time_ms_wrapper
 extern sys_get_fps_wrapper
+extern sys_play_sound_wrapper
+extern sys_beep_wrapper
 
 syscalls_table:
     dq sys_write              ; 0: SYS_WRITE
@@ -40,4 +42,6 @@ syscalls_table:
     dq sys_get_rdtsc_wrapper ; 16: SYS_GET_RDTSC
     dq sys_get_time_ms_wrapper ; 17: SYS_GET_TIME_MS
     dq sys_get_fps_wrapper ; 18: SYS_GET_FPS
+    dq sys_play_sound_wrapper ; 19: SYS_PLAY_SOUND
+    dq sys_beep_wrapper ; 20: SYS_BEEP
 

@@ -174,6 +174,8 @@ void tron_update_player(player_t *player, uint8_t player_id) {
         if (new_x < 0 || new_x >= GRID_WIDTH || new_y < 0 ||
             new_y >= GRID_HEIGHT || game.grid[new_y][new_x] != 0) {
                 player->alive = 0;
+                /* Play collision sound */
+                syscall_play_sound(200, 200); /* Low frequency crash sound */
                 return;
         }
 
@@ -253,6 +255,11 @@ int tron_game(void) {
         /* Show menu and wait for start */
         tron_show_menu();
 
+        /* Play start sound */
+        syscall_play_sound(440, 100); /* A note */
+        syscall_play_sound(554, 100); /* C# note */
+        syscall_play_sound(659, 150); /* E note */
+
         /* Initialize game state */
         tron_init();
 
@@ -293,6 +300,13 @@ int tron_game(void) {
 
         /* Game over - show results */
         syscall_clear();
+
+        /* Play game over sound sequence */
+        syscall_play_sound(523, 150); /* C */
+        syscall_play_sound(392, 150); /* G */
+        syscall_play_sound(330, 150); /* E */
+        syscall_play_sound(262, 300); /* C low */
+
         printf("\n");
         printf("  ============================\n");
         printf("  |        GAME OVER         |\n");
