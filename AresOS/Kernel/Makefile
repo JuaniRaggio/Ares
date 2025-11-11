@@ -11,6 +11,7 @@ BUILD_DIR := build
 BIN_DIR := bin
 
 # Archivos de salida
+KERNEL_ELF := $(BIN_DIR)/kernel.elf
 KERNEL := $(BIN_DIR)/kernel.bin
 
 # 1. LOADER - DEBE SER PRIMERO (punto de entrada)
@@ -47,11 +48,17 @@ GCCFLAGS += -MMD -MP  # Generar dependencias automáticas
 
 all: $(KERNEL)
 	@echo "✓ Kernel compilado: $(KERNEL)"
+	@echo "✓ Símbolos de debug: $(KERNEL_ELF)"
 
-# Linkeo del kernel con orden explícito
-$(KERNEL): $(ALL_OBJECTS) | $(BIN_DIR)
-	@echo "Linkeando kernel..."
-	@$(LD) $(LDFLAGS) -T kernel.ld -o $@ $(ALL_OBJECTS)
+# Linkeo del kernel ELF con símbolos de debug
+$(KERNEL_ELF): $(ALL_OBJECTS) | $(BIN_DIR)
+	@echo "Linkeando kernel ELF..."
+	@$(LD) $(LDFLAGS) --oformat=elf64-x86-64 -T kernel.ld -o $@ $(ALL_OBJECTS)
+
+# Extraer binario plano del ELF
+$(KERNEL): $(KERNEL_ELF)
+	@echo "Generando binario plano..."
+	@objcopy -O binary $< $@
 
 # Compilación de loader (PRIMERO)
 $(LOADER_OBJ): $(LOADER_SRC) | $(BUILD_DIR)
