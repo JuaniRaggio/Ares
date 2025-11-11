@@ -2,18 +2,19 @@
 #include <commands.h>
 #include <shell.h>
 #include <stdint.h>
+#include <stdio.h>
 
 extern shell_attributes shell_status;
 
-int history_cmd(void) {
+uint8_t history_cmd(void) {
         if (shell_status.prompts.lastest_prompt_idx == 0) {
                 printf("Empty history!\n");
                 return EMPTY;
         }
         printf("Command history:\n");
-        for (int i = 0; i < shell_status.prompts.lastest_prompt_idx; i++) {
+        for (uint8_t i = 0; i < shell_status.prompts.lastest_prompt_idx; i++) {
                 printf("%s", shell_status.prompts.prompt_history[i]);
-                for (int j = 0; j < max_parameters; ++j) {
+                for (uint8_t j = 0; j < max_parameters; ++j) {
                         if (shell_status.prompts.prompt_history[i].args[j][0] !=
                             0) {
                                 printf(" %s",
@@ -26,7 +27,7 @@ int history_cmd(void) {
         return OK;
 }
 
-int print_info_reg(void) {
+uint8_t print_info_reg(void) {
         regs_snapshot_t regs;
         uint64_t ret = syscall_get_register_snapshot(&regs);
         printf("===== Register snapshot: =====\n");
@@ -54,7 +55,7 @@ int print_info_reg(void) {
 }
 
 int get_command_index(char *command) {
-        for (int idx = 0; idx < QTY_COMMANDS; idx++) {
+        for (uint8_t idx = 0; idx < QTY_COMMANDS; idx++) {
                 if (commands[idx]->name &&
                     !strcmp(commands[idx]->name, command))
                         return idx;
@@ -62,20 +63,20 @@ int get_command_index(char *command) {
         return INVALID_COMMAND_NAME;
 }
 
-int help(void) {
+uint8_t help(void) {
         printf("Available commands:\n");
-        for (int i = 0; i < QTY_COMMANDS; i++) {
+        for (uint8_t i = 0; i < QTY_COMMANDS; i++) {
                 printf("  %s: %s\n", commands[i]->name,
                        commands[i]->description);
         }
         return OK;
 }
 
-int div_cmd(char *num_str, char *div_str) {
-        int num = 0, div = 0;
-        for (int i = 0; num_str[i] >= '0' && num_str[i] <= '9'; i++)
+uint8_t div_cmd(char *num_str, char *div_str) {
+        uint8_t num = 0, div = 0;
+        for (uint8_t i = 0; num_str[i] >= '0' && num_str[i] <= '9'; i++)
                 num = num * 10 + (num_str[i] - '0');
-        for (int i = 0; div_str[i] >= '0' && div_str[i] <= '9'; i++)
+        for (uint8_t i = 0; div_str[i] >= '0' && div_str[i] <= '9'; i++)
                 div = div * 10 + (div_str[i] - '0');
         printf("%d / %d = %d\n", num, div, num / div);
         return OK;
@@ -106,7 +107,7 @@ s_time get_elapsed_time(s_time current_time) {
         return elapsed;
 }
 
-int show_time(void) {
+uint8_t show_time(void) {
         s_time time;
         syscall_get_time(&time);
         printf("Current time: %d:%d:%d\n", time.hours, time.minutes,
@@ -118,18 +119,18 @@ int show_time(void) {
         return OK;
 }
 
-int clear_cmd(void) {
+uint8_t clear_cmd(void) {
         syscall_clear();
         return OK;
 }
 
-int print_mem(char *pos_str) {
+uint8_t print_mem(char *pos_str) {
         uint64_t addr = 0;
 
         if (pos_str[0] == '0' && (pos_str[1] == 'x' || pos_str[1] == 'X'))
                 pos_str += 2;
 
-        for (int i = 0; pos_str[i]; i++) {
+        for (uint8_t i = 0; pos_str[i]; i++) {
                 char c = pos_str[i];
                 addr <<= 4;
                 if (c >= '0' && c <= '9')
@@ -144,7 +145,7 @@ int print_mem(char *pos_str) {
         syscall_get_memory(addr, buffer, 32);
 
         printf("Memory at 0x%x:\n", addr);
-        for (int i = 0; i < 32; i++) {
+        for (uint8_t i = 0; i < 32; i++) {
                 printf("%x ", buffer[i]);
                 if ((i + 1) % 8 == 0)
                         printf("\n");
@@ -152,7 +153,7 @@ int print_mem(char *pos_str) {
         return OK;
 }
 
-int man(char *command) {
+uint8_t man(char *command) {
         int idx = get_command_index(command);
         if (idx == -1) {
                 printf(invalid_command);
@@ -164,7 +165,7 @@ int man(char *command) {
         return OK;
 }
 
-int cursor_cmd(char *type) {
+uint8_t cursor_cmd(char *type) {
         if (!strcmp(type, "block")) {
                 shell_status.cursor.shape = block;
                 printf("Cursor shape set to: block\n");
@@ -186,7 +187,13 @@ int cursor_cmd(char *type) {
         return OK;
 }
 
-int benchmark_cmd(void) {
+static void wait(char *msg) {
+        printf("%s", msg);
+        while (getchar() == 0)
+                ;
+}
+
+uint8_t benchmark_cmd(void) {
         static const char *const init_benchmark_msg =
             "============ Ares OS Benchmarks ============\n\n";
         static const char *const end_benchmark_msg =
@@ -198,24 +205,33 @@ int benchmark_cmd(void) {
         fps_data fps = fps_benchmark(desired_tests);
         show_fps_benchmark(fps);
 
-        timer_data timer = timer_benchmark();
+        wait("Press Any key to continue with the next test\n");
+
+        timer_data timer = timer_benchmark(1000);
         show_timer_benchmark(timer);
 
-        keyboard_data keyboard = keyboard_benchmark();
+        wait("Press Any key to continue with the next test\n");
+
+        keyboard_data keyboard = keyboard_benchmark(100);
         show_keyboard_benchmark(keyboard);
 
-        printf("%s", end_benchmark_msg);
+        printf("Resume:\n");
+        printf("============================================\n");
+        show_fps_benchmark(fps);
+        show_timer_benchmark(timer);
+        show_keyboard_benchmark(keyboard);
+        printf("%s\n", end_benchmark_msg);
         return OK;
 }
 
-int tron_cmd(void) {
+uint8_t tron_cmd(void) {
         tron_game();
         return OK;
 }
 
 extern void opcode_asm(void);
 
-int trigger_opcode_cmd(void) {
+uint8_t trigger_opcode_cmd(void) {
         opcode_asm();
         return OK;
 }

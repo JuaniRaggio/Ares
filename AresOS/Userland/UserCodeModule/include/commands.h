@@ -20,45 +20,45 @@ static const char *const wrong_params    = "Invalid number of parameters\n";
  * Displays list of available commands
  * @return: status code
  */
-int help(void);
+uint8_t help(void);
 
 /**
  * Shows current system time
  * @return: status code
  */
-int show_time(void);
+uint8_t show_time(void);
 
 /**
  * Clears the screen
  * @return: status code
  */
-int clear_cmd(void);
+uint8_t clear_cmd(void);
 
 /**
  * Prints captured CPU register information
  * @return: status code
  */
-int print_info_reg(void);
+uint8_t print_info_reg(void);
 
 /**
  * Shows manual for a specific command
  * @param command Command name
  * @return: status code
  */
-int man(char *command);
+uint8_t man(char *command);
 
 /**
  * Prints memory dump from specified address
  * @param pos Memory address (as string)
  * @return: status code
  */
-int print_mem(char *pos);
+uint8_t print_mem(char *pos);
 
 /**
  * Displays command history
  * @return: status code
  */
-int history_cmd(void);
+uint8_t history_cmd(void);
 
 /**
  * Gets the index of a command by name
@@ -73,31 +73,31 @@ int get_command_index(char *command);
  * @param div Divisor (as string)
  * @return 0 on success, -1 on error
  */
-int div_cmd(char *num, char *div);
+uint8_t div_cmd(char *num, char *div);
 
 /**
  * Changes cursor shape
  * @param type Cursor type (block, hollow, line, underline)
  * @return 0 on success, -1 on error
  */
-int cursor_cmd(char *type);
+uint8_t cursor_cmd(char *type);
 
 /**
  * Launches the Tron game
  * @return: status code
  */
-int tron_cmd(void);
+uint8_t tron_cmd(void);
 
 /**
  * Triggers OPCode exception (6)
  */
-int trigger_opcode_cmd(void);
+uint8_t trigger_opcode_cmd(void);
 
 /**
  * Runs performance benchmarks
  * @return: status code
  */
-int benchmark_cmd(void);
+uint8_t benchmark_cmd(void);
 
 typedef enum {
         CMD_HELP,
@@ -124,9 +124,9 @@ typedef enum {
 } function_type;
 
 typedef union {
-        int (*supplier)(void);
-        int (*function)(char *);
-        int (*bi_function)(char *, char *);
+        uint8_t (*supplier)(void);
+        uint8_t (*function)(char *);
+        uint8_t (*bi_function)(char *, char *);
 } executable_t;
 
 typedef struct {
@@ -168,7 +168,7 @@ static const command_t man_command = {
 
 static const command_t inforeg_command = {
     .name        = "inforeg",
-    .description = "Display captured CPU registers",
+    .description = "Display captured CPU registers, to capture regs: <C-R>",
     .lambda =
         {
             .execute.supplier = &print_info_reg,
