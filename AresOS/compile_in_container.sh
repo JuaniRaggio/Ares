@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script para compilar el proyecto dentro de un contenedor Docker ya existente
-# Uso: ./compile_in_container.sh [NOMBRE_CONTENEDOR] [TARGET]
-#   NOMBRE_CONTENEDOR: nombre del contenedor (default: ARES)
-#   TARGET: target de make (default: all)
+# Script to compile the project inside an existing Docker container
+# Usage: ./compile_in_container.sh [CONTAINER_NAME] [TARGET]
+#   CONTAINER_NAME: container name (default: ARES)
+#   TARGET: make target (default: all)
 
 set -e
 
@@ -12,19 +12,19 @@ MAKE_TARGET="${2:-all}"
 PROJECT_PATH="/root"
 
 echo "=========================================="
-echo "Compilando en contenedor: $CONTAINER_NAME"
+echo "Compiling in container: $CONTAINER_NAME"
 echo "Target: $MAKE_TARGET"
 echo "=========================================="
 echo ""
 
-# Verificar que docker esté disponible
+# Check if docker is available
 if ! command -v docker &> /dev/null; then
     echo "ERROR: Docker is not installed or not in PATH"
     echo "Please refer to Readme.txt for compilation prerequisites"
     exit 1
 fi
 
-# Verificar que el contenedor exista
+# Check if the container exists
 if ! docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     echo "ERROR: Container '$CONTAINER_NAME' does not exist"
     echo ""
@@ -35,7 +35,7 @@ if ! docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     exit 1
 fi
 
-# Verificar que el contenedor esté corriendo
+# Check if the container is running
 if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     echo "WARNING: Container '$CONTAINER_NAME' is not running"
     echo "Attempting to start it..."
@@ -48,19 +48,19 @@ if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
     sleep 1
 fi
 
-echo "[*] Ejecutando make $MAKE_TARGET dentro del contenedor..."
+echo "[*] Running make $MAKE_TARGET inside the container..."
 echo ""
 
-# Ejecutar make dentro del contenedor
+# Execute make inside the container
 if docker exec -it "$CONTAINER_NAME" bash -c "cd $PROJECT_PATH && make $MAKE_TARGET"; then
     echo ""
     echo "=========================================="
-    echo "Compilación exitosa"
+    echo "Compilation successful"
     echo "=========================================="
 
-    # Corregir permisos de los archivos generados
+    # Fix permissions of generated files
     echo ""
-    echo "[*] Corrigiendo permisos de archivos generados..."
+    echo "[*] Fixing permissions of generated files..."
     sudo chown -R "$(id -u):$(id -g)" "$(pwd)/Kernel/build" 2>/dev/null || true
     sudo chown -R "$(id -u):$(id -g)" "$(pwd)/Kernel/bin" 2>/dev/null || true
     sudo chown -R "$(id -u):$(id -g)" "$(pwd)/Image" 2>/dev/null || true
