@@ -46,9 +46,10 @@ uint64_t sys_clear(void);
 
 /**
  * Gets the number of timer ticks since boot
- * @return Timer tick count
+ * @param ticks_ptr Pointer to store the tick count
+ * @return 0 on success, 1 on error
  */
-uint64_t sys_get_ticks(void);
+uint64_t sys_get_ticks(uint64_t *ticks_ptr);
 
 /**
  * Gets the number of seconds elapsed since boot

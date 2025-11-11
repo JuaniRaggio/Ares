@@ -82,24 +82,20 @@ int div_cmd(char *num_str, char *div_str) {
 s_time get_elapsed_time(s_time current_time) {
         s_time start = get_shell_start_time();
 
-        // Convert both times to total seconds since midnight
         uint32_t current_total_seconds = current_time.hours * 3600 +
                                          current_time.minutes * 60 +
                                          current_time.seconds;
         uint32_t start_total_seconds =
             start.hours * 3600 + start.minutes * 60 + start.seconds;
 
-        // Calculate elapsed seconds
         uint32_t elapsed_seconds;
         if (current_total_seconds >= start_total_seconds) {
                 elapsed_seconds = current_total_seconds - start_total_seconds;
         } else {
-                // Handle day wrap-around (crossed midnight)
                 elapsed_seconds =
                     (86400 - start_total_seconds) + current_total_seconds;
         }
 
-        // Convert back to h:m:s format
         s_time elapsed;
         elapsed.hours   = (elapsed_seconds / 3600) % 24;
         elapsed.minutes = (elapsed_seconds / 60) % 60;

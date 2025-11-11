@@ -48,10 +48,11 @@ static inline uint64_t syscall_clear(void) {
 
 /**
  * Gets the number of timer ticks since boot
- * @return Timer tick count
+ * @param ticks_ptr Pointer to store the tick count
+ * @return 0 on success, 1 on error
  */
-static inline uint64_t syscall_get_ticks(void) {
-        return _syscall3(SYS_GET_TICKS, 0, 0, 0);
+static inline uint64_t syscall_get_ticks(uint64_t *ticks_ptr) {
+        return _syscall3(SYS_GET_TICKS, (uint64_t)ticks_ptr, 0, 0);
 }
 
 /**

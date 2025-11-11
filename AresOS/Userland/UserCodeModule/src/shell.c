@@ -153,8 +153,9 @@ int shell_read_line(char input[][256], int max_params) {
         int param_count   = 0;
         int current_param = 0;
 
-        uint64_t last_blink = syscall_get_ticks();
-        int cursor_visible  = 0;
+        uint64_t last_blink = 0;
+        syscall_get_ticks(&last_blink);
+        int cursor_visible = 0;
 
         for (int i = 0; i < max_params; i++) {
                 input[i][0] = 0;
@@ -164,7 +165,8 @@ int shell_read_line(char input[][256], int max_params) {
                 char c = getchar();
 
                 if (c == 0) {
-                        uint64_t now = syscall_get_ticks();
+                        uint64_t now = 0;
+                        syscall_get_ticks(&now);
                         if (now - last_blink > CURSOR_BLINK_TICKS) {
                                 if (cursor_visible) {
                                         erase_cursor(shell_status.cursor.x,
@@ -310,6 +312,9 @@ int shell(void) {
         sync_cursor_pos();
 
         for_ever {
+                if (syscall_get_ticks() == 0) {
+                        printf("Ticks == 0 frikitowna");
+                }
                 printf(input_prompt);
                 sync_cursor_pos();
                 char error      = VALID_INPUT;

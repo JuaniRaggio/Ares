@@ -1,10 +1,10 @@
 #include <drivers/time.h>
 
 /* PIT timer tick counter (IRQ 0 fires at TICKS_PER_SECOND Hz) */
-static uint64_t tick_counter  = 0;
-static uint64_t start_seconds = 0;
-static uint64_t start_minutes = 0;
-static uint64_t start_hours   = 0;
+static volatile uint64_t tick_counter = 0;
+static uint64_t start_seconds         = 0;
+static uint64_t start_minutes         = 0;
+static uint64_t start_hours           = 0;
 
 /* PIT ports */
 #define PIT_CHANNEL0 0x40

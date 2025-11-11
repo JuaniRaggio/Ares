@@ -27,8 +27,12 @@ uint64_t sys_clear(void) {
         return 0;
 }
 
-uint64_t sys_get_ticks(void) {
-        return ticks_elapsed();
+uint64_t sys_get_ticks(uint64_t *ticks_ptr) {
+        if (ticks_ptr == NULL) {
+                return 1;
+        }
+        *ticks_ptr = ticks_elapsed();
+        return 0;
 }
 
 uint64_t sys_get_seconds(void) {
