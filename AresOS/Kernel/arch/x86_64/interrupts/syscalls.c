@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <syscalls.h>
 
-regs_snapshot_t saved_regs = {0};
+static volatile regs_snapshot_t saved_regs = {0};
 
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t count) {
         if (fd != 0 || count == 0 || buf == NULL) {
