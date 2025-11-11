@@ -1,14 +1,6 @@
 #include <lib.h>
 #include <stdint.h>
 
-inline void minimize(uint64_t *to_minimize, uint64_t value) {
-        *to_minimize = *to_minimize < value ? *to_minimize : value;
-}
-
-inline void maximize(uint64_t *to_maximize, uint64_t value) {
-        *to_maximize = *to_maximize > value ? *to_maximize : value;
-}
-
 void *memset(void *destination, int32_t c, uint64_t length) {
         uint8_t chr = (uint8_t)c;
         char *dst   = (char *)destination;
