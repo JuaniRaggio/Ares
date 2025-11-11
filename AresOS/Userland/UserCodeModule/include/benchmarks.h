@@ -7,7 +7,7 @@ typedef struct {
         uint64_t total_tests;        // Total tests produced
         uint64_t min_fps;            // Minimum FPS observed
         uint64_t max_fps;            // Maximum FPS observed
-        double average_fps;          // Average FPS
+        uint64_t average_fps;        // Average FPS
 } fps_data;
 
 typedef struct {

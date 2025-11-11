@@ -7,7 +7,7 @@
 #define for_ever for (;;)
 #define NO_DATA 0
 
-/* Simple pseudo-random number generator for colors */
+/* Simple random number generator for colors */
 static uint32_t rand_state = 12345;
 static uint32_t simple_rand(void) {
         rand_state = rand_state * 1103515245 + 12345;
@@ -31,10 +31,10 @@ fps_data fps_benchmark(uint8_t tests) {
         syscall_get_time_ms(&start_ms);
         current_ms = start_ms;
 
-        for (uint8_t frames_second = 0; tests > 0; --tests) {
+        for (uint8_t frames_second = 0; tests > 0;
+             --tests, frames += frames_second) {
                 for (inner_start_ms = current_ms, frames_second = 0;
-                     current_ms < inner_start_ms + 1000;
-                     ++frames_second, ++frames) {
+                     current_ms < inner_start_ms + 1000; ++frames_second) {
                         uint32_t color = (simple_rand() % 0xFFFFFF);
                         uint16_t x     = simple_rand() % (screen_width - 100);
                         uint16_t y     = simple_rand() % (screen_height - 100);
@@ -47,7 +47,7 @@ fps_data fps_benchmark(uint8_t tests) {
         collected_data.sample_count       = frames;
         collected_data.total_test_time_ms = current_ms - start_ms;
         collected_data.average_fps =
-            (((double)frames * 1000.0) / collected_data.total_test_time_ms);
+            (frames * 1000 / collected_data.total_test_time_ms);
 
         /* Restore screen content from text buffer */
         syscall_redraw_screen();
