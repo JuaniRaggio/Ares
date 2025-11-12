@@ -33,16 +33,42 @@ fi
 echo "================================================"
 echo ""
 
+# Determine the best audio backend available
+AUDIO_BACKEND="none"
+if command -v pulseaudio &> /dev/null || pgrep -x pulseaudio > /dev/null; then
+    AUDIO_BACKEND="pa"
+elif command -v pactl &> /dev/null; then
+    AUDIO_BACKEND="pa"
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    # Try ALSA on Linux
+    AUDIO_BACKEND="alsa"
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    # macOS
+    AUDIO_BACKEND="coreaudio"
+fi
+
+echo "Audio backend: $AUDIO_BACKEND"
+echo ""
+
 # Flag for debugging
 if [ "$1" == "-d" ]; then
-    qemu-system-x86_64 -s -S -drive file="$IMAGE",format="$FORMAT" -m 512 || {
+    qemu-system-x86_64 \
+        -s -S \
+        -drive file="$IMAGE",format="$FORMAT" \
+        -m 512 \
+        -audiodev $AUDIO_BACKEND,id=audio \
+        -machine pcspk-audiodev=audio || {
         echo ""
         echo "ERROR: Failed to start QEMU in debug mode"
         echo "Please refer to Readme.txt for troubleshooting instructions"
         exit 1
     }
 else
-    qemu-system-x86_64 -drive file="$IMAGE",format="$FORMAT" -m 512 || {
+    qemu-system-x86_64 \
+        -drive file="$IMAGE",format="$FORMAT" \
+        -m 512 \
+        -audiodev $AUDIO_BACKEND,id=audio \
+        -machine pcspk-audiodev=audio || {
         echo ""
         echo "ERROR: Failed to start QEMU"
         echo "Please refer to Readme.txt for troubleshooting instructions"

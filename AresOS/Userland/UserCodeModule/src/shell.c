@@ -41,6 +41,13 @@ static const char *const welcome_msg_shell =
     "@@@@@\n "
     "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@AresSystem@@@"
     "@@@@@\n";
+const char *const logo_shell =
+"    ___    ____  ______ _____ \n"
+"   /   |  / __ \\/ ____// ___/ \n"
+"  / /| | / /_/ / __/  /__ \\  \n"
+" / ___ |/ _, _/ /___ ___/ /  \n"
+"/_/  |_/_/ |_/_____//____/   \n\n";
+
 static const char *const input_prompt = " > ";
 static s_time start_time;
 
@@ -311,6 +318,7 @@ s_time get_shell_start_time(void) {
 int shell(void) {
         init_shell();
         printf(welcome_msg_shell);
+        printf(logo_shell);
         printf(helper_msg);
         sync_cursor_pos();
 
