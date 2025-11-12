@@ -15,9 +15,7 @@
  */
 static void enable_speaker(void) {
         uint8_t tmp = inb(SPEAKER_PORT);
-        if (tmp != (tmp | 3)) {
-                outb(SPEAKER_PORT, tmp | 3);
-        }
+        outb(SPEAKER_PORT, tmp | 3);  /* Set bits 0 and 1 to enable speaker */
 }
 
 /**
