@@ -215,6 +215,8 @@ uint8_t benchmark_cmd(void) {
         keyboard_data keyboard = keyboard_benchmark(100);
         show_keyboard_benchmark(keyboard);
 
+        clear_cmd();
+
         printf("Resume:\n");
         printf("============================================\n");
         show_fps_benchmark(fps);
