@@ -40,10 +40,3 @@ int puts(const char *s);
  * @return Character read
  */
 int getchar(void);
-
-/**
- * Reads formatted input from stdin
- * @param fmt Format string
- * @return Number of items successfully read
- */
-int scanf(char *fmt, ...);
