@@ -7,23 +7,27 @@
 extern shell_attributes shell_status;
 
 uint8_t history_cmd(void) {
-        if (shell_status.prompts.lastest_prompt_idx == 0) {
-                printf("Empty history!\n");
-                return EMPTY;
-        }
-        printf("Command history:\n");
-        for (uint8_t i = 0; i < shell_status.prompts.lastest_prompt_idx; i++) {
-                printf("%s", shell_status.prompts.prompt_history[i]);
-                for (uint8_t j = 0; j < max_parameters; ++j) {
-                        if (shell_status.prompts.prompt_history[i].args[j][0] !=
-                            0) {
-                                printf(" %s",
-                                       shell_status.prompts.prompt_history[i]
-                                           .args[j]);
-                        }
-                }
-                putchar('\n');
-        }
+        printf("Command not supported yet! Sorry :(\n");
+        return INVALID_COMMAND_NAME;
+        // if (shell_status.prompts.lastest_prompt_idx == 0) {
+        //         printf("Empty history!\n");
+        //         return EMPTY;
+        // }
+        // printf("Command history:\n");
+        // for (uint8_t i = 0; i < shell_status.prompts.lastest_prompt_idx; i++)
+        // {
+        //         printf("%s", shell_status.prompts.prompt_history[i]);
+        //         for (uint8_t j = 0; j < max_parameters; ++j) {
+        //                 if (shell_status.prompts.prompt_history[i].args[j][0]
+        //                 !=
+        //                     0) {
+        //                         printf(" %s",
+        //                                shell_status.prompts.prompt_history[i]
+        //                                    .args[j]);
+        //                 }
+        //         }
+        //         putchar('\n');
+        // }
         return OK;
 }
 
@@ -167,25 +171,26 @@ uint8_t man(char *command) {
 }
 
 uint8_t cursor_cmd(char *type) {
-        if (!strcmp(type, "block")) {
-                shell_status.cursor.shape = block;
-                printf("Cursor shape set to: block\n");
-        } else if (!strcmp(type, "hollow")) {
-                shell_status.cursor.shape = hollow;
-                printf("Cursor shape set to: hollow\n");
-        } else if (!strcmp(type, "line")) {
-                shell_status.cursor.shape = line;
-                printf("Cursor shape set to: line\n");
-        } else if (!strcmp(type, "underline")) {
-                shell_status.cursor.shape = underline;
-                printf("Cursor shape set to: underline\n");
-        } else {
-                printf("Invalid cursor type or not supported yet. Current "
-                       "options: block, hollow, line, underline\nTo add a new "
-                       "cursor type, contact support@ares.com");
-                return INVALID_INPUT;
-        }
-        return OK;
+        printf("Cursor not supported yet! Sorry :(\n");
+        // if (!strcmp(type, "block")) {
+        //         shell_status.cursor.shape = block;
+        //         printf("Cursor shape set to: block\n");
+        // } else if (!strcmp(type, "hollow")) {
+        //         shell_status.cursor.shape = hollow;
+        //         printf("Cursor shape set to: hollow\n");
+        // } else if (!strcmp(type, "line")) {
+        //         shell_status.cursor.shape = line;
+        //         printf("Cursor shape set to: line\n");
+        // } else if (!strcmp(type, "underline")) {
+        //         shell_status.cursor.shape = underline;
+        //         printf("Cursor shape set to: underline\n");
+        // } else {
+        //         printf("Invalid cursor type or not supported yet. Current "
+        //                "options: block, hollow, line, underline\nTo add a new
+        //                " "cursor type, contact support@ares.com");
+        //         return INVALID_INPUT;
+        // }
+        return INVALID_COMMAND_NAME;
 }
 
 static void wait(char *msg) {
