@@ -110,10 +110,12 @@ static void print_registers(regs_snapshot_t *regs) {
         ncPrint("\nPress any key to continue...", VGA_CYAN);
 
         char buffer;
+        uint64_t byte;
         picMasterMask(PIC_MASK_KBD_ONLY);
         _sti();
-        static uint64_t byte = 1;
-        while (sys_read(STDIN, &buffer, &byte) == 0)
-                ;
+        /* Wait until a key is pressed */
+        do {
+                byte = 1;
+        } while (sys_read(STDIN, &buffer, &byte) != 0 || byte == 0);
         picMasterMask(PIC_MASK_TIMER_KBD);
 }
