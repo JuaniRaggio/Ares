@@ -3,6 +3,7 @@
 #include <colors.h>
 #include <naiveConsole.h>
 #include <regs.h>
+#include <stdint.h>
 
 extern regs_snapshot_t saved_regs;
 
@@ -111,7 +112,8 @@ static void print_registers(regs_snapshot_t *regs) {
         char buffer;
         picMasterMask(PIC_MASK_KBD_ONLY);
         _sti();
-        while (sys_read(STDIN, &buffer, 1) == 0)
+        static uint64_t byte = 1;
+        while (sys_read(STDIN, &buffer, &byte) == 0)
                 ;
         picMasterMask(PIC_MASK_TIMER_KBD);
 }
