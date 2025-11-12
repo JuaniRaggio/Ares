@@ -101,18 +101,18 @@ uint64_t sys_draw_rect(uint64_t packed_xy, uint64_t packed_wh, uint64_t color);
 
 /**
  * Sets the text color for a stream
- * @param color Color index
+ * @param color RGB color value (0xRRGGBB)
  * @param stream Output stream (STDOUT or STDERR)
  * @return 0 on success
  */
-uint64_t sys_set_text_color(uint8_t color, uint8_t stream);
+uint64_t sys_set_text_color(uint32_t color, uint8_t stream);
 
 /**
  * Sets the background color
- * @param color Color index
+ * @param color RGB color value (0xRRGGBB)
  * @return 0 on success
  */
-uint64_t sys_set_bg_color(uint8_t color);
+uint64_t sys_set_bg_color(uint32_t color);
 
 /**
  * Gets the current cursor position

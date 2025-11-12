@@ -89,4 +89,11 @@ void ncPrintBase(uint64_t value, uint32_t base);
  */
 void ncClear(void);
 
+/**
+ * Prints a single character with RGB color
+ * @param c Character to print
+ * @param rgb RGB color value (0xRRGGBB)
+ */
+void ncPrintCharRGB(char c, uint32_t rgb);
+
 #endif

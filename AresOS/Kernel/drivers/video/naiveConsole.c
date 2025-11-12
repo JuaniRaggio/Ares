@@ -157,3 +157,59 @@ void ncPrintChar(char c, uint8_t color) {
                 }
         }
 }
+
+extern uint32_t current_bg_color;
+
+void ncPrintCharRGB(char c, uint32_t rgb) {
+        if (videoMode == 0) {
+                /* In text mode, convert RGB to VGA approximation */
+                uint8_t vga_color = VGA_WHITE; /* Default */
+                if (rgb == 0x000000)
+                        vga_color = VGA_BLACK;
+                else if ((rgb & 0xFF0000) > 0x800000)
+                        vga_color = VGA_WHITE;
+                ncPrintCharText(c, vga_color);
+        } else {
+                bmp_font_t *font = getFont();
+                if (font == NULL)
+                        return;
+
+                if (c == '\n') {
+                        screen_buffer_add_char(c);
+                        gfxCursorX = 0;
+                        gfxCursorY += font->height * fontScale;
+                        if (gfxCursorY + font->height * fontScale >=
+                            SCREEN_HEIGHT) {
+                                clearScreen(current_bg_color);
+                                gfxCursorX = 0;
+                                gfxCursorY = 0;
+                        }
+                        return;
+                }
+
+                if (c == '\b') {
+                        if (gfxCursorX >= font->width * fontScale) {
+                                gfxCursorX -= font->width * fontScale;
+                                drawRect(gfxCursorX, gfxCursorY,
+                                         font->width * fontScale,
+                                         font->height * fontScale,
+                                         current_bg_color);
+                        }
+                        return;
+                }
+
+                screen_buffer_add_char(c);
+                drawChar(c, gfxCursorX, gfxCursorY, rgb, font);
+                gfxCursorX += font->width * fontScale;
+                if (gfxCursorX + font->width * fontScale >= SCREEN_WIDTH) {
+                        gfxCursorX = 0;
+                        gfxCursorY += font->height * fontScale;
+                        if (gfxCursorY + font->height * fontScale >=
+                            SCREEN_HEIGHT) {
+                                clearScreen(current_bg_color);
+                                gfxCursorX = 0;
+                                gfxCursorY = 0;
+                        }
+                }
+        }
+}

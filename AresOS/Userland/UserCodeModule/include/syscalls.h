@@ -133,20 +133,20 @@ static inline uint64_t syscall_draw_rect(uint16_t x, uint16_t y, uint16_t width,
 
 /**
  * Sets the text color for a stream
- * @param color Color index
+ * @param color RGB color value (0xRRGGBB)
  * @param stream Output stream (1=stdout, 2=stderr)
  * @return 0 on success
  */
-static inline uint64_t syscall_set_text_color(uint8_t color, uint8_t stream) {
+static inline uint64_t syscall_set_text_color(uint32_t color, uint8_t stream) {
         return _syscall3(SYS_SET_TEXT_COLOR, color, stream, 0);
 }
 
 /**
  * Sets the background color
- * @param color Color index
+ * @param color RGB color value (0xRRGGBB)
  * @return 0 on success
  */
-static inline uint64_t syscall_set_bg_color(uint8_t color) {
+static inline uint64_t syscall_set_bg_color(uint32_t color) {
         return _syscall3(SYS_SET_BG_COLOR, color, 0, 0);
 }
 

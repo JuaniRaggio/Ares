@@ -97,3 +97,12 @@ char *itoa(int value, char *str, int base);
  * @return Pointer to the resulting string (same as str parameter)
  */
 char *utoa(uint64_t value, char *str, int base);
+
+/**
+ * Converts a string to an unsigned long integer
+ * @param str String to convert
+ * @param endptr Pointer to store the address of the first invalid character
+ * @param base Numeric base (0 for auto-detect, 10 for decimal, 16 for hex)
+ * @return Converted unsigned integer value
+ */
+uint64_t strtoul(const char *str, char **endptr, int base);

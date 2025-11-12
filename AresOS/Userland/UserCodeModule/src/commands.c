@@ -120,6 +120,7 @@ uint8_t show_time(void) {
 }
 
 uint8_t clear_cmd(void) {
+        syscall_set_bg_color(shell_status.background_color);
         syscall_clear();
         return OK;
 }
@@ -235,5 +236,73 @@ extern void opcode_asm(void);
 
 uint8_t trigger_opcode_cmd(void) {
         opcode_asm();
+        return OK;
+}
+
+static uint32_t parse_color(char *color_str) {
+        /* Try to parse as color name */
+        if (strcmp(color_str, "black") == 0)
+                return BLACK;
+        if (strcmp(color_str, "white") == 0)
+                return WHITE;
+        if (strcmp(color_str, "red") == 0)
+                return RED;
+        if (strcmp(color_str, "green") == 0)
+                return GREEN;
+        if (strcmp(color_str, "blue") == 0)
+                return BLUE;
+        if (strcmp(color_str, "yellow") == 0)
+                return YELLOW;
+        if (strcmp(color_str, "cyan") == 0)
+                return CYAN;
+        if (strcmp(color_str, "magenta") == 0)
+                return MAGENTA;
+        if (strcmp(color_str, "gray") == 0)
+                return GRAY;
+        if (strcmp(color_str, "lightgray") == 0)
+                return LIGHT_GRAY;
+        if (strcmp(color_str, "darkgray") == 0)
+                return DARK_GRAY;
+
+        /* Try to parse as hex value (0xRRGGBB) */
+        if (color_str[0] == '0' &&
+            (color_str[1] == 'x' || color_str[1] == 'X')) {
+                return (uint32_t)strtoul(color_str, NULL, 16);
+        }
+
+        return 0xFFFFFFFF; /* Invalid color */
+}
+
+uint8_t textcolor_cmd(char *color) {
+        uint32_t color_value = parse_color(color);
+
+        if (color_value == 0xFFFFFFFF) {
+                printf("Invalid color: %s\n", color);
+                printf("Valid colors: black, white, red, green, blue, yellow, "
+                       "cyan, magenta, gray, lightgray, darkgray\n");
+                printf("Or use hex format: 0xRRGGBB\n");
+                return INVALID_INPUT;
+        }
+
+        shell_status.font_color = color_value;
+        syscall_set_text_color(color_value, STDOUT);
+        printf("Text color changed\n");
+        return OK;
+}
+
+uint8_t bgcolor_cmd(char *color) {
+        uint32_t color_value = parse_color(color);
+
+        if (color_value == 0xFFFFFFFF) {
+                printf("Invalid color: %s\n", color);
+                printf("Valid colors: black, white, red, green, blue, yellow, "
+                       "cyan, magenta, gray, lightgray, darkgray\n");
+                printf("Or use hex format: 0xRRGGBB\n");
+                return INVALID_INPUT;
+        }
+
+        shell_status.background_color = color_value;
+        syscall_set_bg_color(color_value);
+        printf("Background color changed\n");
         return OK;
 }

@@ -1,10 +1,33 @@
+#include <drivers/keyboard_driver.h>
 #include <drivers/sound.h>
 #include <lib.h>
+#include <naiveConsole.h>
 #include <regs.h>
 #include <stdint.h>
 #include <syscalls.h>
 
 regs_snapshot_t saved_regs = {0};
+uint32_t current_bg_color  = 0x000000; /* Default black background */
+static uint32_t current_stdout_color_rgb = 0xFFFFFF; /* Default white */
+static uint32_t current_stderr_color_rgb = 0xFF0000; /* Default red */
+
+uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
+        if (fd != 1 && fd != 2) {
+                return 0;
+        }
+        if (buf == NULL || len == 0) {
+                return 0;
+        }
+
+        uint32_t color =
+            (fd == 1) ? current_stdout_color_rgb : current_stderr_color_rgb;
+
+        for (uint64_t i = 0; i < len; i++) {
+                ncPrintCharRGB(buf[i], color);
+        }
+
+        return len;
+}
 
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
         if (fd != 0 || count == NULL || buf == NULL) {
@@ -32,7 +55,7 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
 
 uint64_t sys_clear(void) {
         if (videoMode == 1) {
-                clearScreen(0x000000);
+                clearScreen(current_bg_color);
                 screen_buffer_clear();
                 gfxCursorX = 0;
                 gfxCursorY = 0;
@@ -105,21 +128,19 @@ uint64_t sys_draw_rect(uint64_t packed_xy, uint64_t packed_wh, uint64_t color) {
         return 0;
 }
 
-extern uint8_t current_stdout_color;
-extern uint8_t current_stderr_color;
-
-uint64_t sys_set_text_color(uint8_t color, uint8_t stream) {
+uint64_t sys_set_text_color(uint32_t color, uint8_t stream) {
         if (stream == 1) {
-                current_stdout_color = color;
+                current_stdout_color_rgb = color;
         } else if (stream == 2) {
-                current_stderr_color = color;
+                current_stderr_color_rgb = color;
         }
         return 0;
 }
 
-uint64_t sys_set_bg_color(uint8_t color) {
+uint64_t sys_set_bg_color(uint32_t color) {
         if (videoMode == 1) {
-                clearScreen(vgaToRGB(color));
+                current_bg_color = color;
+                clearScreen(current_bg_color);
                 return 0;
         }
         return 1;

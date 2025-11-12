@@ -170,3 +170,47 @@ char *utoa(uint64_t value, char *str, int base) {
 
         return str;
 }
+
+uint64_t strtoul(const char *str, char **endptr, int base) {
+        uint64_t result = 0;
+        const char *s   = str;
+
+        /* Skip whitespace */
+        while (*s == ' ' || *s == '\t' || *s == '\n')
+                s++;
+
+        /* Handle 0x prefix for hex */
+        if (base == 16 || base == 0) {
+                if (s[0] == '0' && (s[1] == 'x' || s[1] == 'X')) {
+                        s += 2;
+                        base = 16;
+                }
+        }
+
+        if (base == 0)
+                base = 10;
+
+        /* Parse digits */
+        while (*s) {
+                int digit;
+                if (*s >= '0' && *s <= '9')
+                        digit = *s - '0';
+                else if (*s >= 'a' && *s <= 'f')
+                        digit = *s - 'a' + 10;
+                else if (*s >= 'A' && *s <= 'F')
+                        digit = *s - 'A' + 10;
+                else
+                        break;
+
+                if (digit >= base)
+                        break;
+
+                result = result * base + digit;
+                s++;
+        }
+
+        if (endptr)
+                *endptr = (char *)s;
+
+        return result;
+}

@@ -99,6 +99,20 @@ uint8_t trigger_opcode_cmd(void);
  */
 uint8_t benchmark_cmd(void);
 
+/**
+ * Changes text color
+ * @param color Color name or hex value
+ * @return: status code
+ */
+uint8_t textcolor_cmd(char *color);
+
+/**
+ * Changes background color
+ * @param color Color name or hex value
+ * @return: status code
+ */
+uint8_t bgcolor_cmd(char *color);
+
 typedef enum {
         CMD_HELP,
         CMD_MAN,
@@ -113,6 +127,8 @@ typedef enum {
         CMD_TRON,
         CMD_TRIGGER_OPCODE,
         CMD_BENCHMARK,
+        CMD_TEXTCOLOR,
+        CMD_BGCOLOR,
         QTY_COMMANDS
 } command_index;
 
@@ -276,9 +292,32 @@ static const command_t benchmark_command = {
         },
 };
 
+static const command_t textcolor_command = {
+    .name        = "textcolor",
+    .description = "Change text color (black, white, red, green, blue, yellow, "
+                   "cyan, magenta, gray)",
+    .lambda =
+        {
+            .ftype            = function_t,
+            .execute.function = &textcolor_cmd,
+        },
+};
+
+static const command_t bgcolor_command = {
+    .name        = "bgcolor",
+    .description = "Change background color (black, white, red, green, blue, "
+                   "yellow, cyan, magenta, gray)",
+    .lambda =
+        {
+            .ftype            = function_t,
+            .execute.function = &bgcolor_cmd,
+        },
+};
+
 static const command_t *const commands[QTY_COMMANDS] = {
-    &help_command,      &man_command,    &inforeg_command,   &time_command,
-    &div_command,       &clear_command,  &print_mem_command, &history_command,
-    &exit_command,      &cursor_command, &tron_command,      &trigger_opcode,
-    &benchmark_command,
+    &help_command,      &man_command,       &inforeg_command,
+    &time_command,      &div_command,       &clear_command,
+    &print_mem_command, &history_command,   &exit_command,
+    &cursor_command,    &tron_command,      &trigger_opcode,
+    &benchmark_command, &textcolor_command, &bgcolor_command,
 };
