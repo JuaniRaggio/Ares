@@ -29,16 +29,16 @@ uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len);
  */
 void sys_exit(uint64_t code);
 
-// FIX THIS BUG AND ALL ITS USAGES
 /**
- * Reads a character from the keyboard buffer
+ * Reads from a file descriptor
  * @param fd File descriptor (STDIN)
- * @param buf Buffer to store the read character
- * @param count Maximum number of bytes to read
- * @return status code
- *        NOT->---Number of bytes read---
+ * @param buf Buffer to store the read data
+ * @param count Pointer to number of bytes (input/output)
+ *              Input: maximum bytes to read
+ *              Output: actual bytes read
+ * @return 0 on success, 1 on error
  */
-uint64_t sys_read(uint64_t fd, char *buf, uint64_t count);
+uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count);
 
 /**
  * Clears the screen

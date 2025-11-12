@@ -1,11 +1,18 @@
 #include <stdint.h>
 #include <stdio.h>
 
-/* Lee un caracter del stdin (non-blocking) */
+/*
+ * Lee un caracter del stdin (non-blocking)
+ * Retorna 0 si no hay datos disponibles, o el caracter leido
+ */
 int getchar(void) {
-        char c = 0;
-        syscall_read(STDIN, &c, 1);
-        return c;
+        char c         = 0;
+        uint64_t count = 1;
+        syscall_read(STDIN, &c, &count);
+        if (count == 0) {
+                return 0; /* No data available */
+        }
+        return (uint8_t)c;
 }
 
 int putchar(int c) {

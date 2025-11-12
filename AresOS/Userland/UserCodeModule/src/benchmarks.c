@@ -159,11 +159,12 @@ keyboard_data keyboard_benchmark(uint32_t num_keys) {
 
         for (uint32_t i = 0; i < num_keys; i++) {
                 uint64_t wait_start_ms, key_detected_ms;
+                uint64_t count = 1;
                 char c;
 
                 syscall_get_time_ms(&wait_start_ms);
 
-                syscall_read(STDIN, &c, 1);
+                syscall_read(STDIN, &c, &count);
 
                 syscall_get_time_ms(&key_detected_ms);
 

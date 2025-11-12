@@ -6,14 +6,28 @@
 
 regs_snapshot_t saved_regs = {0};
 
-uint64_t sys_read(uint64_t fd, char *buf, uint64_t count) {
-        if (fd != 0 || count == 0 || buf == NULL) {
-                return 0;
+uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
+        if (fd != 0 || count == NULL || buf == NULL) {
+                if (count != NULL) {
+                        *count = 0;
+                }
+                return 1; /* Error */
         }
+
+        uint64_t max_count = *count;
+        if (max_count == 0) {
+                *count = 0;
+                return 1; /* Error */
+        }
+
         uint64_t i = 0;
-        while (buffer_has_next() && i++ < count)
-                buf[0] = buffer_next();
-        return i;
+        while (buffer_has_next() && i < max_count) {
+                buf[i] = buffer_next();
+                i++;
+        }
+
+        *count = i; /* Update count with actual bytes read */
+        return 0;   /* Success */
 }
 
 uint64_t sys_clear(void) {

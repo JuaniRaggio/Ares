@@ -155,11 +155,14 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
 
         uint64_t last_blink = 0;
         syscall_get_ticks(&last_blink);
-        int cursor_visible = 0;
+        int cursor_visible = 1;
 
         for (int i = 0; i < max_params; i++) {
                 input[i][0] = 0;
         }
+
+        /* Draw initial cursor */
+        draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
 
         for_ever {
                 char c = getchar();

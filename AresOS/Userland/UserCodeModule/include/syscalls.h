@@ -31,11 +31,13 @@ static inline void syscall_exit(int code) {
  * Reads from a file descriptor
  * @param fd File descriptor (STDIN = 0)
  * @param buf Buffer to store data
- * @param count Number of bytes to read
- * @return Number of bytes read
+ * @param count Pointer to number of bytes to read (input/output)
+ *              Input: maximum bytes to read
+ *              Output: actual bytes read
+ * @return 0 on success, non-zero on error
  */
-static inline uint64_t syscall_read(uint64_t fd, char *buf, uint64_t count) {
-        return _syscall3(SYS_READ, fd, (uint64_t)buf, count);
+static inline uint64_t syscall_read(uint64_t fd, char *buf, uint64_t *count) {
+        return _syscall3(SYS_READ, fd, (uint64_t)buf, (uint64_t)count);
 }
 
 /**
