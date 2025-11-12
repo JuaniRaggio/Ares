@@ -55,12 +55,12 @@ fps_data fps_benchmark(uint8_t tests) {
 
 void show_fps_benchmark(fps_data data) {
         printf("\n========= FPS Benchmark Result =========\n");
-        printf("Total test duration: %llu ms\n", data.total_test_time_ms);
-        printf("Total tests produced: %llu\n", data.total_tests);
-        printf("Total frames measured: %llu\n", data.sample_count);
-        printf("Minimum FPS observed: %llu\n", data.min_fps);
-        printf("Maximum FPS observed: %llu\n", data.max_fps);
-        printf("Average FPS observed: %llu\n", data.average_fps);
+        printf("  Total test duration: %llu ms\n", data.total_test_time_ms);
+        printf("  Total tests produced: %llu\n", data.total_tests);
+        printf("  Total frames measured: %llu\n", data.sample_count);
+        printf("  Minimum FPS observed: %llu\n", data.min_fps);
+        printf("  Maximum FPS observed: %llu\n", data.max_fps);
+        printf("  Average FPS observed: %llu\n", data.average_fps);
 }
 
 timer_data timer_benchmark(uint32_t duration_ms) {
@@ -135,11 +135,11 @@ timer_data timer_benchmark(uint32_t duration_ms) {
 
 void show_timer_benchmark(timer_data data) {
         printf("\n======= Timer Hardware Benchmark =======\n");
-        printf("Test duration: %llu ms\n", data.total_time_ms);
-        printf("Expected ticks: %llu\n", data.expected_ticks);
-        printf("Actual ticks: %llu\n", data.actual_ticks);
-        printf("Missed ticks: %llu\n", data.missed_ticks);
-        printf("Max jitter: %llu us\n", data.max_jitter_us);
+        printf("  Test duration: %llu ms\n", data.total_time_ms);
+        printf("  Expected ticks: %llu\n", data.expected_ticks);
+        printf("  Actual ticks: %llu\n", data.actual_ticks);
+        printf("  Missed ticks: %llu\n", data.missed_ticks);
+        printf("  Max jitter: %llu us\n", data.max_jitter_us);
 }
 
 keyboard_data keyboard_benchmark(uint32_t num_keys) {
@@ -149,13 +149,13 @@ keyboard_data keyboard_benchmark(uint32_t num_keys) {
         uint64_t key_count     = 0;
 
         keyboard_data collected_data = {
-            .key_presses        = num_keys,
+            .chars_read         = num_keys,
             .min_latency_us     = 0,
             .max_latency_us     = 0,
             .average_latency_us = 0,
         };
 
-        printf("\n========== Keyboard Benchmark ==========\n");
+        printf("\n========== Syscall Read Benchmark ==========\n");
 
         for (uint32_t i = 0; i < num_keys; i++) {
                 uint64_t wait_start_ms, key_detected_ms;
@@ -185,7 +185,7 @@ keyboard_data keyboard_benchmark(uint32_t num_keys) {
                        num_keys, (c >= 32 && c <= 126) ? c : '?', latency_us);
         }
 
-        collected_data.key_presses    = key_count;
+        collected_data.chars_read     = key_count;
         collected_data.min_latency_us = min_latency;
         collected_data.max_latency_us = max_latency;
         collected_data.average_latency_us =
@@ -197,9 +197,9 @@ keyboard_data keyboard_benchmark(uint32_t num_keys) {
 }
 
 void show_keyboard_benchmark(keyboard_data data) {
-        printf("\n========== Keyboard Benchmark ==========\n");
-        printf("Total keys pressed: %llu\n", data.key_presses);
-        printf("Minimum latency: %llu us\n", data.min_latency_us);
-        printf("Maximum latency: %llu us\n", data.max_latency_us);
-        printf("Average latency: %llu us\n", data.average_latency_us);
+        printf("\n========== Syscall Read Benchmark ==========\n");
+        printf("  Total characters read: %llu\n", data.chars_read);
+        printf("  Minimum latency:       %llu us\n", data.min_latency_us);
+        printf("  Maximum latency:       %llu us\n", data.max_latency_us);
+        printf("  Average latency:       %llu us\n", data.average_latency_us);
 }

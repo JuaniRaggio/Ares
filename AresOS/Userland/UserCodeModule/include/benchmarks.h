@@ -12,7 +12,7 @@ typedef struct {
 } fps_data;
 
 typedef struct {
-        uint64_t key_presses;        // Number of keys pressed in test
+        uint64_t chars_read;         // Number of keys read in test
         uint64_t min_latency_us;     // Minimum latency (microseconds)
         uint64_t max_latency_us;     // Maximum latency
         uint64_t average_latency_us; // Average latency
