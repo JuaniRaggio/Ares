@@ -60,7 +60,7 @@
   v(0.3em)
 }
 
-#set list(indent: 1em, marker: (""", "�", "�"))
+#set list(indent: 1em, marker: ([•], [◦], [▪]))
 #set enum(indent: 1em, numbering: "1.a.")
 
 #show raw.where(block: false): box.with(
@@ -168,7 +168,6 @@
 
 #pagebreak()
 
-// Introduction
 = Introduction
 
 == About ARES
@@ -321,11 +320,13 @@ Always run `clean_in_container.sh` before making significant changes to the buil
 
 The Makefile supports several targets:
 
-=== all (default)
+=== all
 
 Builds the complete system: kernel, userland, and bootable image.
 
 ```bash
+./AresOS/compile_in_container.sh
+# or
 ./AresOS/compile_in_container.sh ARES all
 ```
 
@@ -355,10 +356,7 @@ Removes all build artifacts.
 
 == Build Output
 
-After successful compilation, you will find:
-
 - `AresOS/Image/x64BareBonesImage.img`: Raw bootable disk image
-- `AresOS/Image/x64BareBonesImage.qcow2`: QEMU copy-on-write disk image
 - `AresOS/Kernel/bin/`: Kernel binaries
 - `AresOS/Kernel/build/`: Kernel object files
 - `AresOS/Userland/*/bin/`: Userland binaries
@@ -394,26 +392,9 @@ The simplest way to run ARES is using the provided run script.
 The script automatically selects the QCOW2 image if available, otherwise it uses the raw IMG file.
 ]
 
-== Manual QEMU Invocation
-
-You can also run QEMU manually with custom options:
-
-```bash
-# Basic run with 512MB RAM
-qemu-system-x86_64 -hda Image/x64BareBonesImage.img -m 512
-
-# Run with specific resolution
-qemu-system-x86_64 -hda Image/x64BareBonesImage.img -m 512 \
-  -vga std
-
-# Run with KVM acceleration (Linux only)
-qemu-system-x86_64 -hda Image/x64BareBonesImage.img -m 512 \
-  -enable-kvm
-
-# Run with serial output
-qemu-system-x86_64 -hda Image/x64BareBonesImage.img -m 512 \
-  -serial stdio
-```
+#note[
+You can also run QEMU manually with custom options
+]
 
 == Debugging with GDB
 
@@ -437,64 +418,6 @@ Add breakpoints before running `continue`:
 (gdb) break kernel_main
 (gdb) continue
 ```
-]
-
-#pagebreak()
-
-= Project Structure Validation
-
-== validate_structure.sh
-
-This script validates the project's directory structure and file organization.
-
-*Usage:*
-
-```bash
-./AresOS/validate_structure.sh
-```
-
-*What it checks:*
-
-1. *Duplicate Headers*: Ensures no duplicate header files exist
-2. *Duplicate Drivers*: Checks for duplicate driver implementations
-3. *Relative Includes*: Verifies no relative path includes (e.g., `#include "../file.h"`)
-4. *Compile Flags*: Confirms `compile_flags.txt` files exist
-5. *Compile Commands*: Checks for `compile_commands.json` (for IDE support)
-6. *Directory Structure*: Validates all required directories are present
-
-*Example output:*
-
-```
-===================================
-Validating project structure
-===================================
-
-[1] Checking for duplicate headers...
-  OK: No duplicate headers found
-
-[2] Checking for duplicate driver files...
-  OK: No duplicate files found
-
-[3] Checking for relative path includes...
-  OK: No relative path includes found
-
-[4] Checking compile_flags.txt existence...
-  OK: Kernel/compile_flags.txt exists
-  OK: Userland/UserCodeModule/compile_flags.txt exists
-
-[5] Checking compile_commands.json existence...
-  OK: Kernel/compile_commands.json exists
-
-[6] Checking directory structure...
-  OK: All required directories exist
-
-===================================
-VALIDATION SUCCESSFUL
-===================================
-```
-
-#important[
-Always run this validation script after making structural changes to the project or before submitting code.
 ]
 
 #pagebreak()
@@ -557,23 +480,6 @@ This script configures Git to use a custom hooks directory.
 3. Lists available hooks
 4. Displays confirmation message
 
-*Example output:*
-
-```
-Configuring git hooks for the project Ares...
-Configuration successful!
-Git will now use hooks in the .githooks/ directory
-
-Available hooks:
-pre-commit
-
-The hooks will run automatically on corresponding git operations.
-```
-
-#tip[
-After running this script, any hooks in `.githooks/` will execute automatically during Git operations like commit, push, etc.
-]
-
 #pagebreak()
 
 = Shell Commands Reference
@@ -581,7 +487,7 @@ After running this script, any hooks in `.githooks/` will execute automatically 
 Once ARES boots, you will be presented with an interactive shell prompt:
 
 ```
-ARES>
+>
 ```
 
 This section describes all available commands.
@@ -596,23 +502,6 @@ help
 ```
 
 *Parameters:* None
-
-*Example output:*
-```
-Available commands:
-  help: List all available commands
-  man: Show manual for a specific command
-  inforeg: Display captured CPU registers
-  time: Show system elapsed time
-  div: Integer division of two numbers
-  clear: Clear the entire screen
-  printmem: Memory dump of 32 bytes from an address
-  textcolor: Change text color (RGB or color name)
-  bgcolor: Change background color (RGB or color name)
-  benchmark: Run performance benchmark suite
-  tron: Play the Tron game (WASD vs IJKL)
-  exit: Exit Ares OS
-```
 
 #note[
 The commands `history` and `cursor` are not yet implemented in the current version.
@@ -630,14 +519,6 @@ man <command>
 *Parameters:*
 - `command`: Name of the command to get information about
 
-*Example:*
-```
-ARES> man div
-Command: div
-Description: Integer division of two numbers
-Parameters: 2
-```
-
 == inforeg
 
 Displays a snapshot of all CPU registers at the moment of the last register capture.
@@ -648,28 +529,6 @@ inforeg
 ```
 
 *Parameters:* None
-
-*Example output:*
-```
-===== Register snapshot: =====
-      RIP: 0x100234
-      RSP: 0x9ffe0
-      RAX: 0x0
-      RBX: 0x0
-      RCX: 0xa0000
-      RDX: 0x3
-      RBP: 0x9fff8
-      RDI: 0x200000
-      RSI: 0x100000
-      R8:  0x0
-      R9:  0x0
-      R10: 0x0
-      R11: 0x0
-      R12: 0x0
-      R13: 0x0
-      R14: 0x0
-      R15: 0x0
-```
 
 #note[
 Register values are captured through a syscall that takes a snapshot of the current register state.
@@ -686,14 +545,8 @@ time
 
 *Parameters:* None
 
-*Example output:*
-```
-Current time: 14:32:15
-Time elapsed: 0:5:23
-```
-
 #note[
-Time is read from the Real-Time Clock (RTC). The elapsed time is calculated from when the shell was first started.
+Time is read from the Real-Time Clock (RTC), it has a 3 hour gap with Argentina's current time. The elapsed time is calculated from when the shell was first started.
 ]
 
 == div
@@ -709,20 +562,8 @@ div <numerator> <denominator>
 - `numerator`: The number to be divided (dividend)
 - `denominator`: The number to divide by (divisor)
 
-*Examples:*
-```
-ARES> div 42 6
-42 / 6 = 7
-
-ARES> div 100 7
-100 / 7 = 14
-
-ARES> div 10 0
-Error: division by zero
-```
-
 #warning[
-Division by zero is handled gracefully and will display an error message instead of causing a system exception.
+Division by zero is not handled gracefully so it will cause a system exception.
 ]
 
 == clear
@@ -736,13 +577,6 @@ clear
 
 *Parameters:* None
 
-*Example:*
-```
-ARES> clear
-[screen clears]
-ARES>
-```
-
 == printmem
 
 Displays a hexadecimal dump of 32 bytes from a specified memory address.
@@ -755,25 +589,8 @@ printmem <address>
 *Parameters:*
 - `address`: Memory address in hexadecimal format (with or without `0x` prefix)
 
-*Examples:*
-```
-ARES> printmem 0x100000
-Memory at 0x100000:
-48 89 e5 48 83 ec 20 48
-89 7d f8 48 89 75 f0 48
-8b 45 f8 48 8b 55 f0 48
-01 d0 48 89 45 e8 48 8b
-
-ARES> printmem 400000
-Memory at 0x400000:
-00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00
-```
-
 #warning[
-Reading from invalid or protected memory addresses may cause the system to display an error or exception.
+Reading from invalid or protected memory addresses may cause the system to have unexpected problems
 ]
 
 == history
@@ -791,14 +608,13 @@ history
 
 *Parameters:* None
 
-*Planned functionality:*
-- Display previously executed commands
-- Show command numbers for reference
-- Allow command recall by number
-
 == exit
 
-Exits the ARES operating system.
+#warning[
+We need Scheduler to make this work
+]
+
+Exits the ARES operating system
 
 *Syntax:*
 ```
@@ -806,10 +622,6 @@ exit
 ```
 
 *Parameters:* None
-
-#note[
-This will typically halt the system or return to a halt state. In QEMU, you can close the window or use Ctrl+A then X to exit.
-]
 
 == cursor
 
@@ -826,12 +638,6 @@ cursor <shape>
 
 *Parameters:*
 - `shape`: One of: `block`, `hollow`, `line`, or `underline`
-
-*Planned cursor shapes:*
-- *block*: Solid filled rectangle
-- *hollow*: Rectangle outline only
-- *line*: Vertical line
-- *underline*: Horizontal line at bottom
 
 == tron
 
@@ -858,22 +664,9 @@ Player 2 (Magenta):
 - `K`: Move down
 - `L`: Move right
 
-*Objective:*
-
-Each player controls a light cycle that leaves a trail behind it. The goal is to force your opponent to crash into a trail (yours or theirs) while avoiding crashes yourself.
-
-*Game Rules:*
-1. You cannot reverse direction (e.g., if moving right, you cannot immediately move left)
-2. Crashing into any trail results in losing the round
-3. Last player standing wins
-
 *To Exit:*
 
 Press `ESC` to return to the shell.
-
-#tip[
-Try to cut off your opponent's path while keeping your own escape routes open.
-]
 
 == textcolor
 
@@ -891,29 +684,6 @@ textcolor <color>
 - `black`, `white`, `red`, `green`, `blue`
 - `yellow`, `cyan`, `magenta`
 - `gray`, `lightgray`, `darkgray`
-
-*Examples:*
-```
-ARES> textcolor red
-Text color changed
-
-ARES> textcolor 0xFF5500
-Text color changed
-
-ARES> textcolor blue
-Text color changed
-
-ARES> textcolor invalid
-Invalid color: invalid
-Valid colors: black, white, red, green, blue, yellow, cyan, magenta, gray, lightgray, darkgray
-Or use hex format: 0xRRGGBB
-```
-
-*Hexadecimal format:*
-- Use format `0xRRGGBB` where:
-  - `RR`: Red component (00-FF)
-  - `GG`: Green component (00-FF)
-  - `BB`: Blue component (00-FF)
 
 #note[
 The text color affects all subsequent text output in STDOUT. The color persists until changed again or the system is restarted.
@@ -936,18 +706,6 @@ bgcolor <color>
 - `yellow`, `cyan`, `magenta`
 - `gray`, `lightgray`, `darkgray`
 
-*Examples:*
-```
-ARES> bgcolor black
-Background color changed
-
-ARES> bgcolor 0x001122
-Background color changed
-
-ARES> bgcolor darkgray
-Background color changed
-```
-
 #tip[
 Combine `textcolor` and `bgcolor` to create custom color schemes. Use the `clear` command after changing colors to see the full effect.
 ]
@@ -966,19 +724,8 @@ benchmark
 *What it tests:*
 
 1. *FPS (Frames Per Second) Benchmark*
-   - Tests graphics rendering performance
-   - Measures frame rendering time
-   - Calculates average FPS
-
 2. *Timer Benchmark*
-   - Tests timer accuracy and resolution
-   - Reads Real-Time Clock (RTC)
-   - Measures Programmable Interval Timer (PIT) ticks
-
 3. *Syscall Read Benchmark*
-   - Tests system call performance
-   - Measures read operation latency
-   - Tests buffer handling
 
 #note[
 The benchmark requires user interaction to advance between tests. Press any key when prompted to continue to the next benchmark.
@@ -1038,6 +785,8 @@ Compile the project first:
 ```bash
 ./AresOS/compile_in_container.sh
 ```
+
+\
 
 === Black screen on boot
 
@@ -1110,53 +859,6 @@ Review the error messages and fix the reported issues. Common problems:
 ./setup-hooks.sh
 ```
 
-== Keyboard Shortcuts
-
-*In QEMU:*
-- `Ctrl+Alt+G`: Release mouse capture
-- `Ctrl+Alt+F`: Toggle fullscreen
-- `Ctrl+A`, then `X`: Exit QEMU
-- `Ctrl+A`, then `C`: Switch to QEMU console
-
-*In Shell:*
-- `Tab`: (Future) Command completion
-- `Up/Down`: (Future) Command history navigation
-- `Ctrl+C`: (Future) Interrupt current operation
-
-#pagebreak()
-
-= Appendix
-
-== File Structure Overview
-
-```
-Ares/
-   AresOS/
-      Bootloader/          # Pure64 bootloader
-      Kernel/              # Kernel source code
-         arch/            # Architecture-specific code
-         core/            # Core kernel functionality
-         drivers/         # Hardware drivers
-         include/         # Kernel headers
-         Makefile         # Kernel build configuration
-      Userland/            # User space programs
-         UserCodeModule/  # Shell and applications
-             src/         # Source files
-             include/     # User headers
-             libc/        # C library implementation
-      Image/               # Built disk images
-      compile_in_container.sh
-      clean_in_container.sh
-      validate_structure.sh
-      run.sh
-   doc/                     # Documentation
-      UserManual.typ       # This document
-      planning.typ         # Project planning
-      roadmap.typ          # Development roadmap
-   install-hooks.sh
-   setup-hooks.sh
-```
-
 == System Specifications
 
 *Architecture:* x86-64 (64-bit)
@@ -1165,55 +867,9 @@ Ares/
 
 *Memory:* 512 MB RAM (configurable)
 
-*Display:* VESA graphics mode
-- Supported resolutions: 1024x768, 1366x768, 1024x600
-- Color depth: 24/32 bpp
-
 *Drivers:*
 - Video (framebuffer)
-- Keyboard (PS/2)
+- Keyboard
 - Timer/RTC
 - PC Speaker (sound)
 
-== Contact and Support
-
-For issues, questions, or contributions:
-
-*Repository:* [Project repository URL]
-
-*Team:*
-- Juan Ignacio Raggio
-- Enzo Canelo
-- Matias Sanchez
-
-#pagebreak()
-
-= Glossary
-
-*Bare Metal:* Code that runs directly on hardware without an operating system underneath.
-
-*Bootloader:* The first program that runs when a computer starts, responsible for loading the operating system.
-
-*Docker Container:* An isolated environment that packages an application and its dependencies.
-
-*Framebuffer:* A portion of memory containing a bitmap that drives a video display.
-
-*QEMU:* Quick Emulator, a generic machine emulator and virtualizer.
-
-*Pure64:* A 64-bit bootloader designed for x86-64 systems.
-
-*RTC:* Real-Time Clock, hardware that keeps track of current time.
-
-*Syscall:* System call, a programmatic way for programs to request services from the kernel.
-
-*x86-64:* 64-bit version of the x86 instruction set architecture.
-
-#align(center)[
-  #v(2em)
-  #text(size: 14pt, weight: "bold")[End of User Manual]
-  #v(1em)
-  #text(size: 10pt, fill: gray)[
-    For updates and additional information, \
-    refer to the project documentation
-  ]
-]
