@@ -1,1 +1,0 @@
-gcc -o bdf2h bdf2h.c

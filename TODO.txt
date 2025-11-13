@@ -21,7 +21,7 @@ Importante
     - [X] Rendimiento/Tiempos de procesamiento
     - [X] Tiempos de acceso a hardware
   Para las siguientes plataformas:
-    - [ ] QEMU
+    - [X] QEMU
     - [ ] Hardware fisico en al menos 2 maquinas (dar detalles de HW)
     - [ ] Virtual Box
 

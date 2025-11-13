@@ -60,7 +60,7 @@
   v(0.3em)
 }
 
-#set list(indent: 1em, marker: (""", "æ", "ª"))
+#set list(indent: 1em, marker: (""", "ï¿½", "ï¿½"))
 #set enum(indent: 1em, numbering: "1.a.")
 
 #show raw.where(block: false): box.with(
@@ -607,11 +607,16 @@ Available commands:
   div: Integer division of two numbers
   clear: Clear the entire screen
   printmem: Memory dump of 32 bytes from an address
-  history: Show command history
-  exit: Exit Ares OS
-  cursor: Change cursor shape (block, hollow, line, underline)
+  textcolor: Change text color (RGB or color name)
+  bgcolor: Change background color (RGB or color name)
+  benchmark: Run performance benchmark suite
   tron: Play the Tron game (WASD vs IJKL)
+  exit: Exit Ares OS
 ```
+
+#note[
+The commands `history` and `cursor` are not yet implemented in the current version.
+]
 
 == man
 
@@ -773,6 +778,10 @@ Reading from invalid or protected memory addresses may cause the system to displ
 
 == history
 
+#warning[
+This command is not yet implemented in the current version of ARES.
+]
+
 Displays the command history showing previously executed commands.
 
 *Syntax:*
@@ -782,20 +791,10 @@ history
 
 *Parameters:* None
 
-*Example output:*
-```
-Command history:
-1: help
-2: time
-3: div 42 6
-4: clear
-5: printmem 0x100000
-```
-
-If no commands have been executed:
-```
-No commands in history
-```
+*Planned functionality:*
+- Display previously executed commands
+- Show command numbers for reference
+- Allow command recall by number
 
 == exit
 
@@ -814,6 +813,10 @@ This will typically halt the system or return to a halt state. In QEMU, you can 
 
 == cursor
 
+#warning[
+This command is not yet implemented in the current version of ARES.
+]
+
 Changes the cursor shape in the shell.
 
 *Syntax:*
@@ -824,26 +827,7 @@ cursor <shape>
 *Parameters:*
 - `shape`: One of: `block`, `hollow`, `line`, or `underline`
 
-*Examples:*
-```
-ARES> cursor block
-Cursor shape set to: block
-
-ARES> cursor hollow
-Cursor shape set to: hollow
-
-ARES> cursor line
-Cursor shape set to: line
-
-ARES> cursor underline
-Cursor shape set to: underline
-
-ARES> cursor invalid
-Invalid cursor type or not supported yet. Current options: block, hollow, line, underline
-To add a new cursor type, contact support@ares.com
-```
-
-*Cursor Shapes:*
+*Planned cursor shapes:*
 - *block*: Solid filled rectangle
 - *hollow*: Rectangle outline only
 - *line*: Vertical line
@@ -889,6 +873,115 @@ Press `ESC` to return to the shell.
 
 #tip[
 Try to cut off your opponent's path while keeping your own escape routes open.
+]
+
+== textcolor
+
+Changes the foreground text color of the shell.
+
+*Syntax:*
+```
+textcolor <color>
+```
+
+*Parameters:*
+- `color`: Color name or hexadecimal RGB value
+
+*Supported color names:*
+- `black`, `white`, `red`, `green`, `blue`
+- `yellow`, `cyan`, `magenta`
+- `gray`, `lightgray`, `darkgray`
+
+*Examples:*
+```
+ARES> textcolor red
+Text color changed
+
+ARES> textcolor 0xFF5500
+Text color changed
+
+ARES> textcolor blue
+Text color changed
+
+ARES> textcolor invalid
+Invalid color: invalid
+Valid colors: black, white, red, green, blue, yellow, cyan, magenta, gray, lightgray, darkgray
+Or use hex format: 0xRRGGBB
+```
+
+*Hexadecimal format:*
+- Use format `0xRRGGBB` where:
+  - `RR`: Red component (00-FF)
+  - `GG`: Green component (00-FF)
+  - `BB`: Blue component (00-FF)
+
+#note[
+The text color affects all subsequent text output in STDOUT. The color persists until changed again or the system is restarted.
+]
+
+== bgcolor
+
+Changes the background color of the shell.
+
+*Syntax:*
+```
+bgcolor <color>
+```
+
+*Parameters:*
+- `color`: Color name or hexadecimal RGB value
+
+*Supported color names:*
+- `black`, `white`, `red`, `green`, `blue`
+- `yellow`, `cyan`, `magenta`
+- `gray`, `lightgray`, `darkgray`
+
+*Examples:*
+```
+ARES> bgcolor black
+Background color changed
+
+ARES> bgcolor 0x001122
+Background color changed
+
+ARES> bgcolor darkgray
+Background color changed
+```
+
+#tip[
+Combine `textcolor` and `bgcolor` to create custom color schemes. Use the `clear` command after changing colors to see the full effect.
+]
+
+== benchmark
+
+Runs a comprehensive performance benchmark suite testing various system components.
+
+*Syntax:*
+```
+benchmark
+```
+
+*Parameters:* None
+
+*What it tests:*
+
+1. *FPS (Frames Per Second) Benchmark*
+   - Tests graphics rendering performance
+   - Measures frame rendering time
+   - Calculates average FPS
+
+2. *Timer Benchmark*
+   - Tests timer accuracy and resolution
+   - Reads Real-Time Clock (RTC)
+   - Measures Programmable Interval Timer (PIT) ticks
+
+3. *Syscall Read Benchmark*
+   - Tests system call performance
+   - Measures read operation latency
+   - Tests buffer handling
+
+#note[
+The benchmark requires user interaction to advance between tests. Press any key when prompted to continue to the next benchmark.
 ]
 
 #pagebreak()
