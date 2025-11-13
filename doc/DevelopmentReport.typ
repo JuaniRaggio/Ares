@@ -304,22 +304,22 @@ struc regs
 endstruc
 ```
 
-This structure is then used in exception handlers to save register state:
+Then to save registers to the buffer, we use an elegant way of moving qwords (64 bits) for each register
 
 ```nasm
 exceptionHandler 1
-    cli
-    pushState
+        cli
+        pushState
+        ; Copy registers from stack to regs_buffer safely
+        mov rsi, rsp                ; Source = stack
+        lea rdi, [regs_buffer]      ; Destination = buffer
+        mov rcx, 20                 ; 20 registers (qwords)
+        rep movsq                   ; Copy efficiently
 
-    ; Save general purpose registers to struct
-    mov QWORD [regs + _rax], rax
-    mov QWORD [regs + _rbx], rbx
-    mov QWORD [regs + _rcx], rcx
-    ; ... (additional registers)
+        ; Call exceptionDispatcher
+        mov rdi, %1                 ; Exception number
+        lea rsi, [regs_buffer]      ; Pointer to safe copy
 
-    ; Call C exception dispatcher
-    mov rdi, %1                  ; Exception number
-    lea rsi, [regs]              ; Pointer to register struct
     call exceptionDispatcher
 ```
 
@@ -330,7 +330,7 @@ Using structs in assembly provides several benefits:
 - *Type Safety*: Field offsets are calculated automatically by the assembler, eliminating manual offset calculations and reducing human errors and unreadable code
 - *Maintainability*: Adding or reordering fields requires changes only to the struct definition, you don't need to initialize the structure in order
 - *Interoperability*: The struct layout matches the corresponding C struct, ensuring seamless data exchange between assembly and C code
-- *Readability*: Code using named fields (`regs + _rax`) is much clearer than magic number offsets
+- *Readability*: The posibility of using named fields (`regs + _rax`) is much clearer than magic number offsets
 
 #pagebreak()
 
@@ -662,6 +662,54 @@ syscalls_table:
 
 This table-driven approach makes adding new system calls trivial: simply add a new entry to the table and define the corresponding handler function.
 
+=== Challenges with Return Values and Context Switching
+
+During development, we encountered a critical issue with syscall return values. Initially, our `syscall_entry` implementation saved ALL registers including RAX, following the same pattern used for IRQ handlers:
+
+```asm
+; Initial (incorrect) implementation
+syscall_entry:
+    push rax        ; Saved RAX - this was the problem
+    push rbx
+    push rbp
+    ; ...
+    call handler    ; Handler returns value in RAX
+    ; ...
+    pop rbp
+    pop rbx
+    pop rax         ; Overwrites the return value with syscall number
+    sysretq
+```
+
+This caused syscalls to return nonsensical values to userland. The handler would correctly compute and return a value in RAX, but the `pop rax` instruction would immediately overwrite it with the original syscall number that was pushed at entry.
+
+*Symptoms*:
+- `read()` always returned the syscall number instead of bytes read
+- Return values appeared random or incorrect
+- Debugging showed handlers executed correctly, but userland received wrong results
+
+*Root cause*: We were treating syscalls like interrupts, saving and restoring all registers. This breaks the calling convention where RAX must carry the return value.
+
+*Solution*: Remove RAX from the saved registers in `syscall_entry`. RAX is intentionally left unsaved so the handler's return value propagates to userland:
+
+```asm
+; Corrected implementation
+syscall_entry:
+    ; RAX NOT saved - it will carry return value
+    push rbx
+    push rbp
+    push r12-r14
+    ; ...
+    call handler    ; Handler returns in RAX
+    ; ...
+    pop r12-r14
+    pop rbp
+    pop rbx
+    sysretq         ; RAX carries return value to userland
+```
+
+This demonstrates an important distinction: IRQ handlers must preserve all registers to be transparent, while syscalls must preserve RAX as a communication channel for return values.
+
 === Example System Call Handler
 
 System call handlers are implemented in C. Here's an example from `AresOS/Kernel/arch/x86_64/interrupts/syscalls.c`:
@@ -760,7 +808,7 @@ This design separates low-level register management (assembly) from high-level d
 
 == Exception Handling
 
-Exceptions represent error conditions or special events during program execution (e.g., division by zero, invalid opcode). AresOS implements comprehensive exception handling to provide useful debugging information.
+Exceptions represent error conditions or special events during program execution (e.g., division by zero, invalid opcode)
 
 === Exception Handler Macro
 
@@ -841,28 +889,404 @@ void exceptionDispatcher(int exception, uint64_t *stack_frame) {
 }
 ```
 
-When an exception occurs, the user sees:
+#pagebreak()
 
+= Video System and RGB Color Support
+
+== Evolution from VGA to RGB
+
+One of the significant enhancements made to AresOS was the transition from the original 8-bit VGA color palette system to a full 32-bit RGB color system.
+
+=== Original VGA System
+
+The x64BareBones baseline used VGA palette indices (8-bit values) for text colors:
+
+```c
+#define VGA_BLACK   0x00
+#define VGA_BLUE    0x01
+#define VGA_GREEN   0x02
+// ... (16 colors total)
+#define VGA_WHITE   0x0F
 ```
-========================================
-EXCEPTION 0: DIVISION BY ZERO
-A division by zero was attempted.
-========================================
 
-REGISTER STATE:
-RAX: 0x0000000000000000  RBX: 0x0000000000000000  RCX: 0x00000000000A0000
-RDX: 0x0000000000000003  RSI: 0x0000000000100000  RDI: 0x0000000000200000
-RBP: 0x0000000000009FFF8  RSP: 0x0000000000009FFE0  RIP: 0x0000000000100234
-R8:  0x0000000000000000  R9:  0x0000000000000000  R10: 0x0000000000000000
-R11: 0x0000000000000000  R12: 0x0000000000000000  R13: 0x0000000000000000
-R14: 0x0000000000000000  R15: 0x0000000000000000
-CS:     0x0000000000000008  SS:     0x0000000000000010
-RFLAGS: 0x0000000000000202
+While simple, this approach severely limits color customization and doesn't take advantage of modern graphics hardware capabilities.
 
-Press any key to continue...
+=== RGB Color System
+
+We implemented a comprehensive RGB color system throughout the entire video subsystem:
+
+```c
+// RGB Colors (32-bit format: 0xRRGGBB)
+#define BLACK       0x000000
+#define WHITE       0xFFFFFF
+#define RED         0xFF0000
+#define GREEN       0x00FF00
+#define BLUE        0x0000FF
+#define YELLOW      0xFFFF00
+#define CYAN        0x00FFFF
+#define MAGENTA     0xFF00FF
+// ...
 ```
 
-This comprehensive error reporting significantly aids debugging and understanding program failures.
+== RGB Implementation Details
+
+=== ncPrintCharRGB Function
+
+The core of the RGB system is the `ncPrintCharRGB` function in `naiveConsole.c`:
+
+```c
+extern uint32_t current_bg_color;
+
+void ncPrintCharRGB(char c, uint32_t rgb) {
+    if (videoMode == 0) {
+        /* In text mode, convert RGB to VGA approximation */
+        uint8_t vga_color = VGA_WHITE;
+        if (rgb == 0x000000)
+            vga_color = VGA_BLACK;
+        else if ((rgb & 0xFF0000) > 0x800000)
+            vga_color = VGA_WHITE;
+        ncPrintCharText(c, vga_color);
+    } else {
+        bmp_font_t *font = getFont();
+
+        if (c == '\n') {
+            // Handle newline with background color
+            gfxCursorY += font->height * fontScale;
+            if (gfxCursorY + font->height * fontScale >= SCREEN_HEIGHT) {
+                clearScreen(current_bg_color);
+                gfxCursorX = 0;
+                gfxCursorY = 0;
+            }
+            return;
+        }
+
+        if (c == '\b') {
+            // Handle backspace with background color
+            if (gfxCursorX >= font->width * fontScale) {
+                gfxCursorX -= font->width * fontScale;
+                drawRect(gfxCursorX, gfxCursorY,
+                         font->width * fontScale,
+                         font->height * fontScale,
+                         current_bg_color);
+            }
+            return;
+        }
+
+        // Draw character with RGB color
+        drawChar(c, gfxCursorX, gfxCursorY, rgb, font);
+        gfxCursorX += font->width * fontScale;
+    }
+}
+```
+
+This function:
+- Accepts full 32-bit RGB colors
+- Handles text mode with VGA color approximation
+- Uses RGB colors directly in graphics mode
+- Respects the current background color for special characters
+
+=== System Call Integration
+
+The `sys_write` syscall was reimplemented in C to support RGB colors:
+
+```c
+uint32_t current_bg_color = 0x000000;
+static uint32_t current_stdout_color_rgb = 0xFFFFFF;
+static uint32_t current_stderr_color_rgb = 0xFF0000;
+
+uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
+    if (fd != 1 && fd != 2) {
+        return 0;
+    }
+    if (buf == NULL || len == 0) {
+        return 0;
+    }
+
+    uint32_t color = (fd == 1) ?
+        current_stdout_color_rgb : current_stderr_color_rgb;
+
+    for (uint64_t i = 0; i < len; i++) {
+        ncPrintCharRGB(buf[i], color);
+    }
+
+    return len;
+}
+```
+
+Previously, `sys_write` was implemented in assembly and used VGA colors. The C implementation allows for:
+- Direct RGB color support
+- Cleaner code that's easier to maintain
+- Integration with the global color state
+
+== User-Facing Color Commands
+
+To expose RGB capabilities to users, we implemented two shell commands:
+
+=== textcolor Command
+
+Changes the foreground text color:
+
+```c
+uint8_t textcolor_cmd(char *color) {
+    uint32_t color_value = parse_color(color);
+
+    if (color_value == 0xFFFFFFFF) {
+        printf("Invalid color: %s\n", color);
+        printf("Valid colors: black, white, red, green, blue, "
+               "yellow, cyan, magenta, gray, lightgray, darkgray\n");
+        printf("Or use hex format: 0xRRGGBB\n");
+        return INVALID_INPUT;
+    }
+
+    shell_status.font_color = color_value;
+    syscall_set_text_color(color_value, STDOUT);
+    printf("Text color changed\n");
+    return OK;
+}
+```
+
+=== bgcolor Command
+
+Changes the background color:
+
+```c
+uint8_t bgcolor_cmd(char *color) {
+    uint32_t color_value = parse_color(color);
+
+    if (color_value == 0xFFFFFFFF) {
+        printf("Invalid color: %s\n", color);
+        printf("Valid colors: black, white, red, green, blue, "
+               "yellow, cyan, magenta, gray, lightgray, darkgray\n");
+        printf("Or use hex format: 0xRRGGBB\n");
+        return INVALID_INPUT;
+    }
+
+    shell_status.background_color = color_value;
+    syscall_set_bg_color(color_value);
+    printf("Background color changed\n");
+    return OK;
+}
+```
+
+=== Color Parsing
+
+Both commands use a sophisticated color parser that accepts:
+
+1. *Named Colors*: `textcolor red`, `bgcolor blue`
+2. *Hex Values*: `textcolor 0xFF5500`, `bgcolor 0x123456`
+
+```c
+static uint32_t parse_color(char *color_str) {
+    /* Try to parse as color name */
+    if (strcmp(color_str, "black") == 0) return BLACK;
+    if (strcmp(color_str, "white") == 0) return WHITE;
+    if (strcmp(color_str, "red") == 0) return RED;
+    // ...
+
+    /* Try to parse as hex value (0xRRGGBB) */
+    if (color_str[0] == '0' &&
+        (color_str[1] == 'x' || color_str[1] == 'X')) {
+        return (uint32_t)strtoul(color_str, NULL, 16);
+    }
+
+    return 0xFFFFFFFF;  /* Invalid color */
+}
+```
+
+== Benefits of RGB System
+
+The RGB color system provides several advantages:
+
+=== User Customization
+
+Users can personalize their terminal experience with any color combination they prefer, not just the 16 VGA colors.
+
+=== Modern Graphics
+
+The system takes full advantage of modern graphics hardware capabilities
+
+=== Extensibility
+
+Future applications can use the full RGB color space for sophisticated graphics, UI elements, and visual feedback.
+
+=== Backward Compatibility
+
+The system still supports text mode through VGA color approximation, ensuring compatibility with older hardware or emulators.
+
+#pagebreak()
+
+= Audio System
+
+== PC Speaker Driver
+
+AresOS includes a PC speaker driver that provides basic audio output capabilities through the legacy PC speaker hardware.
+
+=== Hardware Interface
+
+The PC speaker is controlled through the Programmable Interval Timer (PIT) and port 0x61:
+
+```c
+void playSound(uint64_t frequency, uint64_t duration_ms) {
+    if (frequency == 0) {
+        return;  // Can't play 0 Hz
+    }
+
+    // Calculate PIT divisor: PIT_FREQUENCY / frequency
+    uint32_t divisor = 1193180 / frequency;
+
+    // Configure PIT channel 2 for square wave
+    outb(0x43, 0xB6);  // Command: channel 2, mode 3
+    outb(0x42, (uint8_t)(divisor & 0xFF));
+    outb(0x42, (uint8_t)((divisor >> 8) & 0xFF));
+
+    // Enable speaker
+    uint8_t tmp = inb(0x61);
+    outb(0x61, tmp | 0x03);
+
+    // Wait for duration
+    uint64_t end_time = get_time_ms() + duration_ms;
+    while (get_time_ms() < end_time) {
+        _hlt();
+    }
+
+    // Disable speaker
+    tmp = inb(0x61);
+    outb(0x61, tmp & 0xFC);
+}
+```
+
+=== System Call Interface
+
+Two syscalls expose audio functionality to userland:
+
+==== SYS_PLAY_SOUND
+
+Plays a tone at a specific frequency for a given duration:
+
+```c
+uint64_t sys_play_sound(uint64_t frequency, uint64_t duration_ms) {
+    playSound(frequency, duration_ms);
+    return 0;
+}
+```
+
+Usage from userland:
+```c
+syscall_play_sound(440, 500);  // Play 440 Hz (A4) for 500ms
+```
+
+==== SYS_BEEP
+
+Plays a short beep at a specified frequency:
+
+```c
+uint64_t sys_beep(uint64_t frequency) {
+    beep(frequency);
+    return 0;
+}
+```
+
+Usage from userland:
+```c
+syscall_beep(880);  // Play 880 Hz (A5) beep
+```
+
+=== Applications
+
+The audio system can be used for:
+- User feedback (beeps for errors or confirmations)
+- Simple melodies or alert sounds
+- Debugging (audio signals during boot or operation)
+- Sound effects in Tron or other applications
+
+#note[
+While the PC speaker is limited, it provides a simple, universally available audio interface that works on all x86 hardware.
+]
+
+#pagebreak()
+
+= Performance Benchmarks
+
+#important[
+To evaluate AresOS performance across different platforms and virtualization technologies. These benchmarks test CPU performance, timer accuracy, systemcall read responsiveness, and graphics rendering speed.
+]
+
+== Benchmark Suite
+
+AresOS includes an integrated benchmark suite accessible through the `benchmark` shell command. The suite tests three key subsystems:
+
+=== FPS (Frames Per Second) Benchmark
+
+Tests graphics rendering performance by:
+- Drawing rectangles and characters
+- Measuring frame rendering time
+- Calculating average FPS over multiple iterations
+
+=== Timer Benchmark
+
+Tests timer accuracy and resolution by:
+- Reading the RTC (Real-Time Clock)
+- Measuring PIT (Programmable Interval Timer) ticks
+- Calculating time differences over multiple samples
+- Verifying timer interrupt frequency
+
+This benchmark ensures that timing-critical operations (delays, timeouts, scheduling) work correctly.
+
+=== Syscall Read Benchmark
+
+Tests Sys Read performance by:
+- Measuring detection latency
+- Testing buffer handling
+- Verifying scan code translation
+- Measuring character processing time
+
+== Benchmark Results
+
+The following subsections present benchmark results from four different platforms:
+
+#pagebreak()
+
+== Macbook Pro M3 - QEMU Virtualization
+
+#figure(
+  image("BenchmarkMac.jpeg", width: 40%),
+  caption: [Benchmark results on Macbook Pro M3 running QEMU]
+)
+
+*System Configuration:*
+- Host: Macbook Pro M3
+- Virtualization: QEMU
+- CPU Emulation: x86-64
+- Graphics: QEMU VGA emulation
+
+*Notes:*
+QEMU on Apple Silicon requires CPU emulation (x86-64 on ARM64), which adds overhead compared to native execution. Despite this, performance remains acceptable
+
+#pagebreak()
+
+== Surface 4 - QEMU Virtualization
+
+#figure(
+  image("BenchmarkSurface4.jpeg", width: 40%),
+  caption: [Benchmark results on Laptop Surface 4 running QEMU]
+)
+
+*System Configuration:*
+- Host: Laptop Surface 4
+- Virtualization: QEMU
+- CPU Emulation: x86_64
+- Graphics: QEMU VGA emulation
+
+=== Cross-Platform Consistency
+
+The benchmarks verify that AresOS:
+- Runs consistently across different platforms
+- Maintains functional correctness regardless of host
+- Scales appropriately with available resources
+
+#note[
+All benchmark results are reproducible by running the `benchmark` command in the AresOS shell. The benchmark suite ensures consistent testing methodology across all platforms.
+]
 
 #pagebreak()
 
@@ -1017,23 +1441,13 @@ The driver can then be used by both kernel and userland code through system call
 
 == Benefits of This Approach
 
-The emphasis on quality and extensibility provides tangible benefits:
+- Easier Debugging
+- Lower Maintenance Cost
+- Educational Value
 
-=== Easier Debugging
-
-Clean, well-structured code is easier to debug. When an issue arises, developers can quickly:
-- Locate the relevant code
-- Understand its logic
-- Identify the root cause
-- Implement a fix
-
-=== Lower Maintenance Cost
-
-Code that is easy to understand requires less time to maintain. Future developers (including our future selves) will spend less time deciphering intent and more time adding value.
-
-=== Educational Value
-
-As an educational project, AresOS serves as a learning resource. Clean, well-documented code is more effective for teaching operating system concepts than complex, optimized code.
+#note[
+AresOS serves as a learning resource. Clean, well-documented code is more effective for learning operating system concepts.
+]
 
 #pagebreak()
 
@@ -1051,8 +1465,10 @@ We made informed technical decisions based on research and analysis:
 We successfully implemented core operating system components:
 - MSR-based SYSCALL/SYSRET mechanism with proper privilege transitions
 - Comprehensive interrupt and exception handling
-- Device drivers for keyboard, video, timer, and RTC
-- User-space environment with C library and shell
+- Device drivers for keyboard, video, timer, RTC, and PC speaker
+- User-space environment with C library and interactive shell
+- PC speaker audio system for sound feedback
+- Integrated benchmark for performance evaluation
 
 === Code Quality
 
@@ -1061,7 +1477,5 @@ We prioritized maintainability and extensibility:
 - Modular architecture with clear separation of concerns
 - Type-safe abstractions using structs and unions
 - Extensible design patterns throughout
+- Comprehensive error handling and debugging information
 
-== Final Thoughts
-
-AresOS demonstrates that prioritizing code quality and architectural soundness creates a more valuable result than rushing to implement features. The clean, extensible codebase we created will serve as an excellent foundation for future development and as an educational resource for understanding operating system implementation.
