@@ -23,6 +23,7 @@ For detailed instructions on building and running the operating system, please r
 
 ### Prerequisites
 
+- `docker`: Required to download the image with all the required tools
 - `clang-format`: Required for automatic code formatting
 - `nasm`: Assembler for x86-64
 - `qemu`: Emulator for testing the OS
