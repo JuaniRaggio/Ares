@@ -812,54 +812,34 @@ Exceptions represent error conditions or special events during program execution
 
 === Exception Handler Macro
 
-Exception handlers are defined using a macro that captures complete register state:
+Exception handlers are defined using a macro that captures complete register state as mentioned before:
 
 ```nasm
 %macro exceptionHandler 1
-    cli                     ; Disable interrupts
-    pushState               ; Save all registers
+        cli
+        pushState
 
-    ; Manually save registers to struct
-    mov QWORD [regs + _rax], rax
-    mov QWORD [regs + _rbx], rbx
-    mov QWORD [regs + _rcx], rcx
-    mov QWORD [regs + _rdx], rdx
-    ; ... (save all registers)
+        ; Copy registers from stack to regs_buffer safely
+        mov rsi, rsp                ; Source = stack
+        lea rdi, [regs_buffer]      ; Destination = buffer
+        mov rcx, 20                 ; 20 registers (qwords)
+        rep movsq                   ; Copy efficiently
 
-    ; Registers pushed by CPU are on stack
-    mov rax, QWORD [rsp + 15*8]
-    mov QWORD [regs + _rip], rax     ; Instruction pointer
-    mov rax, QWORD [rsp + 16*8]
-    mov QWORD [regs + _cs], rax      ; Code segment
-    mov rax, QWORD [rsp + 17*8]
-    mov QWORD [regs + _rflags], rax  ; Flags
-    mov rax, QWORD [rsp + 18*8]
-    mov QWORD [regs + _rsp], rax     ; Stack pointer
-    mov rax, QWORD [rsp + 19*8]
-    mov QWORD [regs + _ss], rax      ; Stack segment
+        ; Call exceptionDispatcher
+        mov rdi, %1                 ; Exception number
+        lea rsi, [regs_buffer]      ; Pointer to safe copy
 
-    ; Call C exception handler
-    mov rdi, %1              ; Exception number
-    lea rsi, [regs]          ; Pointer to register struct
-    call exceptionDispatcher
+        call exceptionDispatcher
 
-    popState                 ; Restore registers
-    call getStackBase
-    mov [rsp+24], rax        ; Reset stack
-    mov rax, userland
-    mov [rsp], rax           ; Return to userland base
+        popState
+        call getStackBase
+        mov [rsp+24], rax            ; The StackBase
+        mov rax, userland
+        mov [rsp], rax               ; Overwrite return address
 
-    sti                      ; Re-enable interrupts
-    iretq
+        sti
+        iretq
 %endmacro
-
-; Division by zero exception
-_exception0Handler:
-    exceptionHandler 0
-
-; Invalid opcode exception
-_exception6Handler:
-    exceptionHandler 6
 ```
 
 === Exception Dispatcher and Register Snapshot
@@ -867,25 +847,15 @@ _exception6Handler:
 The exception dispatcher in `AresOS/Kernel/arch/x86_64/interrupts/exceptions.c` provides detailed information about the exception:
 
 ```c
-void exceptionDispatcher(int exception, uint64_t *stack_frame) {
-    // Extract registers from stack frame
-    regs_snapshot_t regs;
-    regs.r15    = stack_frame[0];
-    regs.r14    = stack_frame[1];
-    regs.r13    = stack_frame[2];
-    // ... (extract all registers)
-    regs.rip    = stack_frame[15];
-    regs.rflags = stack_frame[17];
-    regs.rsp    = stack_frame[18];
+void exceptionDispatcher(int exception, regs_snapshot_t *regs) {
+        saved_regs = *regs;
 
-    saved_regs = regs;  // Save for debugging
+        if (exception == ZERO_EXCEPTION_ID)
+                zero_division(regs);
+        else if (exception == INVALID_OPCODE_ID)
+                invalid_opcode(regs);
 
-    if (exception == ZERO_EXCEPTION_ID)
-        zero_division(&regs);
-    else if (exception == INVALID_OPCODE_ID)
-        invalid_opcode(&regs);
-
-    print_registers(&regs);  // Display register state
+        print_registers(regs);
 }
 ```
 
@@ -896,20 +866,6 @@ void exceptionDispatcher(int exception, uint64_t *stack_frame) {
 == Evolution from VGA to RGB
 
 One of the significant enhancements made to AresOS was the transition from the original 8-bit VGA color palette system to a full 32-bit RGB color system.
-
-=== Original VGA System
-
-The x64BareBones baseline used VGA palette indices (8-bit values) for text colors:
-
-```c
-#define VGA_BLACK   0x00
-#define VGA_BLUE    0x01
-#define VGA_GREEN   0x02
-// ... (16 colors total)
-#define VGA_WHITE   0x0F
-```
-
-While simple, this approach severely limits color customization and doesn't take advantage of modern graphics hardware capabilities.
 
 === RGB Color System
 
@@ -1068,31 +1024,6 @@ uint8_t bgcolor_cmd(char *color) {
 }
 ```
 
-=== Color Parsing
-
-Both commands use a sophisticated color parser that accepts:
-
-1. *Named Colors*: `textcolor red`, `bgcolor blue`
-2. *Hex Values*: `textcolor 0xFF5500`, `bgcolor 0x123456`
-
-```c
-static uint32_t parse_color(char *color_str) {
-    /* Try to parse as color name */
-    if (strcmp(color_str, "black") == 0) return BLACK;
-    if (strcmp(color_str, "white") == 0) return WHITE;
-    if (strcmp(color_str, "red") == 0) return RED;
-    // ...
-
-    /* Try to parse as hex value (0xRRGGBB) */
-    if (color_str[0] == '0' &&
-        (color_str[1] == 'x' || color_str[1] == 'X')) {
-        return (uint32_t)strtoul(color_str, NULL, 16);
-    }
-
-    return 0xFFFFFFFF;  /* Invalid color */
-}
-```
-
 == Benefits of RGB System
 
 The RGB color system provides several advantages:
@@ -1127,31 +1058,20 @@ The PC speaker is controlled through the Programmable Interval Timer (PIT) and p
 
 ```c
 void playSound(uint64_t frequency, uint64_t duration_ms) {
-    if (frequency == 0) {
-        return;  // Can't play 0 Hz
-    }
+        if (frequency == 0 || duration_ms == 0) {
+                return;
+        }
 
-    // Calculate PIT divisor: PIT_FREQUENCY / frequency
-    uint32_t divisor = 1193180 / frequency;
+        set_speaker_frequency(frequency);
+        enable_speaker();
 
-    // Configure PIT channel 2 for square wave
-    outb(0x43, 0xB6);  // Command: channel 2, mode 3
-    outb(0x42, (uint8_t)(divisor & 0xFF));
-    outb(0x42, (uint8_t)((divisor >> 8) & 0xFF));
+        /* Wait for the specified duration */
+        uint64_t start_ms = get_time_ms();
+        uint64_t end_ms   = start_ms + duration_ms;
+        while (get_time_ms() < end_ms)
+                ;
 
-    // Enable speaker
-    uint8_t tmp = inb(0x61);
-    outb(0x61, tmp | 0x03);
-
-    // Wait for duration
-    uint64_t end_time = get_time_ms() + duration_ms;
-    while (get_time_ms() < end_time) {
-        _hlt();
-    }
-
-    // Disable speaker
-    tmp = inb(0x61);
-    outb(0x61, tmp & 0xFC);
+        disable_speaker();
 }
 ```
 
@@ -1240,11 +1160,9 @@ Tests Sys Read performance by:
 - Verifying scan code translation
 - Measuring character processing time
 
-== Benchmark Results
-
-The following subsections present benchmark results from four different platforms:
-
 #pagebreak()
+
+== Benchmark Results
 
 == Macbook Pro M3 - QEMU Virtualization
 
@@ -1259,8 +1177,9 @@ The following subsections present benchmark results from four different platform
 - CPU Emulation: x86-64
 - Graphics: QEMU VGA emulation
 
-*Notes:*
+#note[
 QEMU on Apple Silicon requires CPU emulation (x86-64 on ARM64), which adds overhead compared to native execution. Despite this, performance remains acceptable
+]
 
 #pagebreak()
 
@@ -1303,7 +1222,6 @@ Our commitment to code quality manifests in several ways throughout the project:
 === Clean Code Principles
 
 - *Meaningful Names*: Functions, variables, and structures use descriptive names that clearly convey their purpose (e.g., `exceptionDispatcher`, `syscall_entry`, `irqHandlerMaster`)
-- *Single Responsibility*: Each function performs one well-defined task
 - *Consistent Style*: We use automated formatting (clang-format) enforced through Git hooks
 - *Comments and Documentation*: Complex algorithms and hardware interactions are thoroughly documented
 
