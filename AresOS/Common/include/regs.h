@@ -2,7 +2,11 @@
 
 #include <stdint.h>
 
-/* IMPORTANT: Order matches stack layout after pushState + CPU interrupt:
+/**
+ * CPU register snapshot structure
+ * Used to capture and store the state of all general-purpose registers
+ *
+ * IMPORTANT: Order matches stack layout after pushState + CPU interrupt:
  * r15, r14, r13, r12, r11, r10, r9, r8, rsi, rdi, rbp, rdx, rcx, rbx, rax,
  * RIP, CS, RFLAGS, RSP, SS
  */
@@ -31,4 +35,7 @@ typedef struct {
 
 typedef regs_t regs_snapshot_t;
 
+/**
+ * Prototype as requested in plan (to be implemented later)
+ */
 extern regs_t *get_register_values(void);

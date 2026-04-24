@@ -3,14 +3,15 @@ include ../Makefile.inc
 MODULE=0000-userCodeModule.bin
 MODULE_ELF=0000-userCodeModule.elf
 
-# Fuentes C: main + todo en src/ + libc de userland
-SOURCES=$(wildcard [^_]*.c) $(wildcard src/*.c) $(wildcard libc/src/*.c)
+# Fuentes C: main + todo en src/ + libc de userland + common
+COMMON_DIR=../../Common
+SOURCES=$(wildcard [^_]*.c) $(wildcard src/*.c) $(wildcard libc/src/*.c) $(wildcard $(COMMON_DIR)/src/*.c)
 
 # Fuentes ASM
 ASM_SOURCES=asm/syscall.asm asm/opcode.asm
 ASM_OBJECTS=$(ASM_SOURCES:.asm=.o)
 
-INCLUDE_FLAGS=-Ilibc/include -Iinclude
+INCLUDE_FLAGS=-Ilibc/include -Iinclude -I$(COMMON_DIR)/include
 
 all: $(MODULE)
 

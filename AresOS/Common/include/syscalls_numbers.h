@@ -7,7 +7,7 @@ typedef enum {
         SYS_CLEAR,
         SYS_GET_TICKS,
         SYS_GET_RESOLUTION,
-        SYS_GET_REGISTER_ARRAY,
+        SYS_GET_REGISTER_SNAPSHOT,
         SYS_SET_FONT_SIZE,
         SYS_GET_MEMORY,
         SYS_DRAW_RECT,

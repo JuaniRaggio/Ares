@@ -9,6 +9,7 @@ LIB_DIR := lib
 INCLUDE_DIR := include
 BUILD_DIR := build
 BIN_DIR := bin
+COMMON_DIR := ../Common
 
 # Archivos de salida
 KERNEL_ELF := $(BIN_DIR)/kernel.elf
@@ -28,7 +29,8 @@ SYSCALLS_OBJ := $(patsubst %.asm,$(BUILD_DIR)/%.o,$(SYSCALLS_ASM))
 
 # 4. Código C (todos juntos, orden no crítico)
 C_SOURCES := $(shell find $(ARCH_DIR) $(DRIVERS_DIR) $(CORE_DIR) $(LIB_DIR) -name '*.c')
-C_OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(C_SOURCES))
+COMMON_SOURCES := $(shell find $(COMMON_DIR)/src -name '*.c')
+C_OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(C_SOURCES)) $(patsubst $(COMMON_DIR)/src/%.c,$(BUILD_DIR)/common/%.o,$(COMMON_SOURCES))
 
 ALL_OBJECTS := $(LOADER_OBJ) $(INTERRUPTS_OBJ) $(SYSCALLS_OBJ) $(C_OBJECTS)
 
@@ -41,6 +43,7 @@ GCCFLAGS += -I$(INCLUDE_DIR)/arch/x86_64
 GCCFLAGS += -I$(INCLUDE_DIR)/core
 GCCFLAGS += -I$(INCLUDE_DIR)/drivers
 GCCFLAGS += -I$(DRIVERS_DIR)/video
+GCCFLAGS += -I$(COMMON_DIR)/include
 GCCFLAGS += -MMD -MP  # Generar dependencias automáticas
 
 # Target principal
@@ -78,11 +81,18 @@ $(BUILD_DIR)/asm/%.o: asm/%.asm | $(BUILD_DIR)
 	@echo "ASM (syscalls) $<"
 	@$(ASM) $(ASMFLAGS) $< -o $@
 
-# Compilación de archivos C
+# Compilación de archivos C del Kernel
 $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
 	@echo "CC  $<"
 	@$(GCC) $(GCCFLAGS) -c $< -o $@
+
+# Compilación de archivos C de Common
+$(BUILD_DIR)/common/%.o: $(COMMON_DIR)/src/%.c | $(BUILD_DIR)
+	@mkdir -p $(dir $@)
+	@echo "CC (common) $<"
+	@$(GCC) $(GCCFLAGS) -c $< -o $@
+
 
 # Crear directorios si no existen
 $(BUILD_DIR):
