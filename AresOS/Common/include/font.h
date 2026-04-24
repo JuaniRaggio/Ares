@@ -1,5 +1,4 @@
-#ifndef FONT_H
-#define FONT_H
+#pragma once
 
 #define BITMAP_WIDTH 17
 
@@ -10,5 +9,3 @@ typedef struct {
         int nChars;
         const unsigned char (*bitmap)[BITMAP_WIDTH];
 } bmp_font_t;
-
-#endif

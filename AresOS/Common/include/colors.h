@@ -1,6 +1,4 @@
-/* colors.h - Shared color definitions */
-#ifndef COLORS_H
-#define COLORS_H
+#pragma once
 
 // RGB Colors (32-bit format: 0xRRGGBB)
 #define BLACK 0x000000
@@ -26,4 +24,3 @@
 #define VGA_GRAY 0x07
 #define VGA_WHITE 0x0F
 
-#endif

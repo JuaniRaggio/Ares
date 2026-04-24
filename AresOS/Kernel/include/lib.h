@@ -1,8 +1,7 @@
-#ifndef LIB_H
-#define LIB_H
+#pragma once
 
 #include <stdint.h>
-#include <lib_common.h> // Renaming common lib.h to lib_common.h to avoid collision
+#include <lib_common.h>
 
 /**
  * Gets the CPU vendor string
@@ -43,5 +42,3 @@ void outb(uint16_t port, uint8_t value);
  * Reads a byte from an I/O port
  */
 uint8_t inb(uint16_t port);
-
-#endif

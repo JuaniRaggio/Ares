@@ -1,6 +1,5 @@
 ; syscall.asm - Stub to execute a syscall from userland
 global _syscall3
-extern SYS_GET_REGISTER_ARRAY
 
 section .text
 _syscall3:
