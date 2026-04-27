@@ -47,7 +47,7 @@ GCCFLAGS += -I$(COMMON_DIR)/include
 GCCFLAGS += -MMD -MP  # Generar dependencias automáticas
 
 # Target principal
-.PHONY: all clean info
+.PHONY: all clean info compile_commands.json
 
 all: $(KERNEL)
 	@echo "✓ Kernel compilado: $(KERNEL)"
@@ -109,6 +109,23 @@ clean:
 	@echo "Limpiando archivos de compilación..."
 	@rm -rf $(BUILD_DIR) $(BIN_DIR)
 	@echo "✓ Limpieza completa"
+
+# Generar compile_commands.json para IDE/LSP
+compile_commands.json:
+	@printf '[\n' > $@
+	@first=1; \
+	for src in $(C_SOURCES); do \
+		[ $$first -ne 1 ] && printf ',\n' >> $@; first=0; \
+		printf '  { "directory": "%s", "command": "%s -c %s", "file": "%s/%s" }' \
+			"$(CURDIR)" "$(GCC) $(GCCFLAGS)" "$$src" "$(CURDIR)" "$$src" >> $@; \
+	done; \
+	for src in $(COMMON_SOURCES); do \
+		printf ',\n' >> $@; \
+		abs=$$(cd "$$(dirname "$$src")" && pwd)/$$(basename "$$src"); \
+		printf '  { "directory": "%s", "command": "%s -c %s", "file": "%s" }' \
+			"$(CURDIR)" "$(GCC) $(GCCFLAGS)" "$$src" "$$abs" >> $@; \
+	done
+	@printf '\n]\n' >> $@
 
 # Info del proyecto
 info:
