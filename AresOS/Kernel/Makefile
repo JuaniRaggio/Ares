@@ -39,6 +39,7 @@ DEPS := $(C_OBJECTS:.o=.d)
 
 # Flags de compilación con includes
 GCCFLAGS += -I$(INCLUDE_DIR)
+GCCFLAGS += -I$(INCLUDE_DIR)/lib
 GCCFLAGS += -I$(INCLUDE_DIR)/arch/x86_64
 GCCFLAGS += -I$(INCLUDE_DIR)/core
 GCCFLAGS += -I$(INCLUDE_DIR)/drivers

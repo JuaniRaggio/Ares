@@ -1,5 +1,4 @@
 #include <lib.h>
-#include <stdint.h>
 
 s_time get_current_time() {
         return (s_time){
