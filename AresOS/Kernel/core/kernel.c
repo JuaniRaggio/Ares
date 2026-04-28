@@ -5,6 +5,7 @@
 #include <interrupts.h>
 #include <lib.h>
 #include <moduleLoader.h>
+#include <multi_region_heap.h>
 #include <naiveConsole.h>
 #include <time.h>
 #include <video_driver.h>
@@ -26,6 +27,8 @@ extern void jump_to_userland(void *entry_point);
 static const uint64_t PageSize           = 0x1000;
 static void *const userCodeModuleAddress = (void *)0x400000;
 static void *const userDataModuleAddress = (void *)0x500000;
+static void *const heapRegion2Start      = (void *)0x600000;
+static const uint64_t heapRegion2Size    = 0x2000000; // 32 MB
 
 typedef int (*EntryPoint)();
 
@@ -79,6 +82,20 @@ int main() {
         picMasterMask(PIC_MASK_TIMER_KBD);
         picSlaveMask(PIC_MASK_ALL);
         _sti();
+
+        // Initialize the memory manager with two heap regions
+        // Region 1: between end of kernel stack and user code module
+        // Region 2: from 0x600000, 32 MB
+        uint8_t *heap_r1_start =
+            (uint8_t *)((uint64_t)&endOfKernel + PageSize * 8);
+        size_t heap_r1_size =
+            (size_t)((uint8_t *)userCodeModuleAddress - heap_r1_start);
+
+        heap_region_t regions[HEAP_REGION_COUNT] = {
+            {heap_r1_start, heap_r1_size},
+            {(uint8_t *)heapRegion2Start, heapRegion2Size},
+        };
+        mem_init(regions, HEAP_REGION_COUNT);
 
         clearScreen(BLACK);
         bmp_font_t *font = &font_ubuntu_mono;
