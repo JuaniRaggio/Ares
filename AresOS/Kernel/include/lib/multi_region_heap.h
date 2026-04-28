@@ -39,3 +39,29 @@ typedef struct heap_stats {
         size_t successful_allocations;  //< Total successful mem_alloc calls
         size_t successful_frees;        //< Total successful mem_free calls
 } heap_stats_t;
+
+/**
+ * @brief Initialize the heap with the given memory regions.
+ * @param regions Array of heap regions to manage.
+ * @param region_count Number of regions in the array.
+ */
+void mem_init(heap_region_t *regions, size_t region_count);
+
+/**
+ * @brief Allocate a block of memory using first-fit strategy.
+ * @param size Requested size in bytes.
+ * @return Pointer to the allocated block, or NULL if no suitable block found.
+ */
+void *mem_alloc(size_t size);
+
+/**
+ * @brief Free a previously allocated block.
+ * @param ptr Pointer returned by mem_alloc. NULL is a no-op.
+ */
+void mem_free(void *ptr);
+
+/**
+ * @brief Fill a heap_stats_t structure with current heap state information.
+ * @param stats Pointer to the structure to fill.
+ */
+void mem_get_stats(heap_stats_t *stats);
