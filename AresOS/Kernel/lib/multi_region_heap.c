@@ -74,7 +74,75 @@ static void insert_block_into_free_list(block_list_t *block_to_insert) {
 }
 
 void mem_init(heap_region_t *regions, size_t region_count) {
+        if (heap_initialized) {
+                return;
+        }
+
+        header_size = align_up((size_t)sizeof(block_list_t));
+
+        block_list_t *first_free = (void *)0;
+        block_list_t *prev_free  = (void *)0;
+        size_t total_free        = 0;
+
+        for (size_t i = 0; i < region_count; i++) {
+                /* Align starting address upwards */
+                uint8_t *addr = regions[i].initial_address;
+                size_t offset = (size_t)addr & (HEAP_ALIGNMENT - 1);
+                if (offset != 0) {
+                        size_t adjustment = HEAP_ALIGNMENT - offset;
+                        addr += adjustment;
+                        if (regions[i].region_size_in_bytes <= adjustment) {
+                                continue;
+                        }
+                        regions[i].region_size_in_bytes -= adjustment;
+                }
+
+                /* Ensure usable size is aligned */
+                size_t usable = regions[i].region_size_in_bytes &
+                                ~((size_t)(HEAP_ALIGNMENT - 1));
+                if (usable < header_size + HEAP_ALIGNMENT) {
+                        continue;
+                }
+
+                /* Create initial free block for this region */
+                block_list_t *block    = (block_list_t *)addr;
+                block->block_size      = usable;
+                block->next_free_block = (void *)0;
+
+                /* Link regions in address order */
+                if (first_free == (void *)0) {
+                        first_free = block;
+                } else {
+                        prev_free->next_free_block = block;
+                }
+                prev_free = block;
+                total_free += usable;
+        }
+
+        /* Set up sentinels */
+        free_list_start.block_size      = 0;
+        free_list_start.next_free_block = first_free;
+        free_list_end.block_size        = 0;
+        free_list_end.next_free_block   = (void *)0;
+
+        if (prev_free != (void *)0) {
+                prev_free->next_free_block = &free_list_end;
+        } else {
+                free_list_start.next_free_block = &free_list_end;
+        }
+
+        /* Initialize heap status */
+        total_heap_size                               = total_free;
+        heap_status.available_heap_space_bytes        = total_free;
+        heap_status.minimum_ever_free_bytes           = total_free;
+        heap_status.successful_allocations            = 0;
+        heap_status.successful_frees                  = 0;
+        heap_status.size_largest_free_block_bytes     = 0;
+        heap_status.size_smallest_free_block_in_bytes = 0;
+        heap_status.number_of_free_blocks             = 0;
+        heap_initialized                              = 1;
 }
+
 void *mem_alloc(size_t size) {
 }
 
