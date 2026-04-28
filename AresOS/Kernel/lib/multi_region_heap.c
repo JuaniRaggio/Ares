@@ -15,8 +15,8 @@
  * block and the total block size (including this header).
  */
 typedef struct block_list {
-	struct block_list *next_free_block;  /**< Next block in the free list. */
-	size_t block_size;                   /**< Total block size including header. */
+        struct block_list *next_free_block; /**< Next block in the free list. */
+        size_t block_size; /**< Total block size including header. */
 } block_list_t;
 
 /** @brief Sentinel head of the free list (size=0). */
