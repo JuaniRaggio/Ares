@@ -1,12 +1,37 @@
+/**
+ * @file multi_region_heap.c
+ * @brief Multi-region first-fit heap allocator with coalescing.
+ *
+ * Inspired by FreeRTOS heap_5. Manages multiple non-contiguous memory
+ * regions through a single address-ordered free list with sentinel nodes.
+ */
+
 #include <multi_region_heap.h>
 
-heap_region_t heap_regions[] = {};
-
+/**
+ * @brief Free list node.
+ *
+ * Each free block has a header containing a pointer to the next free
+ * block and the total block size (including this header).
+ */
 typedef struct block_list {
-        struct block_list *next_free_block;
-        size_t size_in_bytes;
+	struct block_list *next_free_block;  /**< Next block in the free list. */
+	size_t block_size;                   /**< Total block size including header. */
 } block_list_t;
 
-size_t available_bytes        = 0;
-size_t successfull_alocations = 0;
-size_t successfull_frees      = 0;
+/** @brief Sentinel head of the free list (size=0). */
+static block_list_t free_list_start;
+
+/** @brief Sentinel tail of the free list (size=0, next=NULL). */
+static block_list_t free_list_end;
+
+/** @brief Heap state: incrementally maintained statistics. */
+static heap_stats_t heap_status;
+
+/** @brief Total heap size across all regions (set at init, never changes). */
+static size_t total_heap_size;
+
+/** @brief sizeof(block_list_t) aligned up to HEAP_ALIGNMENT. */
+static size_t header_size;
+
+static int heap_initialized;
