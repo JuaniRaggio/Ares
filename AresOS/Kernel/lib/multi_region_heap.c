@@ -35,3 +35,15 @@ static size_t total_heap_size;
 static size_t header_size;
 
 static int heap_initialized;
+static inline size_t align_up(size_t val) {
+        return (val + (HEAP_ALIGNMENT - 1)) & ~((size_t)(HEAP_ALIGNMENT - 1));
+}
+
+static void insert_block_into_free_list(block_list_t *block_to_insert) {
+void mem_init(heap_region_t *regions, size_t region_count) {
+}
+void *mem_alloc(size_t size) {
+}
+
+void mem_get_stats(heap_stats_t *stats) {
+}
