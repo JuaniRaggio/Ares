@@ -144,7 +144,99 @@ void mem_init(heap_region_t *regions, size_t region_count) {
 }
 
 void *mem_alloc(size_t size) {
+        if (size == 0) {
+                return (void *)0;
+        }
+
+        size_t needed = align_up(size + header_size);
+
+        if (needed > heap_status.available_heap_space_bytes) {
+                return (void *)0;
+        }
+
+        block_list_t *prev  = &free_list_start;
+        block_list_t *block = free_list_start.next_free_block;
+
+        while (block != &free_list_end) {
+                if (block->block_size >= needed) {
+                        if (block->block_size - needed >=
+                            header_size + HEAP_ALIGNMENT) {
+                                block_list_t *new_block =
+                                    (block_list_t *)((uint8_t *)block + needed);
+                                new_block->block_size =
+                                    block->block_size - needed;
+                                new_block->next_free_block =
+                                    block->next_free_block;
+
+                                block->block_size     = needed;
+                                prev->next_free_block = new_block;
+                        } else {
+                                prev->next_free_block = block->next_free_block;
+                        }
+
+                        block->next_free_block = (void *)0;
+                        heap_status.available_heap_space_bytes -=
+                            block->block_size;
+
+                        if (heap_status.available_heap_space_bytes <
+                            heap_status.minimum_ever_free_bytes) {
+                                heap_status.minimum_ever_free_bytes =
+                                    heap_status.available_heap_space_bytes;
+                        }
+
+                        heap_status.successful_allocations++;
+
+                        return (void *)((uint8_t *)block + header_size);
+                }
+
+                prev  = block;
+                block = block->next_free_block;
+        }
+
+        return (void *)0;
+}
+
+void mem_free(void *ptr) {
+        if (ptr == (void *)0) {
+                return;
+        }
+
+        block_list_t *block = (block_list_t *)((uint8_t *)ptr - header_size);
+
+        heap_status.available_heap_space_bytes += block->block_size;
+        heap_status.successful_frees++;
+
+        insert_block_into_free_list(block);
 }
 
 void mem_get_stats(heap_stats_t *stats) {
+        if (stats == (void *)0) {
+                return;
+        }
+
+        size_t largest  = 0;
+        size_t smallest = ~((size_t)0);
+        size_t count    = 0;
+
+        block_list_t *block = free_list_start.next_free_block;
+        while (block != &free_list_end) {
+                count++;
+                if (block->block_size > largest) {
+                        largest = block->block_size;
+                }
+                if (block->block_size < smallest) {
+                        smallest = block->block_size;
+                }
+                block = block->next_free_block;
+        }
+
+        if (count == 0) {
+                smallest = 0;
+        }
+
+        *stats = heap_status;
+
+        stats->size_largest_free_block_bytes     = largest;
+        stats->size_smallest_free_block_in_bytes = smallest;
+        stats->number_of_free_blocks             = count;
 }
