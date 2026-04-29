@@ -39,6 +39,8 @@ static inline size_t align_up(size_t val) {
         return (val + (HEAP_ALIGNMENT - 1)) & ~((size_t)(HEAP_ALIGNMENT - 1));
 }
 
+/* Insert a block into the free list maintaining ascending address order.
+ * Coalesces with adjacent blocks when possible. */
 static void insert_block_into_free_list(block_list_t *block_to_insert) {
         block_list_t *iterator;
         uint8_t *block_addr = (uint8_t *)block_to_insert;
