@@ -15,11 +15,13 @@
 #define NUM_ORDERS (MAX_ORDER - MIN_ORDER + 1)
 #define MAX_POOLS HEAP_REGION_COUNT
 
+/* Block header stored at the start of every block (free or allocated). */
 typedef struct block_header {
         size_t order;
         size_t is_free;
 } block_header_t;
 
+/* One buddy pool per memory region. */
 typedef struct buddy_pool {
         uint8_t *base;
         size_t total_size;
@@ -33,6 +35,63 @@ static heap_stats_t heap_status;
 static size_t header_size;
 static int buddy_initialized;
 
+static inline size_t align_up(size_t val) {
+        return (val + (HEAP_ALIGNMENT - 1)) & ~((size_t)(HEAP_ALIGNMENT - 1));
+}
+
+static inline size_t log2_of(size_t n) {
+        size_t r = 0;
+        while (n >>= 1) {
+                r++;
+        }
+        return r;
+}
+
+static inline size_t next_pow2(size_t n) {
+        if (n == 0) {
+                return 1;
+        }
+        n--;
+        n |= n >> 1;
+        n |= n >> 2;
+        n |= n >> 4;
+        n |= n >> 8;
+        n |= n >> 16;
+        n |= n >> 32;
+        return n + 1;
+}
+static inline block_header_t *get_next_free(block_header_t *blk) {
+        block_header_t **ptr = (block_header_t **)((uint8_t *)blk + header_size);
+        return *ptr;
+}
+static inline void set_next_free(block_header_t *blk, block_header_t *next) {
+        block_header_t **ptr = (block_header_t **)((uint8_t *)blk + header_size);
+        *ptr = next;
+}
+static void add_to_free_list(buddy_pool_t *pool, block_header_t *blk) {
+        size_t idx = blk->order - MIN_ORDER;
+        set_next_free(blk, pool->free_lists[idx]);
+        pool->free_lists[idx] = blk;
+        blk->is_free = 1;
+}
+static void remove_from_free_list(buddy_pool_t *pool, block_header_t *blk) {
+        size_t idx = blk->order - MIN_ORDER;
+        block_header_t *cur = pool->free_lists[idx];
+        block_header_t *prev = (void *)0;
+
+        while (cur != (void *)0) {
+                if (cur == blk) {
+                        if (prev == (void *)0) {
+                                pool->free_lists[idx] = get_next_free(cur);
+                        } else {
+                                set_next_free(prev, get_next_free(cur));
+                        }
+                        return;
+                }
+                prev = cur;
+                cur = get_next_free(cur);
+        }
+}
 void mem_init(heap_region_t *regions, size_t region_count) {
         if (buddy_initialized) {
                 return;
