@@ -30,7 +30,6 @@ typedef struct buddy_pool {
 } buddy_pool_t;
 
 static buddy_pool_t pools[MAX_POOLS];
-static size_t pool_count;
 static heap_stats_t heap_status;
 static size_t header_size;
 static int buddy_initialized;
@@ -44,28 +43,34 @@ static inline size_t log2_of(size_t n) {
 }
 
 static inline size_t next_pow2(size_t n) {
-        if (n <= 1) {
+        if (n <= 1)
                 return 1;
-        }
         return (size_t)1 << (64 - __builtin_clzll(n - 1));
 }
 static inline block_header_t *get_next_free(block_header_t *blk) {
-        block_header_t **ptr = (block_header_t **)((uint8_t *)blk + header_size);
-        return *ptr;
+        return *(block_header_t **)((uint8_t *)blk + header_size);
 }
+
 static inline void set_next_free(block_header_t *blk, block_header_t *next) {
-        block_header_t **ptr = (block_header_t **)((uint8_t *)blk + header_size);
-        *ptr = next;
+        *(block_header_t **)((uint8_t *)blk + header_size) = next;
 }
+
+static inline block_header_t *get_buddy(buddy_pool_t *pool,
+                                       block_header_t *blk) {
+        size_t blk_offset   = (size_t)((uint8_t *)blk - pool->base);
+        size_t buddy_offset = blk_offset ^ ((size_t)1 << blk->order);
+        return (block_header_t *)(pool->base + buddy_offset);
+}
+
 static void add_to_free_list(buddy_pool_t *pool, block_header_t *blk) {
         size_t idx = blk->order - MIN_ORDER;
         set_next_free(blk, pool->free_lists[idx]);
         pool->free_lists[idx] = blk;
-        blk->is_free = 1;
+        blk->is_free          = 1;
 }
 static void remove_from_free_list(buddy_pool_t *pool, block_header_t *blk) {
-        size_t idx = blk->order - MIN_ORDER;
-        block_header_t *cur = pool->free_lists[idx];
+        size_t idx           = blk->order - MIN_ORDER;
+        block_header_t *cur  = pool->free_lists[idx];
         block_header_t *prev = (void *)0;
 
         while (cur != (void *)0) {
@@ -78,8 +83,38 @@ static void remove_from_free_list(buddy_pool_t *pool, block_header_t *blk) {
                         return;
                 }
                 prev = cur;
-                cur = get_next_free(cur);
+                cur  = get_next_free(cur);
         }
+}
+
+static void split_block(buddy_pool_t *pool, block_header_t *blk,
+                       size_t target_order) {
+        while (blk->order > target_order) {
+                blk->order--;
+                size_t half_size      = (size_t)1 << blk->order;
+                block_header_t *buddy = (block_header_t *)((uint8_t *)blk + half_size);
+                buddy->order          = blk->order;
+                buddy->is_free        = 1;
+                add_to_free_list(pool, buddy);
+        }
+}
+
+static block_header_t *coalesce_block(buddy_pool_t *pool, block_header_t *blk) {
+        while (blk->order < pool->max_order) {
+                block_header_t *buddy = get_buddy(pool, blk);
+
+                if (!buddy->is_free || buddy->order != blk->order) {
+                        break;
+                }
+
+                remove_from_free_list(pool, buddy);
+
+                if (buddy < blk) {
+                        blk = buddy;
+                }
+                blk->order++;
+        }
+        return blk;
 }
 void mem_init(heap_region_t *regions, size_t region_count) {
         if (buddy_initialized) {
