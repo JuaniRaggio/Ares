@@ -204,21 +204,29 @@ void mem_init(heap_region_t *regions, size_t region_count) {
 }
 
 void *mem_alloc(size_t size) {
+        if (size == 0 || !buddy_initialized)
+                return (void *)0;
+
+        size_t target_order = compute_target_order(size);
+        if (target_order > MAX_ORDER)
+                return (void *)0;
+
+        for (size_t p = 0; p < pool_count; p++) {
+        }
+
+        return (void *)0;
 }
 
 void mem_free(void *ptr) {
-        if (ptr == (void *)0 || !buddy_initialized) {
+        if (ptr == (void *)0 || !buddy_initialized)
                 return;
-        }
 
         block_header_t *blk = (block_header_t *)((uint8_t *)ptr - header_size);
         buddy_pool_t *pool  = find_pool_for_ptr(blk);
+        if (pool == (void *)0)
+                return;
 
-        if (pool == (void *)0) {
-                return; /* Invalid pointer or not from our pools */
-        }
-
-        size_t freed_bytes = (size_t)1 << blk->order;
+        size_t freed_bytes = block_size(blk);
         blk->is_free       = 1;
 
         blk = coalesce_block(pool, blk);
@@ -229,9 +237,8 @@ void mem_free(void *ptr) {
 }
 
 void mem_get_stats(heap_stats_t *stats) {
-        if (stats == (void *)0) {
+        if (stats == (void *)0)
                 return;
-        }
 
         size_t largest  = 0;
         size_t smallest = ~((size_t)0);
@@ -241,7 +248,7 @@ void mem_get_stats(heap_stats_t *stats) {
                 for (size_t i = 0; i < NUM_ORDERS; i++) {
                         block_header_t *blk = pools[p].free_lists[i];
                         while (blk != (void *)0) {
-                                size_t bsize = (size_t)1 << blk->order;
+                                size_t bsize = block_size(blk);
                                 count++;
                                 if (bsize > largest)
                                         largest = bsize;
