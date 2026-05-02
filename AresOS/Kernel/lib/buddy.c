@@ -212,6 +212,24 @@ void *mem_alloc(size_t size) {
                 return (void *)0;
 
         for (size_t p = 0; p < pool_count; p++) {
+                buddy_pool_t *pool = &pools[p];
+                if (target_order > pool->max_order)
+                        continue;
+
+                block_header_t *blk = find_free_block(pool, target_order);
+                if (blk == (void *)0)
+                        continue;
+
+                remove_from_free_list(pool, blk);
+                blk->is_free = 0;
+                split_block(pool, blk, target_order);
+
+                heap_status.available_heap_space_bytes -= block_size(blk);
+                if (heap_status.available_heap_space_bytes < heap_status.minimum_ever_free_bytes)
+                        heap_status.minimum_ever_free_bytes = heap_status.available_heap_space_bytes;
+                heap_status.successful_allocations++;
+
+                return (void *)((uint8_t *)blk + header_size);
         }
 
         return (void *)0;
