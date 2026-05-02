@@ -11,7 +11,7 @@
 #include <multi_region_heap.h>
 
 #define MIN_ORDER 5   /* 32 bytes - smallest allocatable block */
-#define MAX_ORDER 25  /* 32 MB */
+#define MAX_ORDER 25  /* 32 MB - maximum block size */
 #define NUM_ORDERS (MAX_ORDER - MIN_ORDER + 1)
 #define MAX_POOLS HEAP_REGION_COUNT
 
