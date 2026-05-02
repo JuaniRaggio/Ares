@@ -40,25 +40,14 @@ static inline size_t align_up(size_t val) {
 }
 
 static inline size_t log2_of(size_t n) {
-        size_t r = 0;
-        while (n >>= 1) {
-                r++;
-        }
-        return r;
+        return 63 - __builtin_clzll(n);
 }
 
 static inline size_t next_pow2(size_t n) {
-        if (n == 0) {
+        if (n <= 1) {
                 return 1;
         }
-        n--;
-        n |= n >> 1;
-        n |= n >> 2;
-        n |= n >> 4;
-        n |= n >> 8;
-        n |= n >> 16;
-        n |= n >> 32;
-        return n + 1;
+        return (size_t)1 << (64 - __builtin_clzll(n - 1));
 }
 static inline block_header_t *get_next_free(block_header_t *blk) {
         block_header_t **ptr = (block_header_t **)((uint8_t *)blk + header_size);
