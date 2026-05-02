@@ -68,6 +68,7 @@ static void add_to_free_list(buddy_pool_t *pool, block_header_t *blk) {
         pool->free_lists[idx] = blk;
         blk->is_free          = 1;
 }
+
 static void remove_from_free_list(buddy_pool_t *pool, block_header_t *blk) {
         size_t idx           = blk->order - MIN_ORDER;
         block_header_t *cur  = pool->free_lists[idx];
@@ -116,13 +117,25 @@ static block_header_t *coalesce_block(buddy_pool_t *pool, block_header_t *blk) {
         }
         return blk;
 }
+
+static buddy_pool_t *find_pool_for_ptr(void *ptr) {
+        for (size_t i = 0; i < pool_count; i++) {
+                if ((uint8_t *)ptr >= pools[i].base &&
+                    (uint8_t *)ptr < pools[i].base + pools[i].total_size) {
+                        return &pools[i];
+                }
+        }
+        return (void *)0;
+}
+
+
 void mem_init(heap_region_t *regions, size_t region_count) {
         if (buddy_initialized) {
                 return;
         }
 
         header_size = align_up((size_t)sizeof(block_header_t));
-        pool_count = 0;
+        pool_count  = 0;
 
         size_t total_free = 0;
 
@@ -136,21 +149,27 @@ void mem_get_stats(heap_stats_t *stats) {
                 return;
         }
 
-        size_t largest = 0;
+        size_t largest  = 0;
         size_t smallest = ~((size_t)0);
-        size_t count = 0;
+        size_t count    = 0;
 
         for (size_t p = 0; p < pool_count; p++) {
                 for (size_t i = 0; i < NUM_ORDERS; i++) {
+                        block_header_t *blk = pools[p].free_lists[i];
+                        while (blk != (void *)0) {
+                                size_t bsize = (size_t)1 << blk->order;
+                                count++;
+                                if (bsize > largest)
+                                        largest = bsize;
+                                if (bsize < smallest)
+                                        smallest = bsize;
+                                blk = get_next_free(blk);
+                        }
                 }
         }
 
-        if (count == 0) {
-                smallest = 0;
-        }
-
-        *stats = heap_status;
-        stats->size_largest_free_block_bytes = largest;
-        stats->size_smallest_free_block_in_bytes = smallest;
-        stats->number_of_free_blocks = count;
+        *stats                                   = heap_status;
+        stats->size_largest_free_block_bytes     = largest;
+        stats->size_smallest_free_block_in_bytes = (count == 0) ? 0 : smallest;
+        stats->number_of_free_blocks             = count;
 }
