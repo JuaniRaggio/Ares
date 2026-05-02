@@ -30,9 +30,10 @@ typedef struct buddy_pool {
 } buddy_pool_t;
 
 static buddy_pool_t pools[MAX_POOLS];
+static size_t pool_count      = 0;
 static heap_stats_t heap_status;
-static size_t header_size;
-static int buddy_initialized;
+static size_t header_size     = 0;
+static int buddy_initialized = 0;
 
 static inline size_t align_up(size_t val) {
         return (val + (HEAP_ALIGNMENT - 1)) & ~((size_t)(HEAP_ALIGNMENT - 1));
@@ -139,9 +140,22 @@ void mem_init(heap_region_t *regions, size_t region_count) {
 
         size_t total_free = 0;
 
+        for (size_t i = 0; i < region_count && pool_count < MAX_POOLS; i++) {
+                uint8_t *addr    = (uint8_t *)align_up((size_t)regions[i].initial_address);
+                size_t adj       = addr - regions[i].initial_address;
+                size_t available = regions[i].region_size_in_bytes;
+
+
+        heap_status.available_heap_space_bytes = total_free;
+        heap_status.minimum_ever_free_bytes    = total_free;
+        heap_status.successful_allocations     = 0;
+        heap_status.successful_frees           = 0;
+
+        buddy_initialized = 1;
 }
 void *mem_alloc(size_t size) {
 }
+
 void mem_free(void *ptr) {
         if (ptr == (void *)0 || !buddy_initialized) {
                 return;
