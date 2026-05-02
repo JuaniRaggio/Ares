@@ -27,8 +27,13 @@ INTERRUPTS_OBJ := $(BUILD_DIR)/$(ARCH_DIR)/interrupts/interrupts.o
 SYSCALLS_ASM := asm/libasm.asm asm/sys_exit.asm asm/sys_read.asm asm/sys_clear.asm asm/sys_ticks.asm asm/sys_misc.asm asm/syscalls.asm asm/syscalls_table.asm asm/init_syscalls.asm asm/kernel_stack.asm asm/setup_user_segments.asm asm/jump_to_userland.asm asm/sys_set_bg_color.asm asm/sys_set_text_color.asm asm/sys_get_cursor_pos.asm asm/sys_redraw_screen.asm asm/tss.asm asm/sys_sound.asm
 SYSCALLS_OBJ := $(patsubst %.asm,$(BUILD_DIR)/%.o,$(SYSCALLS_ASM))
 
+# Memory manager: por defecto multi_region_heap, override con MM=buddy
+MM_SRC ?= $(LIB_DIR)/multi_region_heap.c
+
 # 4. Código C (todos juntos, orden no crítico)
-C_SOURCES := $(shell find $(ARCH_DIR) $(DRIVERS_DIR) $(CORE_DIR) $(LIB_DIR) -name '*.c')
+# Se excluyen los memory managers del find y se agrega el seleccionado
+C_SOURCES := $(shell find $(ARCH_DIR) $(DRIVERS_DIR) $(CORE_DIR) $(LIB_DIR) -name '*.c' ! -name 'multi_region_heap.c' ! -name 'buddy.c')
+C_SOURCES += $(MM_SRC)
 COMMON_SOURCES := $(shell find $(COMMON_DIR)/src -name '*.c')
 C_OBJECTS := $(patsubst %.c,$(BUILD_DIR)/%.o,$(C_SOURCES)) $(patsubst $(COMMON_DIR)/src/%.c,$(BUILD_DIR)/common/%.o,$(COMMON_SOURCES))
 
@@ -127,6 +132,11 @@ compile_commands.json:
 			"$(CURDIR)" "$(GCC) $(GCCFLAGS)" "$$src" "$$abs" >> $@; \
 	done
 	@printf '\n]\n' >> $@
+
+# Compilar con buddy system: make buddy
+.PHONY: buddy
+buddy:
+	$(MAKE) MM_SRC=$(LIB_DIR)/buddy.c all
 
 # Info del proyecto
 info:
