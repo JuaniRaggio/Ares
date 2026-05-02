@@ -143,7 +143,27 @@ void mem_init(heap_region_t *regions, size_t region_count) {
 void *mem_alloc(size_t size) {
 }
 void mem_free(void *ptr) {
+        if (ptr == (void *)0 || !buddy_initialized) {
+                return;
+        }
+
+        block_header_t *blk = (block_header_t *)((uint8_t *)ptr - header_size);
+        buddy_pool_t *pool  = find_pool_for_ptr(blk);
+
+        if (pool == (void *)0) {
+                return; /* Invalid pointer or not from our pools */
+        }
+
+        size_t freed_bytes = (size_t)1 << blk->order;
+        blk->is_free       = 1;
+
+        blk = coalesce_block(pool, blk);
+        add_to_free_list(pool, blk);
+
+        heap_status.available_heap_space_bytes += freed_bytes;
+        heap_status.successful_frees++;
 }
+
 void mem_get_stats(heap_stats_t *stats) {
         if (stats == (void *)0) {
                 return;
