@@ -145,6 +145,38 @@ void mem_init(heap_region_t *regions, size_t region_count) {
                 size_t adj       = addr - regions[i].initial_address;
                 size_t available = regions[i].region_size_in_bytes;
 
+                if (available <= adj)
+                        continue;
+                available -= adj;
+
+                if (available == 0)
+                        continue;
+
+                /* Find largest power of 2 that fits */
+                size_t order = log2_of(available);
+                if (order < MIN_ORDER)
+                        continue;
+                if (order > MAX_ORDER)
+                        order = MAX_ORDER;
+
+                size_t pool_size = (size_t)1 << order;
+
+                buddy_pool_t *pool = &pools[pool_count++];
+                pool->base         = addr;
+                pool->total_size   = pool_size;
+                pool->max_order    = order;
+
+                for (size_t j = 0; j < NUM_ORDERS; j++) {
+                        pool->free_lists[j] = (void *)0;
+                }
+
+                block_header_t *root = (block_header_t *)addr;
+                root->order          = order;
+                root->is_free        = 1;
+                add_to_free_list(pool, root);
+
+                total_free += pool_size;
+        }
 
         heap_status.available_heap_space_bytes = total_free;
         heap_status.minimum_ever_free_bytes    = total_free;
@@ -153,6 +185,7 @@ void mem_init(heap_region_t *regions, size_t region_count) {
 
         buddy_initialized = 1;
 }
+
 void *mem_alloc(size_t size) {
 }
 
