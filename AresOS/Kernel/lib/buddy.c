@@ -48,6 +48,11 @@ static inline size_t next_pow2(size_t n) {
                 return 1;
         return (size_t)1 << (64 - __builtin_clzll(n - 1));
 }
+
+static inline size_t block_size(block_header_t *blk) {
+        return (size_t)1 << blk->order;
+}
+
 static inline block_header_t *get_next_free(block_header_t *blk) {
         return *(block_header_t **)((uint8_t *)blk + header_size);
 }
@@ -129,6 +134,37 @@ static buddy_pool_t *find_pool_for_ptr(void *ptr) {
         return (void *)0;
 }
 
+static size_t compute_target_order(size_t alloc_size) {
+        size_t needed = alloc_size + header_size;
+        size_t order  = log2_of(next_pow2(needed));
+        if (order < MIN_ORDER)
+                return MIN_ORDER;
+        return order;
+}
+
+static block_header_t *find_free_block(buddy_pool_t *pool, size_t target_order) {
+        size_t order = target_order;
+        while (order <= pool->max_order) {
+                if (pool->free_lists[order - MIN_ORDER] != (void *)0)
+                        return pool->free_lists[order - MIN_ORDER];
+                order++;
+        }
+        return (void *)0;
+}
+
+static void init_pool(buddy_pool_t *pool, uint8_t *addr, size_t order) {
+        pool->base       = addr;
+        pool->total_size = (size_t)1 << order;
+        pool->max_order  = order;
+
+        for (size_t j = 0; j < NUM_ORDERS; j++)
+                pool->free_lists[j] = (void *)0;
+
+        block_header_t *root = (block_header_t *)addr;
+        root->order          = order;
+        root->is_free        = 1;
+        add_to_free_list(pool, root);
+}
 
 void mem_init(heap_region_t *regions, size_t region_count) {
         if (buddy_initialized) {
