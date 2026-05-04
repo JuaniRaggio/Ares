@@ -132,6 +132,8 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->exit_code         = 0;
         pcb->kernel_stack_base = kstack;
         pcb->user_stack_base   = ustack;
+        strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
+
         return pid;
 }
 
