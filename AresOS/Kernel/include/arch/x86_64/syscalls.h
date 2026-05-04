@@ -239,6 +239,14 @@ uint64_t sys_nice(uint64_t pid, uint64_t new_priority);
 uint64_t sys_waitpid(uint64_t pid);
 
 /**
+ * Fills an array with PIDs of active processes.
+ * @param pids_ptr Pointer to a uint64_t array.
+ * @param max_count Maximum entries to fill.
+ * @return Number of PIDs written.
+ */
+uint64_t sys_list_processes(uint64_t pids_ptr, uint64_t max_count);
+
+/**
  * Initializes the syscall subsystem.
  */
 void init_syscalls(void);

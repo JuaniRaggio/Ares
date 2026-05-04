@@ -74,3 +74,12 @@ int64_t my_yield(void) {
 int64_t my_wait(int64_t pid) {
         return syscall_waitpid((uint64_t)pid);
 }
+
+int64_t my_list_processes(uint64_t *pids, int max) {
+        return syscall_list_processes(pids, (uint64_t)max);
+}
+
+void idle_process(void) {
+        while (1)
+                syscall_yield();
+}

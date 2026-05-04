@@ -256,3 +256,7 @@ static inline int64_t syscall_nice(uint64_t pid, uint64_t new_priority) {
 static inline int64_t syscall_waitpid(uint64_t pid) {
         return (int64_t)_syscall3(SYS_WAITPID, pid, 0, 0);
 }
+
+static inline int64_t syscall_list_processes(uint64_t *pids, uint64_t max) {
+        return (int64_t)_syscall3(SYS_LIST_PROCESSES, (uint64_t)pids, max, 0);
+}

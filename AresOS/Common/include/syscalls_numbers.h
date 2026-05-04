@@ -33,5 +33,6 @@ typedef enum {
         SYS_UNBLOCK,
         SYS_NICE,
         SYS_WAITPID,
+        SYS_LIST_PROCESSES,
         SYS_MAX,
 } syscall_codes;

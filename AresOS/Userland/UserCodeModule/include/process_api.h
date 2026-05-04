@@ -69,3 +69,14 @@ int64_t my_yield(void);
  * @return Exit code of the process, or -1 on error.
  */
 int64_t my_wait(int64_t pid);
+
+/**
+ * @brief List active process PIDs.
+ * @param pids Array to fill with PIDs.
+ * @param max Maximum entries to fill.
+ * @return Number of PIDs written.
+ */
+int64_t my_list_processes(uint64_t *pids, int max);
+
+/** @brief Idle process entry point. Yields in an infinite loop. */
+void idle_process(void);
