@@ -134,6 +134,10 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->user_stack_base   = ustack;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
 
+        uint64_t user_rsp;
+        setup_user_stack(ustack, exit_handler, &user_rsp);
+        setup_kernel_stack(kstack, entry, argc, argv, user_rsp, &pcb->rsp);
+
         return pid;
 }
 
