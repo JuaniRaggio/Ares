@@ -13,7 +13,7 @@
 #define MIN_ORDER 5   /* 32 bytes - smallest allocatable block */
 #define MAX_ORDER 25  /* 32 MB - maximum block size */
 #define NUM_ORDERS (MAX_ORDER - MIN_ORDER + 1)
-#define MAX_POOLS HEAP_REGION_COUNT
+#define MAX_POOLS (HEAP_REGION_COUNT * 2)
 
 /* Block header stored at the start of every block (free or allocated). */
 typedef struct block_header {
@@ -32,6 +32,7 @@ typedef struct buddy_pool {
 static buddy_pool_t pools[MAX_POOLS];
 static size_t pool_count      = 0;
 static heap_stats_t heap_status;
+static size_t total_heap_size = 0;
 static size_t header_size     = 0;
 static int buddy_initialized = 0;
 
@@ -53,12 +54,28 @@ static inline size_t block_size(block_header_t *blk) {
         return (size_t)1 << blk->order;
 }
 
+static inline block_header_t *get_block_header(void *ptr) {
+        return (block_header_t *)((uint8_t *)ptr - header_size);
+}
+
+static inline void *get_block_data(block_header_t *blk) {
+        return (void *)((uint8_t *)blk + header_size);
+}
+
 static inline block_header_t *get_next_free(block_header_t *blk) {
-        return *(block_header_t **)((uint8_t *)blk + header_size);
+        return *(block_header_t **)get_block_data(blk);
 }
 
 static inline void set_next_free(block_header_t *blk, block_header_t *next) {
-        *(block_header_t **)((uint8_t *)blk + header_size) = next;
+        *(block_header_t **)get_block_data(blk) = next;
+}
+
+static inline void mark_as_free(block_header_t *blk) {
+        blk->is_free = 1;
+}
+
+static inline void mark_as_allocated(block_header_t *blk) {
+        blk->is_free = 0;
 }
 
 static inline block_header_t *get_buddy(buddy_pool_t *pool,
@@ -68,11 +85,16 @@ static inline block_header_t *get_buddy(buddy_pool_t *pool,
         return (block_header_t *)(pool->base + buddy_offset);
 }
 
+static inline int is_valid_buddy(block_header_t *blk, block_header_t *buddy) {
+        return buddy->is_free && buddy->order == blk->order;
+}
+
+
 static void add_to_free_list(buddy_pool_t *pool, block_header_t *blk) {
         size_t idx = blk->order - MIN_ORDER;
         set_next_free(blk, pool->free_lists[idx]);
         pool->free_lists[idx] = blk;
-        blk->is_free          = 1;
+        mark_as_free(blk);
 }
 
 static void remove_from_free_list(buddy_pool_t *pool, block_header_t *blk) {
@@ -95,13 +117,11 @@ static void remove_from_free_list(buddy_pool_t *pool, block_header_t *blk) {
 }
 
 static void split_block(buddy_pool_t *pool, block_header_t *blk,
-                       size_t target_order) {
+                        size_t target_order) {
         while (blk->order > target_order) {
                 blk->order--;
-                size_t half_size      = (size_t)1 << blk->order;
-                block_header_t *buddy = (block_header_t *)((uint8_t *)blk + half_size);
+                block_header_t *buddy = (block_header_t *)((uint8_t *)blk + block_size(blk));
                 buddy->order          = blk->order;
-                buddy->is_free        = 1;
                 add_to_free_list(pool, buddy);
         }
 }
@@ -110,7 +130,7 @@ static block_header_t *coalesce_block(buddy_pool_t *pool, block_header_t *blk) {
         while (blk->order < pool->max_order) {
                 block_header_t *buddy = get_buddy(pool, blk);
 
-                if (!buddy->is_free || buddy->order != blk->order) {
+                if (!is_valid_buddy(blk, buddy)) {
                         break;
                 }
 
@@ -123,6 +143,7 @@ static block_header_t *coalesce_block(buddy_pool_t *pool, block_header_t *blk) {
         }
         return blk;
 }
+
 
 static buddy_pool_t *find_pool_for_ptr(void *ptr) {
         for (size_t i = 0; i < pool_count; i++) {
@@ -184,17 +205,20 @@ void mem_init(heap_region_t *regions, size_t region_count) {
                         continue;
                 available -= adj;
 
-                /* Find largest power of 2 that fits */
-                size_t order = log2_of(available);
-                if (order < MIN_ORDER)
-                        continue;
-                if (order > MAX_ORDER)
-                        order = MAX_ORDER;
+                while (available >= ((size_t)1 << MIN_ORDER) && pool_count < MAX_POOLS) {
+                        size_t order = log2_of(available);
+                        if (order > MAX_ORDER)
+                                order = MAX_ORDER;
 
-                init_pool(&pools[pool_count++], addr, order);
-                total_free += (size_t)1 << order;
+                        init_pool(&pools[pool_count++], addr, order);
+                        size_t psize = (size_t)1 << order;
+                        total_free += psize;
+                        addr += psize;
+                        available -= psize;
+                }
         }
 
+        total_heap_size                        = total_free;
         heap_status.available_heap_space_bytes = total_free;
         heap_status.minimum_ever_free_bytes    = total_free;
         heap_status.successful_allocations     = 0;
@@ -221,7 +245,7 @@ void *mem_alloc(size_t size) {
                         continue;
 
                 remove_from_free_list(pool, blk);
-                blk->is_free = 0;
+                mark_as_allocated(blk);
                 split_block(pool, blk, target_order);
 
                 heap_status.available_heap_space_bytes -= block_size(blk);
@@ -229,7 +253,7 @@ void *mem_alloc(size_t size) {
                         heap_status.minimum_ever_free_bytes = heap_status.available_heap_space_bytes;
                 heap_status.successful_allocations++;
 
-                return (void *)((uint8_t *)blk + header_size);
+                return get_block_data(blk);
         }
 
         return (void *)0;
@@ -239,13 +263,16 @@ void mem_free(void *ptr) {
         if (ptr == (void *)0 || !buddy_initialized)
                 return;
 
-        block_header_t *blk = (block_header_t *)((uint8_t *)ptr - header_size);
-        buddy_pool_t *pool  = find_pool_for_ptr(blk);
+        block_header_t *blk = get_block_header(ptr);
+        if (blk->is_free)
+                return;
+
+        buddy_pool_t *pool = find_pool_for_ptr(blk);
         if (pool == (void *)0)
                 return;
 
         size_t freed_bytes = block_size(blk);
-        blk->is_free       = 1;
+        mark_as_free(blk);
 
         blk = coalesce_block(pool, blk);
         add_to_free_list(pool, blk);
@@ -253,6 +280,7 @@ void mem_free(void *ptr) {
         heap_status.available_heap_space_bytes += freed_bytes;
         heap_status.successful_frees++;
 }
+
 
 void mem_get_stats(heap_stats_t *stats) {
         if (stats == (void *)0)
@@ -278,6 +306,9 @@ void mem_get_stats(heap_stats_t *stats) {
         }
 
         *stats                                   = heap_status;
+        stats->total_heap_size_bytes             = total_heap_size;
+        stats->occupied_heap_space_bytes         = total_heap_size -
+                                                   heap_status.available_heap_space_bytes;
         stats->size_largest_free_block_bytes     = largest;
         stats->size_smallest_free_block_in_bytes = (count == 0) ? 0 : smallest;
         stats->number_of_free_blocks             = count;

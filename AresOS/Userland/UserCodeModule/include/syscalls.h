@@ -211,3 +211,15 @@ static inline uint64_t syscall_play_sound(uint64_t frequency,
 static inline uint64_t syscall_beep(uint64_t frequency) {
         return _syscall3(SYS_BEEP, frequency, 0, 0);
 }
+
+static inline void *syscall_malloc(uint64_t size) {
+        return (void *)_syscall3(SYS_MALLOC, size, 0, 0);
+}
+
+static inline void syscall_free(void *ptr) {
+        _syscall3(SYS_FREE, (uint64_t)ptr, 0, 0);
+}
+
+static inline uint64_t syscall_mem_stats(void *stats) {
+        return _syscall3(SYS_MEM_STATS, (uint64_t)stats, 0, 0);
+}

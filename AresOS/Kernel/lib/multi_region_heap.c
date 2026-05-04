@@ -39,40 +39,61 @@ static inline size_t align_up(size_t val) {
         return (val + (HEAP_ALIGNMENT - 1)) & ~((size_t)(HEAP_ALIGNMENT - 1));
 }
 
+static inline int blocks_are_adjacent(void *first, size_t first_size,
+                                      void *second) {
+        return (uint8_t *)first + first_size == (uint8_t *)second;
+}
+
+static inline int can_split_block(block_list_t *block, size_t needed) {
+        return block->block_size - needed >= header_size + HEAP_ALIGNMENT;
+}
+
+static void split_block(block_list_t *block, block_list_t *prev, size_t needed) {
+        block_list_t *new_block = (block_list_t *)((uint8_t *)block + needed);
+        new_block->block_size   = block->block_size - needed;
+        new_block->next_free_block = block->next_free_block;
+
+        block->block_size     = needed;
+        prev->next_free_block = new_block;
+}
+
+static block_list_t *find_insertion_point(uint8_t *block_addr) {
+        block_list_t *iterator = &free_list_start;
+        while (iterator->next_free_block != &free_list_end &&
+               (uint8_t *)iterator->next_free_block < block_addr) {
+                iterator = iterator->next_free_block;
+        }
+        return iterator;
+}
+
+static void try_coalesce_with_next(block_list_t *block) {
+        block_list_t *next = block->next_free_block;
+        if (next != &free_list_end &&
+            blocks_are_adjacent(block, block->block_size, next)) {
+                block->block_size += next->block_size;
+                block->next_free_block = next->next_free_block;
+        }
+}
+
+static void try_coalesce_with_prev(block_list_t *prev, block_list_t *block) {
+        if (prev != &free_list_start &&
+            blocks_are_adjacent(prev, prev->block_size, block)) {
+                prev->block_size += block->block_size;
+                prev->next_free_block = block->next_free_block;
+        } else {
+                prev->next_free_block = block;
+        }
+}
+
 /* Insert a block into the free list maintaining ascending address order.
  * Coalesces with adjacent blocks when possible. */
 static void insert_block_into_free_list(block_list_t *block_to_insert) {
-        block_list_t *iterator;
-        uint8_t *block_addr = (uint8_t *)block_to_insert;
+        uint8_t *block_addr    = (uint8_t *)block_to_insert;
+        block_list_t *iterator = find_insertion_point(block_addr);
 
-        /* Find insertion point: iterate until we find a block at a higher
-         * address */
-        for (iterator = &free_list_start;
-             iterator->next_free_block != &free_list_end &&
-             (uint8_t *)iterator->next_free_block < block_addr;
-             iterator = iterator->next_free_block) {
-        }
-
-        /* Try to coalesce with the next block */
-        uint8_t *next_addr = (uint8_t *)iterator->next_free_block;
-        if (block_addr + block_to_insert->block_size == next_addr &&
-            iterator->next_free_block != &free_list_end) {
-                block_to_insert->block_size +=
-                    iterator->next_free_block->block_size;
-                block_to_insert->next_free_block =
-                    iterator->next_free_block->next_free_block;
-        } else {
-                block_to_insert->next_free_block = iterator->next_free_block;
-        }
-
-        /* Try to coalesce with the previous block (iterator) */
-        if (iterator != &free_list_start &&
-            (uint8_t *)iterator + iterator->block_size == block_addr) {
-                iterator->block_size += block_to_insert->block_size;
-                iterator->next_free_block = block_to_insert->next_free_block;
-        } else {
-                iterator->next_free_block = block_to_insert;
-        }
+        block_to_insert->next_free_block = iterator->next_free_block;
+        try_coalesce_with_next(block_to_insert);
+        try_coalesce_with_prev(iterator, block_to_insert);
 }
 
 void mem_init(heap_region_t *regions, size_t region_count) {
@@ -82,55 +103,32 @@ void mem_init(heap_region_t *regions, size_t region_count) {
 
         header_size = align_up((size_t)sizeof(block_list_t));
 
-        block_list_t *first_free = (void *)0;
-        block_list_t *prev_free  = (void *)0;
-        size_t total_free        = 0;
+        /* Set up sentinels first so we can use insert_block_into_free_list */
+        free_list_start.block_size      = 0;
+        free_list_start.next_free_block = &free_list_end;
+        free_list_end.block_size        = 0;
+        free_list_end.next_free_block   = (void *)0;
+
+        size_t total_free = 0;
 
         for (size_t i = 0; i < region_count; i++) {
-                /* Align starting address upwards */
-                uint8_t *addr = regions[i].initial_address;
-                size_t offset = (size_t)addr & (HEAP_ALIGNMENT - 1);
-                if (offset != 0) {
-                        size_t adjustment = HEAP_ALIGNMENT - offset;
-                        addr += adjustment;
-                        if (regions[i].region_size_in_bytes <= adjustment) {
-                                continue;
-                        }
-                        regions[i].region_size_in_bytes -= adjustment;
-                }
+                uint8_t *addr    = (uint8_t *)align_up((size_t)regions[i].initial_address);
+                size_t adj       = addr - regions[i].initial_address;
+                size_t available = regions[i].region_size_in_bytes;
 
-                /* Ensure usable size is aligned */
-                size_t usable = regions[i].region_size_in_bytes &
-                                ~((size_t)(HEAP_ALIGNMENT - 1));
+                if (available <= adj)
+                        continue;
+                available -= adj;
+
+                size_t usable = available & ~((size_t)(HEAP_ALIGNMENT - 1));
                 if (usable < header_size + HEAP_ALIGNMENT) {
                         continue;
                 }
 
-                /* Create initial free block for this region */
-                block_list_t *block    = (block_list_t *)addr;
-                block->block_size      = usable;
-                block->next_free_block = (void *)0;
-
-                /* Link regions in address order */
-                if (first_free == (void *)0) {
-                        first_free = block;
-                } else {
-                        prev_free->next_free_block = block;
-                }
-                prev_free = block;
+                block_list_t *block = (block_list_t *)addr;
+                block->block_size   = usable;
+                insert_block_into_free_list(block);
                 total_free += usable;
-        }
-
-        /* Set up sentinels */
-        free_list_start.block_size      = 0;
-        free_list_start.next_free_block = first_free;
-        free_list_end.block_size        = 0;
-        free_list_end.next_free_block   = (void *)0;
-
-        if (prev_free != (void *)0) {
-                prev_free->next_free_block = &free_list_end;
-        } else {
-                free_list_start.next_free_block = &free_list_end;
         }
 
         /* Initialize heap status */
@@ -161,17 +159,8 @@ void *mem_alloc(size_t size) {
 
         while (block != &free_list_end) {
                 if (block->block_size >= needed) {
-                        if (block->block_size - needed >=
-                            header_size + HEAP_ALIGNMENT) {
-                                block_list_t *new_block =
-                                    (block_list_t *)((uint8_t *)block + needed);
-                                new_block->block_size =
-                                    block->block_size - needed;
-                                new_block->next_free_block =
-                                    block->next_free_block;
-
-                                block->block_size     = needed;
-                                prev->next_free_block = new_block;
+                        if (can_split_block(block, needed)) {
+                                split_block(block, prev, needed);
                         } else {
                                 prev->next_free_block = block->next_free_block;
                         }
@@ -204,6 +193,10 @@ void mem_free(void *ptr) {
         }
 
         block_list_t *block = (block_list_t *)((uint8_t *)ptr - header_size);
+
+        /* Guard against double-free: allocated blocks have next == NULL */
+        if (block->next_free_block != (void *)0)
+                return;
 
         heap_status.available_heap_space_bytes += block->block_size;
         heap_status.successful_frees++;
@@ -238,6 +231,9 @@ void mem_get_stats(heap_stats_t *stats) {
 
         *stats = heap_status;
 
+        stats->total_heap_size_bytes             = total_heap_size;
+        stats->occupied_heap_space_bytes         = total_heap_size -
+                                                   heap_status.available_heap_space_bytes;
         stats->size_largest_free_block_bytes     = largest;
         stats->size_smallest_free_block_in_bytes = smallest;
         stats->number_of_free_blocks             = count;

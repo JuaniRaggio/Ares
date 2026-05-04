@@ -156,6 +156,12 @@ uint64_t sys_get_time_ms(uint64_t *time_ms);
  */
 uint64_t sys_get_fps(uint64_t *fps);
 
+uint64_t sys_malloc(uint64_t size);
+
+uint64_t sys_free(uint64_t ptr);
+
+uint64_t sys_mem_stats(uint64_t stats_ptr);
+
 /**
  * Initializes the syscall subsystem
  */

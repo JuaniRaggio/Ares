@@ -1,6 +1,7 @@
 #include <drivers/keyboard_driver.h>
 #include <drivers/sound.h>
 #include <lib.h>
+#include <multi_region_heap.h>
 #include <naiveConsole.h>
 #include <regs.h>
 #include <stdint.h>
@@ -190,5 +191,21 @@ uint64_t sys_play_sound(uint64_t frequency, uint64_t duration_ms) {
 
 uint64_t sys_beep(uint64_t frequency) {
         beep(frequency);
+        return 0;
+}
+
+uint64_t sys_malloc(uint64_t size) {
+        return (uint64_t)mem_alloc(size);
+}
+
+uint64_t sys_free(uint64_t ptr) {
+        mem_free((void *)ptr);
+        return 0;
+}
+
+uint64_t sys_mem_stats(uint64_t stats_ptr) {
+        if (stats_ptr == 0)
+                return 1;
+        mem_get_stats((heap_stats_t *)stats_ptr);
         return 0;
 }

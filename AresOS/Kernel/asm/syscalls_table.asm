@@ -21,6 +21,9 @@ extern sys_get_time_ms_wrapper
 extern sys_get_fps_wrapper
 extern sys_play_sound_wrapper
 extern sys_beep_wrapper
+extern sys_malloc_wrapper
+extern sys_free_wrapper
+extern sys_mem_stats_wrapper
 
 syscalls_table:
     dq sys_write              ; 0: SYS_WRITE
@@ -44,4 +47,7 @@ syscalls_table:
     dq sys_get_fps_wrapper ; 18: SYS_GET_FPS
     dq sys_play_sound_wrapper ; 19: SYS_PLAY_SOUND
     dq sys_beep_wrapper ; 20: SYS_BEEP
+    dq sys_malloc_wrapper ; 21: SYS_MALLOC
+    dq sys_free_wrapper ; 22: SYS_FREE
+    dq sys_mem_stats_wrapper ; 23: SYS_MEM_STATS
 
