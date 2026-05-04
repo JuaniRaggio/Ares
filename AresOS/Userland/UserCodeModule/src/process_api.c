@@ -32,7 +32,19 @@ static process_entry_t lookup_function(const char *name) {
 }
 
 int64_t my_create_process(char *name, uint64_t argc, char *argv[]) {
+        process_entry_t func = lookup_function(name);
+        if (func == (process_entry_t)0)
+                return -1;
 
+        create_process_info_t info;
+        info.entry        = (uint64_t)func;
+        info.argc         = argc;
+        info.argv         = argv;
+        info.name         = name;
+        info.foreground   = 0;
+        info.exit_handler = (uint64_t)_process_exit_stub;
+
+        return syscall_create_process(&info);
 }
 
 int64_t my_getpid(void) {
