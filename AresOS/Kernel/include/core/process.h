@@ -24,8 +24,21 @@ typedef enum {
         PROCESS_READY   = 0,
         PROCESS_RUNNING = 1,
         PROCESS_BLOCKED = 2,
-        PROCESS_DEAD    = 3
+        PROCESS_DEAD    = 3,
+        PROCESS_ZOMBIE  = 4
 } process_state_t;
+
+/**
+ * @brief Internal use by scheduler to update the current PID.
+ * @param pid The new current PID.
+ */
+void process_set_current_pid(pid_t pid);
+
+/**
+ * @brief Internal use by scheduler to free resources of a zombie process.
+ * @param pid PID of the zombie process.
+ */
+void process_free_resources(pid_t pid);
 
 /** @brief Process Control Block. */
 typedef struct {
