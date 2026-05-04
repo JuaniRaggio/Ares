@@ -13,6 +13,11 @@ static uint64_t remaining_quantum;
 static void set_tss_rsp0(uint64_t rsp0) {
         *(uint64_t *)((uint64_t)tss64 + 4) = rsp0;
 }
+
+static uint64_t kernel_stack_top_of(pcb_t *pcb) {
+        return (uint64_t)pcb->kernel_stack_base + PROCESS_STACK_SIZE;
+}
+
 void scheduler_init(void) {
         current_index        = 0;
         remaining_quantum    = DEFAULT_PRIORITY;
@@ -25,6 +30,13 @@ void scheduler_yield(void) {
 }
 
 static int pick_next_ready(void) {
+        for (int i = 1; i <= MAX_PROCESSES; i++) {
+                int idx = (current_index + i) % MAX_PROCESSES;
+                pcb_t *pcb = process_get(idx);
+                if (pcb != (void *)0 && pcb->state == PROCESS_READY)
+                        return idx;
+        }
+        return -1;
 }
 
 static int current_is_runnable(void) {
