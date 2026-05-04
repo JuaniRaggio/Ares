@@ -21,6 +21,7 @@ GLOBAL _exception6Handler
 EXTERN irqDispatcher
 EXTERN exceptionDispatcher
 EXTERN getStackBase
+EXTERN schedule
 
 struc regs
         _r15: resq 1
@@ -173,9 +174,19 @@ picSlaveMask:
     pop     rbp
     retn
 
-;8254 Timer (Timer Tick)
+;8254 Timer (Timer Tick) - custom handler with context switch
 _irq00Handler:
-	irqHandlerMaster 0
+	pushState
+
+	mov rdi, rsp
+	call schedule
+	mov rsp, rax
+
+	mov al, 20h
+	out 20h, al
+
+	popState
+	iretq
 
 ;Keyboard
 _irq01Handler:
