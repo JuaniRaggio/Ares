@@ -38,10 +38,27 @@ static pcb_t *find_free_slot(void) {
 
 static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
 }
+
 static void setup_kernel_stack(uint8_t *kstack, uint64_t entry, uint64_t argc,
 }
 
 void process_init(void) {
+        for (int i = 0; i < MAX_PROCESSES; i++)
+                process_table[i].state = PROCESS_DEAD;
+
+        pcb_t *shell               = &process_table[SHELL_PID];
+        shell->pid                 = SHELL_PID;
+        shell->state               = PROCESS_RUNNING;
+        shell->priority            = DEFAULT_PRIORITY;
+        shell->foreground          = 1;
+        shell->parent_pid          = NO_PID;
+        shell->waiting_for         = NO_PID;
+        shell->kernel_stack_base   = kernel_stack;
+        shell->user_stack_base     = user_stack;
+        strncpy(shell->name, "shell", PROCESS_NAME_LEN);
+
+        current_pid = SHELL_PID;
+        next_pid    = FIRST_USER_PID;
 }
 
 pcb_t *process_get_current(void) {
@@ -74,14 +91,24 @@ void process_exit(int code) {
 
 int process_kill(pid_t pid) {
 }
+
 int process_block(pid_t pid) {
 }
+
 int process_unblock(pid_t pid) {
 }
+
 int process_nice(pid_t pid, uint64_t new_priority) {
 }
+
 int process_wait(pid_t pid) {
 }
 
 int process_list(uint64_t *pids, int max) {
+        int count = 0;
+        for (int i = 0; i < MAX_PROCESSES && count < max; i++) {
+                if (process_table[i].state != PROCESS_DEAD)
+                        pids[count++] = process_table[i].pid;
+        }
+        return count;
 }
