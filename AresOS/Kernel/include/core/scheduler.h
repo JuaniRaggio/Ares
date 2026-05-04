@@ -13,6 +13,9 @@
 /** @brief Initialize the scheduler for the first process (pid 0). */
 void scheduler_init(void);
 
+/** @brief Force a context switch on the next timer tick by expiring the quantum. */
+void scheduler_yield(void);
+
 /**
  * @brief Select the next process to run.
  *
