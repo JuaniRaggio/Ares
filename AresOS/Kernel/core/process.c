@@ -113,6 +113,26 @@ pid_t process_getpid(void) {
 
 pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                      const char *name, int foreground, uint64_t exit_handler) {
+        pcb_t *pcb = find_free_slot();
+        if (pcb == (void *)0)
+                return NO_PID;
+
+        uint8_t *kstack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
+        uint8_t *ustack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
+        if (kstack == (void *)0 || ustack == (void *)0) {
+        }
+
+        pid_t pid = next_pid++;
+        pcb->pid               = pid;
+        pcb->state             = PROCESS_READY;
+        pcb->priority          = DEFAULT_PRIORITY;
+        pcb->foreground        = foreground;
+        pcb->parent_pid        = current_pid;
+        pcb->waiting_for       = NO_PID;
+        pcb->exit_code         = 0;
+        pcb->kernel_stack_base = kstack;
+        pcb->user_stack_base   = ustack;
+        return pid;
 }
 
 void process_exit(int code) {
