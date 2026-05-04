@@ -156,6 +156,20 @@ void process_exit(int code) {
 }
 
 int process_kill(pid_t pid) {
+        if (pid <= 0 || pid >= MAX_PROCESSES)
+                return -1;
+        pcb_t *pcb = &process_table[pid];
+        if (pcb->state == PROCESS_DEAD)
+                return -1;
+
+        pcb->state     = PROCESS_DEAD;
+        pcb->exit_code = KILLED_EXIT_CODE;
+        wake_waiters(pid);
+
+        if (pid == current_pid)
+                halt_until_switched();
+
+        return 0;
 }
 
 int process_block(pid_t pid) {
@@ -185,9 +199,32 @@ int process_unblock(pid_t pid) {
 }
 
 int process_nice(pid_t pid, uint64_t new_priority) {
+        if (pid < 0 || pid >= MAX_PROCESSES)
+                return -1;
+        pcb_t *pcb = &process_table[pid];
+        if (pcb->state == PROCESS_DEAD)
+                return -1;
+        if (new_priority > MAX_PRIORITY)
+                new_priority = MAX_PRIORITY;
+
+        pcb->priority = new_priority;
+        return 0;
 }
 
 int process_wait(pid_t pid) {
+        if (pid < 0 || pid >= MAX_PROCESSES)
+                return -1;
+        pcb_t *target = &process_table[pid];
+        if (target->state == PROCESS_DEAD)
+                return target->exit_code;
+
+        pcb_t *current       = process_get_current();
+        current->state       = PROCESS_BLOCKED;
+        current->waiting_for = pid;
+
+        halt_while_blocked(current_pid);
+
+        return target->exit_code;
 }
 
 int process_list(uint64_t *pids, int max) {
