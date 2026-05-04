@@ -41,6 +41,12 @@ static void wake_waiters(pid_t dead_pid) {
 }
 
 static pcb_t *find_free_slot(void) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                int idx = (next_pid + i) % MAX_PROCESSES;
+                if (process_table[idx].state == PROCESS_DEAD)
+                        return &process_table[idx];
+        }
+        return (void *)0;
 }
 
 static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
