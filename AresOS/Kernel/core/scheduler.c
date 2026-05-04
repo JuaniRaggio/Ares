@@ -33,7 +33,7 @@ void scheduler_yield(void) {
 static int pick_next_ready(void) {
         for (int i = 1; i <= MAX_PROCESSES; i++) {
                 int idx    = (current_index + i) % MAX_PROCESSES;
-                pcb_t *pcb = process_get(idx);
+                pcb_t *pcb = process_get_by_index(idx);
                 if (pcb != (void *)0 && pcb->state == PROCESS_READY)
                         return idx;
         }
@@ -41,9 +41,9 @@ static int pick_next_ready(void) {
 }
 
 static void switch_to(int next_index) {
-        current_index = next_index;
-        pcb_t *next   = process_get(next_index);
-        next->state   = PROCESS_RUNNING;
+        current_index     = next_index;
+        pcb_t *next       = process_get_by_index(next_index);
+        next->state       = PROCESS_RUNNING;
         remaining_quantum = next->priority;
         process_set_current_pid(next->pid);
 
@@ -58,7 +58,8 @@ static void switch_to(int next_index) {
 
 uint64_t schedule(uint64_t current_rsp) {
         timer_handler();
-        pcb_t *current = process_get(current_index);
+
+        pcb_t *current = process_get_by_index(current_index);
 
         if (current != (void *)0) {
                 current->rsp = current_rsp;
@@ -94,5 +95,5 @@ uint64_t schedule(uint64_t current_rsp) {
         }
 
         switch_to(next);
-        return process_get(next)->rsp;
+        return process_get_by_index(next)->rsp;
 }

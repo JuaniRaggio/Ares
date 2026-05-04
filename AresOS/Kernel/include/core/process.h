@@ -147,6 +147,13 @@ pcb_t *process_get_current(void);
 pcb_t *process_get(pid_t pid);
 
 /**
+ * @brief Get the PCB for a given index in the process table.
+ * @param idx Index to look up.
+ * @return Pointer to the PCB, or NULL if dead or invalid index.
+ */
+pcb_t *process_get_by_index(int idx);
+
+/**
  * @brief Fill pids array with active process PIDs.
  * @param pids Array to fill with PIDs.
  * @param max Maximum entries to fill.

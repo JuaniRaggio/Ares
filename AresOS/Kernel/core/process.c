@@ -7,12 +7,12 @@
 #define USER_SS          0x23
 #define RFLAGS_IF        0x202
 #define NO_PID           (-1)
-#define SHELL_PID        0
-#define FIRST_USER_PID   1
+#define SHELL_INDEX      0
 #define KILLED_EXIT_CODE (-1)
 
 static pcb_t process_table[MAX_PROCESSES];
 static pid_t current_pid;
+static pid_t next_pid_to_assign = 0;
 
 extern void scheduler_yield(void);
 
@@ -21,16 +21,21 @@ void process_set_current_pid(pid_t pid) {
 }
 
 void process_free_resources(pid_t pid) {
-        if (pid < 0 || pid >= MAX_PROCESSES)
+        if (pid < 0)
                 return;
-        pcb_t *pcb = &process_table[pid];
-        if (pcb->kernel_stack_base != (void *)0) {
-                mem_free(pcb->kernel_stack_base);
-                pcb->kernel_stack_base = (void *)0;
-        }
-        if (pcb->user_stack_base != (void *)0) {
-                mem_free(pcb->user_stack_base);
-                pcb->user_stack_base = (void *)0;
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                if (process_table[i].pid == pid) {
+                        pcb_t *pcb = &process_table[i];
+                        if (pcb->kernel_stack_base != (void *)0) {
+                                mem_free(pcb->kernel_stack_base);
+                                pcb->kernel_stack_base = (void *)0;
+                        }
+                        if (pcb->user_stack_base != (void *)0) {
+                                mem_free(pcb->user_stack_base);
+                                pcb->user_stack_base = (void *)0;
+                        }
+                        return;
+                }
         }
 }
 
@@ -82,34 +87,46 @@ static void setup_kernel_stack(uint8_t *kstack, uint64_t entry, uint64_t argc,
 void process_init(void) {
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 process_table[i].state             = PROCESS_DEAD;
-                process_table[i].pid               = i;
+                process_table[i].pid               = NO_PID;
                 process_table[i].kernel_stack_base = (void *)0;
                 process_table[i].user_stack_base   = (void *)0;
         }
 
-        pcb_t *shell               = &process_table[SHELL_PID];
-        shell->state               = PROCESS_RUNNING;
-        shell->priority            = DEFAULT_PRIORITY;
-        shell->foreground          = 1;
-        shell->parent_pid          = NO_PID;
-        shell->waiting_for         = NO_PID;
-        shell->kernel_stack_base   = (void *)0; /* Static boot stacks */
-        shell->user_stack_base     = (void *)0;
+        pcb_t *shell     = &process_table[SHELL_INDEX];
+        shell->pid       = next_pid_to_assign++;
+        shell->state     = PROCESS_RUNNING;
+        shell->priority  = DEFAULT_PRIORITY;
+        shell->foreground = 1;
+        shell->parent_pid = NO_PID;
+        shell->waiting_for = NO_PID;
+        shell->kernel_stack_base = (void *)0; /* Static boot stacks */
+        shell->user_stack_base   = (void *)0;
         strncpy(shell->name, "shell", PROCESS_NAME_LEN);
 
-        current_pid = SHELL_PID;
+        current_pid = shell->pid;
 }
 
 pcb_t *process_get_current(void) {
-        return &process_table[current_pid];
+        return process_get(current_pid);
 }
 
 pcb_t *process_get(pid_t pid) {
-        if (pid < 0 || pid >= MAX_PROCESSES)
+        if (pid < 0)
                 return (void *)0;
-        if (process_table[pid].state == PROCESS_DEAD)
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                if (process_table[i].pid == pid &&
+                    process_table[i].state != PROCESS_DEAD)
+                        return &process_table[i];
+        }
+        return (void *)0;
+}
+
+pcb_t *process_get_by_index(int idx) {
+        if (idx < 0 || idx >= MAX_PROCESSES)
                 return (void *)0;
-        return &process_table[pid];
+        if (process_table[idx].state == PROCESS_DEAD)
+                return (void *)0;
+        return &process_table[idx];
 }
 
 pid_t process_getpid(void) {
@@ -132,6 +149,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                 return NO_PID;
         }
 
+        pcb->pid               = next_pid_to_assign++;
         pcb->state             = PROCESS_READY;
         pcb->priority          = DEFAULT_PRIORITY;
         pcb->foreground        = foreground;
@@ -160,10 +178,10 @@ void process_exit(int code) {
 }
 
 int process_kill(pid_t pid) {
-        if (pid < 0 || pid >= MAX_PROCESSES)
+        pcb_t *pcb = process_get(pid);
+        if (pcb == (void *)0)
                 return -1;
-        pcb_t *pcb = &process_table[pid];
-        if (pcb->state == PROCESS_DEAD || pcb->state == PROCESS_ZOMBIE)
+        if (pcb->state == PROCESS_ZOMBIE)
                 return -1;
 
         pcb->state     = PROCESS_ZOMBIE;
@@ -172,16 +190,15 @@ int process_kill(pid_t pid) {
 
         if (pid == current_pid) {
                 scheduler_yield();
-                /* Should not return if it's the current process */
         }
 
         return 0;
 }
 
 int process_block(pid_t pid) {
-        if (pid < 0 || pid >= MAX_PROCESSES)
+        pcb_t *pcb = process_get(pid);
+        if (pcb == (void *)0)
                 return -1;
-        pcb_t *pcb = &process_table[pid];
         if (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING)
                 return -1;
 
@@ -194,9 +211,9 @@ int process_block(pid_t pid) {
 }
 
 int process_unblock(pid_t pid) {
-        if (pid < 0 || pid >= MAX_PROCESSES)
+        pcb_t *pcb = process_get(pid);
+        if (pcb == (void *)0)
                 return -1;
-        pcb_t *pcb = &process_table[pid];
         if (pcb->state != PROCESS_BLOCKED)
                 return -1;
 
@@ -205,10 +222,10 @@ int process_unblock(pid_t pid) {
 }
 
 int process_nice(pid_t pid, uint64_t new_priority) {
-        if (pid < 0 || pid >= MAX_PROCESSES)
+        pcb_t *pcb = process_get(pid);
+        if (pcb == (void *)0)
                 return -1;
-        pcb_t *pcb = &process_table[pid];
-        if (pcb->state == PROCESS_DEAD || pcb->state == PROCESS_ZOMBIE)
+        if (pcb->state == PROCESS_ZOMBIE)
                 return -1;
         if (new_priority > MAX_PRIORITY)
                 new_priority = MAX_PRIORITY;
@@ -219,6 +236,16 @@ int process_nice(pid_t pid, uint64_t new_priority) {
         return 0;
 }
 
+static pcb_t *find_by_pid_any_state(pid_t pid) {
+        if (pid < 0)
+                return (void *)0;
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                if (process_table[i].pid == pid)
+                        return &process_table[i];
+        }
+        return (void *)0;
+}
+
 static int reap_zombie(pcb_t *target, pid_t pid) {
         int code = target->exit_code;
         process_free_resources(pid);
@@ -227,9 +254,9 @@ static int reap_zombie(pcb_t *target, pid_t pid) {
 }
 
 int process_wait(pid_t pid) {
-        if (pid < 0 || pid >= MAX_PROCESSES)
+        pcb_t *target = find_by_pid_any_state(pid);
+        if (target == (void *)0)
                 return -1;
-        pcb_t *target = &process_table[pid];
 
         if (target->state == PROCESS_DEAD)
                 return -1;
@@ -242,7 +269,11 @@ int process_wait(pid_t pid) {
 
         scheduler_yield();
 
-        return reap_zombie(target, pid);
+        if (target->state == PROCESS_ZOMBIE)
+                return reap_zombie(target, pid);
+        if (target->state == PROCESS_DEAD)
+                return target->exit_code;
+        return -1;
 }
 
 int process_list(uint64_t *pids, int max) {
