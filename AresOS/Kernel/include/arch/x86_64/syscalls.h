@@ -156,13 +156,89 @@ uint64_t sys_get_time_ms(uint64_t *time_ms);
  */
 uint64_t sys_get_fps(uint64_t *fps);
 
+/**
+ * Allocates memory from the kernel heap.
+ * @param size Number of bytes to allocate.
+ * @return Address of the allocated block, or 0 on failure.
+ */
 uint64_t sys_malloc(uint64_t size);
 
+/**
+ * Frees a previously allocated block.
+ * @param ptr Address of the block to free.
+ * @return 0 on success.
+ */
 uint64_t sys_free(uint64_t ptr);
 
+/**
+ * Retrieves memory manager statistics.
+ * @param stats_ptr Pointer to a heap_stats_t structure.
+ * @return 0 on success, 1 on error.
+ */
 uint64_t sys_mem_stats(uint64_t stats_ptr);
 
 /**
- * Initializes the syscall subsystem
+ * Terminates the current process.
+ * @param code Exit code.
+ */
+void sys_exit(uint64_t code);
+
+/**
+ * Creates a new process from a create_process_info_t struct pointer.
+ * @param info_ptr Pointer to create_process_info_t.
+ * @return PID of the new process, or -1 on failure.
+ */
+uint64_t sys_create_process(uint64_t info_ptr);
+
+/**
+ * Returns the PID of the calling process.
+ * @return Current process PID.
+ */
+uint64_t sys_getpid(void);
+
+/**
+ * Yields the CPU to the next ready process.
+ * @return 0 on success.
+ */
+uint64_t sys_yield(void);
+
+/**
+ * Kills a process by PID.
+ * @param pid PID of the process to kill.
+ * @return 0 on success, -1 on error.
+ */
+uint64_t sys_kill(uint64_t pid);
+
+/**
+ * Blocks a process by PID.
+ * @param pid PID of the process to block.
+ * @return 0 on success, -1 on error.
+ */
+uint64_t sys_block(uint64_t pid);
+
+/**
+ * Unblocks a blocked process by PID.
+ * @param pid PID of the process to unblock.
+ * @return 0 on success, -1 on error.
+ */
+uint64_t sys_unblock(uint64_t pid);
+
+/**
+ * Changes a process's scheduling priority.
+ * @param pid PID of the target process.
+ * @param new_priority New priority value (0 to MAX_PRIORITY).
+ * @return 0 on success, -1 on error.
+ */
+uint64_t sys_nice(uint64_t pid, uint64_t new_priority);
+
+/**
+ * Blocks the caller until the target process exits.
+ * @param pid PID to wait for.
+ * @return Exit code of the waited process, or -1 on error.
+ */
+uint64_t sys_waitpid(uint64_t pid);
+
+/**
+ * Initializes the syscall subsystem.
  */
 void init_syscalls(void);

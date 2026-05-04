@@ -6,8 +6,7 @@ section .text
 global syscall_entry
 
 extern syscalls_table
-extern kernel_stack_top
-extern sys_write, sys_exit
+extern current_kernel_stack
 
 
 ; -------------------------------------------
@@ -20,7 +19,7 @@ extern sys_write, sys_exit
 syscall_entry:
     swapgs                      ; switch to kernel data
     mov r15, rsp                ; save user RSP temporarily in r15
-    mov rsp, kernel_stack_top   ; switch to kernel stack
+    mov rsp, [rel current_kernel_stack]   ; per-process kernel stack
 
     ; Build stack frame
     push r15                    ; save user RSP

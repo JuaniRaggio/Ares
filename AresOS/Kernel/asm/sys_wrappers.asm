@@ -1,6 +1,5 @@
 ; sys_wrappers.asm
 ; syscall wrappers that just forward to their C handler.
-; sys_exit is special (cli/hlt) and lives in sys_exit.asm.
 
 %macro SYSCALL_WRAPPER 1
 global sys_%1_wrapper
@@ -38,3 +37,12 @@ SYSCALL_WRAPPER beep
 SYSCALL_WRAPPER malloc
 SYSCALL_WRAPPER free
 SYSCALL_WRAPPER mem_stats
+SYSCALL_WRAPPER exit
+SYSCALL_WRAPPER create_process
+SYSCALL_WRAPPER getpid
+SYSCALL_WRAPPER yield
+SYSCALL_WRAPPER kill
+SYSCALL_WRAPPER block
+SYSCALL_WRAPPER unblock
+SYSCALL_WRAPPER nice
+SYSCALL_WRAPPER waitpid

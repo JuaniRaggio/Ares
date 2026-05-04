@@ -1,6 +1,7 @@
 #pragma once
 
 #include <lib.h>
+#include <process_types.h>
 #include <regs.h>
 #include <stdint.h>
 #include <syscalls_numbers.h>
@@ -222,4 +223,36 @@ static inline void syscall_free(void *ptr) {
 
 static inline uint64_t syscall_mem_stats(void *stats) {
         return _syscall3(SYS_MEM_STATS, (uint64_t)stats, 0, 0);
+}
+
+static inline int64_t syscall_create_process(create_process_info_t *info) {
+        return (int64_t)_syscall3(SYS_CREATE_PROCESS, (uint64_t)info, 0, 0);
+}
+
+static inline uint64_t syscall_getpid(void) {
+        return _syscall3(SYS_GETPID, 0, 0, 0);
+}
+
+static inline uint64_t syscall_yield(void) {
+        return _syscall3(SYS_YIELD, 0, 0, 0);
+}
+
+static inline int64_t syscall_kill(uint64_t pid) {
+        return (int64_t)_syscall3(SYS_KILL, pid, 0, 0);
+}
+
+static inline int64_t syscall_block(uint64_t pid) {
+        return (int64_t)_syscall3(SYS_BLOCK, pid, 0, 0);
+}
+
+static inline int64_t syscall_unblock(uint64_t pid) {
+        return (int64_t)_syscall3(SYS_UNBLOCK, pid, 0, 0);
+}
+
+static inline int64_t syscall_nice(uint64_t pid, uint64_t new_priority) {
+        return (int64_t)_syscall3(SYS_NICE, pid, new_priority, 0);
+}
+
+static inline int64_t syscall_waitpid(uint64_t pid) {
+        return (int64_t)_syscall3(SYS_WAITPID, pid, 0, 0);
 }

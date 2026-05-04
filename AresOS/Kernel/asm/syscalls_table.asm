@@ -1,7 +1,6 @@
 section .data
 global syscalls_table
 extern sys_write
-extern sys_exit
 extern sys_read_wrapper
 extern sys_clear_wrapper
 extern sys_get_ticks_wrapper
@@ -24,10 +23,19 @@ extern sys_beep_wrapper
 extern sys_malloc_wrapper
 extern sys_free_wrapper
 extern sys_mem_stats_wrapper
+extern sys_exit_wrapper
+extern sys_create_process_wrapper
+extern sys_getpid_wrapper
+extern sys_yield_wrapper
+extern sys_kill_wrapper
+extern sys_block_wrapper
+extern sys_unblock_wrapper
+extern sys_nice_wrapper
+extern sys_waitpid_wrapper
 
 syscalls_table:
     dq sys_write              ; 0: SYS_WRITE
-    dq sys_exit               ; 1: SYS_EXIT
+    dq sys_exit_wrapper       ; 1: SYS_EXIT
     dq sys_read_wrapper       ; 2: SYS_READ
     dq sys_clear_wrapper      ; 3: SYS_CLEAR
     dq sys_get_ticks_wrapper  ; 4: SYS_GET_TICKS
@@ -41,13 +49,20 @@ syscalls_table:
     dq sys_set_bg_color_wrapper ; 12: SYS_SET_BG_COLOR
     dq sys_get_cursor_pos_wrapper ; 13: SYS_GET_CURSOR_POS
     dq sys_redraw_screen_wrapper ; 14: SYS_REDRAW_SCREEN
-    dq sys_get_time_wrapper ; 15: SYS_GET_TIME
-    dq sys_get_rdtsc_wrapper ; 16: SYS_GET_RDTSC
+    dq sys_get_time_wrapper   ; 15: SYS_GET_TIME
+    dq sys_get_rdtsc_wrapper  ; 16: SYS_GET_RDTSC
     dq sys_get_time_ms_wrapper ; 17: SYS_GET_TIME_MS
-    dq sys_get_fps_wrapper ; 18: SYS_GET_FPS
+    dq sys_get_fps_wrapper    ; 18: SYS_GET_FPS
     dq sys_play_sound_wrapper ; 19: SYS_PLAY_SOUND
-    dq sys_beep_wrapper ; 20: SYS_BEEP
-    dq sys_malloc_wrapper ; 21: SYS_MALLOC
-    dq sys_free_wrapper ; 22: SYS_FREE
-    dq sys_mem_stats_wrapper ; 23: SYS_MEM_STATS
-
+    dq sys_beep_wrapper       ; 20: SYS_BEEP
+    dq sys_malloc_wrapper     ; 21: SYS_MALLOC
+    dq sys_free_wrapper       ; 22: SYS_FREE
+    dq sys_mem_stats_wrapper  ; 23: SYS_MEM_STATS
+    dq sys_create_process_wrapper ; 24: SYS_CREATE_PROCESS
+    dq sys_getpid_wrapper     ; 25: SYS_GETPID
+    dq sys_yield_wrapper      ; 26: SYS_YIELD
+    dq sys_kill_wrapper       ; 27: SYS_KILL
+    dq sys_block_wrapper      ; 28: SYS_BLOCK
+    dq sys_unblock_wrapper    ; 29: SYS_UNBLOCK
+    dq sys_nice_wrapper       ; 30: SYS_NICE
+    dq sys_waitpid_wrapper    ; 31: SYS_WAITPID

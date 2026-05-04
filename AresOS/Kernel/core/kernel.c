@@ -7,6 +7,8 @@
 #include <moduleLoader.h>
 #include <multi_region_heap.h>
 #include <naiveConsole.h>
+#include <process.h>
+#include <scheduler.h>
 #include <time.h>
 #include <video_driver.h>
 
@@ -96,6 +98,9 @@ int main() {
             {(uint8_t *)heapRegion2Start, heapRegion2Size},
         };
         mem_init(regions, HEAP_REGION_COUNT);
+
+        process_init();
+        scheduler_init();
 
         clearScreen(BLACK);
         bmp_font_t *font = &font_ubuntu_mono;
