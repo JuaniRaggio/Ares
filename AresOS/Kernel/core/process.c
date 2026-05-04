@@ -120,9 +120,15 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         uint8_t *kstack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
         uint8_t *ustack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
         if (kstack == (void *)0 || ustack == (void *)0) {
+                if (kstack) mem_free(kstack);
+                if (ustack) mem_free(ustack);
+                return NO_PID;
         }
 
         pid_t pid = next_pid++;
+        if (next_pid >= MAX_PROCESSES)
+                next_pid = FIRST_USER_PID;
+
         pcb->pid               = pid;
         pcb->state             = PROCESS_READY;
         pcb->priority          = DEFAULT_PRIORITY;
