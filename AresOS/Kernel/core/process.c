@@ -3,6 +3,14 @@
 #include <multi_region_heap.h>
 #include <process.h>
 
+#define USER_CS       0x1B
+#define USER_SS       0x23
+#define RFLAGS_IF     0x202
+#define NO_PID        (-1)
+#define SHELL_PID     0
+#define FIRST_USER_PID 1
+#define KILLED_EXIT_CODE (-1)
+
 static pcb_t process_table[MAX_PROCESSES];
 static pid_t current_pid;
 static pid_t next_pid;
@@ -22,6 +30,20 @@ static void halt_while_blocked(pid_t pid) {
                 _hlt();
 }
 
+static void wake_waiters(pid_t dead_pid) {
+}
+
+static pcb_t *find_free_slot(void) {
+}
+
+static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
+}
+static void setup_kernel_stack(uint8_t *kstack, uint64_t entry, uint64_t argc,
+}
+
+void process_init(void) {
+}
+
 pcb_t *process_get_current(void) {
         return &process_table[current_pid];
 }
@@ -38,6 +60,10 @@ pid_t process_getpid(void) {
         return current_pid;
 }
 
+pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
+                     const char *name, int foreground, uint64_t exit_handler) {
+}
+
 void process_exit(int code) {
         pcb_t *pcb     = process_get_current();
         pcb->state     = PROCESS_DEAD;
@@ -46,3 +72,16 @@ void process_exit(int code) {
         halt_until_switched();
 }
 
+int process_kill(pid_t pid) {
+}
+int process_block(pid_t pid) {
+}
+int process_unblock(pid_t pid) {
+}
+int process_nice(pid_t pid, uint64_t new_priority) {
+}
+int process_wait(pid_t pid) {
+}
+
+int process_list(uint64_t *pids, int max) {
+}
