@@ -3,7 +3,11 @@
 #include <lib.h>
 #include <multi_region_heap.h>
 #include <naiveConsole.h>
+#include <interrupts.h>
+#include <process.h>
+#include <process_types.h>
 #include <regs.h>
+#include <scheduler.h>
 #include <stdint.h>
 #include <syscalls.h>
 
@@ -208,4 +212,47 @@ uint64_t sys_mem_stats(uint64_t stats_ptr) {
                 return 1;
         mem_get_stats((heap_stats_t *)stats_ptr);
         return 0;
+}
+
+void sys_exit(uint64_t code) {
+        process_exit((int)code);
+}
+
+uint64_t sys_create_process(uint64_t info_ptr) {
+        if (info_ptr == 0)
+                return (uint64_t)-1;
+        create_process_info_t *info = (create_process_info_t *)info_ptr;
+        return (uint64_t)process_create(info->entry, info->argc, info->argv,
+                                        info->name, info->foreground,
+                                        info->exit_handler);
+}
+
+uint64_t sys_getpid(void) {
+        return (uint64_t)process_getpid();
+}
+
+uint64_t sys_yield(void) {
+        scheduler_yield();
+        _hlt();
+        return 0;
+}
+
+uint64_t sys_kill(uint64_t pid) {
+        return (uint64_t)process_kill((pid_t)pid);
+}
+
+uint64_t sys_block(uint64_t pid) {
+        return (uint64_t)process_block((pid_t)pid);
+}
+
+uint64_t sys_unblock(uint64_t pid) {
+        return (uint64_t)process_unblock((pid_t)pid);
+}
+
+uint64_t sys_nice(uint64_t pid, uint64_t new_priority) {
+        return (uint64_t)process_nice((pid_t)pid, new_priority);
+}
+
+uint64_t sys_waitpid(uint64_t pid) {
+        return (uint64_t)process_wait((pid_t)pid);
 }
