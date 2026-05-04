@@ -58,6 +58,22 @@ static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
 }
 
 static void setup_kernel_stack(uint8_t *kstack, uint64_t entry, uint64_t argc,
+                               char **argv, uint64_t user_rsp,
+                               uint64_t *out_rsp) {
+        uint64_t top = (uint64_t)kstack + PROCESS_STACK_SIZE;
+        top -= sizeof(context_frame_t);
+        context_frame_t *frame = (context_frame_t *)top;
+        memset(frame, 0, sizeof(context_frame_t));
+
+        frame->rip    = entry;
+        frame->cs     = USER_CS;
+        frame->rflags = RFLAGS_IF;
+        frame->rsp    = user_rsp;
+        frame->ss     = USER_SS;
+        frame->rdi    = argc;
+        frame->rsi    = (uint64_t)argv;
+
+        *out_rsp = top;
 }
 
 void process_init(void) {
