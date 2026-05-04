@@ -31,6 +31,13 @@ static void halt_while_blocked(pid_t pid) {
 }
 
 static void wake_waiters(pid_t dead_pid) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                if (process_table[i].state == PROCESS_BLOCKED &&
+                    process_table[i].waiting_for == dead_pid) {
+                        process_table[i].state = PROCESS_READY;
+                        process_table[i].waiting_for = NO_PID;
+                }
+        }
 }
 
 static pcb_t *find_free_slot(void) {
