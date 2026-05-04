@@ -256,3 +256,9 @@ uint64_t sys_nice(uint64_t pid, uint64_t new_priority) {
 uint64_t sys_waitpid(uint64_t pid) {
         return (uint64_t)process_wait((pid_t)pid);
 }
+
+uint64_t sys_list_processes(uint64_t pids_ptr, uint64_t max_count) {
+        if (pids_ptr == 0)
+                return 0;
+        return (uint64_t)process_list((uint64_t *)pids_ptr, (int)max_count);
+}
