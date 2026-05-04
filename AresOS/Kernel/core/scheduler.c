@@ -57,4 +57,34 @@ static void switch_to(int next_index) {
 }
 
 uint64_t schedule(uint64_t current_rsp) {
+        pcb_t *current = process_get_current();
+        current->rsp = current_rsp;
+        if (current->state == PROCESS_RUNNING)
+                current->state = PROCESS_READY;
+
+        if (remaining_quantum > 0 && current->state == PROCESS_READY) {
+                remaining_quantum--;
+                current->state = PROCESS_RUNNING;
+                return current_rsp;
+        }
+
+        int next = pick_next_ready();
+
+        if (next < 0) {
+                if (current_is_runnable()) {
+                        current->state = PROCESS_RUNNING;
+                        remaining_quantum = current->priority;
+                        return current_rsp;
+                }
+                return current_rsp;
+        }
+
+        if (next != current_index) {
+                switch_to(next);
+                return process_get(next)->rsp;
+        }
+
+        current->state = PROCESS_RUNNING;
+        remaining_quantum = current->priority;
+        return current_rsp;
 }
