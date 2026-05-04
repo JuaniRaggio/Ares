@@ -22,3 +22,27 @@ static void halt_while_blocked(pid_t pid) {
                 _hlt();
 }
 
+pcb_t *process_get_current(void) {
+        return &process_table[current_pid];
+}
+
+pcb_t *process_get(pid_t pid) {
+        if (pid < 0 || pid >= MAX_PROCESSES)
+                return (void *)0;
+        if (process_table[pid].state == PROCESS_DEAD)
+                return (void *)0;
+        return &process_table[pid];
+}
+
+pid_t process_getpid(void) {
+        return current_pid;
+}
+
+void process_exit(int code) {
+        pcb_t *pcb     = process_get_current();
+        pcb->state     = PROCESS_DEAD;
+        pcb->exit_code = code;
+        wake_waiters(pcb->pid);
+        halt_until_switched();
+}
+
