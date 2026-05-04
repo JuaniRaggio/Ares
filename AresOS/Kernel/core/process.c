@@ -50,6 +50,11 @@ static pcb_t *find_free_slot(void) {
 }
 
 static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
+                             uint64_t *out_rsp) {
+        uint64_t top = (uint64_t)ustack + PROCESS_STACK_SIZE;
+        top -= sizeof(uint64_t);
+        *(uint64_t *)top = exit_handler;
+        *out_rsp = top;
 }
 
 static void setup_kernel_stack(uint8_t *kstack, uint64_t entry, uint64_t argc,
@@ -106,9 +111,29 @@ int process_kill(pid_t pid) {
 }
 
 int process_block(pid_t pid) {
+        if (pid < 0 || pid >= MAX_PROCESSES)
+                return -1;
+        pcb_t *pcb = &process_table[pid];
+        if (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING)
+                return -1;
+
+        pcb->state = PROCESS_BLOCKED;
+
+        if (pid == current_pid)
+                halt_while_blocked(pid);
+
+        return 0;
 }
 
 int process_unblock(pid_t pid) {
+        if (pid < 0 || pid >= MAX_PROCESSES)
+                return -1;
+        pcb_t *pcb = &process_table[pid];
+        if (pcb->state != PROCESS_BLOCKED)
+                return -1;
+
+        pcb->state = PROCESS_READY;
+        return 0;
 }
 
 int process_nice(pid_t pid, uint64_t new_priority) {
