@@ -112,19 +112,15 @@ void mem_init(heap_region_t *regions, size_t region_count) {
         size_t total_free = 0;
 
         for (size_t i = 0; i < region_count; i++) {
-                uint8_t *addr = regions[i].initial_address;
-                size_t offset = (size_t)addr & (HEAP_ALIGNMENT - 1);
-                if (offset != 0) {
-                        size_t adjustment = HEAP_ALIGNMENT - offset;
-                        addr += adjustment;
-                        if (regions[i].region_size_in_bytes <= adjustment) {
-                                continue;
-                        }
-                        regions[i].region_size_in_bytes -= adjustment;
-                }
+                uint8_t *addr    = (uint8_t *)align_up((size_t)regions[i].initial_address);
+                size_t adj       = addr - regions[i].initial_address;
+                size_t available = regions[i].region_size_in_bytes;
 
-                size_t usable = regions[i].region_size_in_bytes &
-                                ~((size_t)(HEAP_ALIGNMENT - 1));
+                if (available <= adj)
+                        continue;
+                available -= adj;
+
+                size_t usable = available & ~((size_t)(HEAP_ALIGNMENT - 1));
                 if (usable < header_size + HEAP_ALIGNMENT) {
                         continue;
                 }
@@ -198,6 +194,10 @@ void mem_free(void *ptr) {
 
         block_list_t *block = (block_list_t *)((uint8_t *)ptr - header_size);
 
+        /* Guard against double-free: allocated blocks have next == NULL */
+        if (block->next_free_block != (void *)0)
+                return;
+
         heap_status.available_heap_space_bytes += block->block_size;
         heap_status.successful_frees++;
 
@@ -231,6 +231,9 @@ void mem_get_stats(heap_stats_t *stats) {
 
         *stats = heap_status;
 
+        stats->total_heap_size_bytes             = total_heap_size;
+        stats->occupied_heap_space_bytes         = total_heap_size -
+                                                   heap_status.available_heap_space_bytes;
         stats->size_largest_free_block_bytes     = largest;
         stats->size_smallest_free_block_in_bytes = smallest;
         stats->number_of_free_blocks             = count;

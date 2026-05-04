@@ -13,7 +13,7 @@
 #define MIN_ORDER 5   /* 32 bytes - smallest allocatable block */
 #define MAX_ORDER 25  /* 32 MB - maximum block size */
 #define NUM_ORDERS (MAX_ORDER - MIN_ORDER + 1)
-#define MAX_POOLS HEAP_REGION_COUNT
+#define MAX_POOLS (HEAP_REGION_COUNT * 2)
 
 /* Block header stored at the start of every block (free or allocated). */
 typedef struct block_header {
@@ -32,6 +32,7 @@ typedef struct buddy_pool {
 static buddy_pool_t pools[MAX_POOLS];
 static size_t pool_count      = 0;
 static heap_stats_t heap_status;
+static size_t total_heap_size = 0;
 static size_t header_size     = 0;
 static int buddy_initialized = 0;
 
@@ -217,6 +218,7 @@ void mem_init(heap_region_t *regions, size_t region_count) {
                 }
         }
 
+        total_heap_size                        = total_free;
         heap_status.available_heap_space_bytes = total_free;
         heap_status.minimum_ever_free_bytes    = total_free;
         heap_status.successful_allocations     = 0;
@@ -262,7 +264,10 @@ void mem_free(void *ptr) {
                 return;
 
         block_header_t *blk = get_block_header(ptr);
-        buddy_pool_t *pool  = find_pool_for_ptr(blk);
+        if (blk->is_free)
+                return;
+
+        buddy_pool_t *pool = find_pool_for_ptr(blk);
         if (pool == (void *)0)
                 return;
 
@@ -301,6 +306,9 @@ void mem_get_stats(heap_stats_t *stats) {
         }
 
         *stats                                   = heap_status;
+        stats->total_heap_size_bytes             = total_heap_size;
+        stats->occupied_heap_space_bytes         = total_heap_size -
+                                                   heap_status.available_heap_space_bytes;
         stats->size_largest_free_block_bytes     = largest;
         stats->size_smallest_free_block_in_bytes = (count == 0) ? 0 : smallest;
         stats->number_of_free_blocks             = count;
