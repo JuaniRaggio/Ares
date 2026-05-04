@@ -65,5 +65,4 @@ syscall_entry:
     pop rsp                     ; restore user RSP
 
     swapgs
-    sysretq                     ; return to user mode
-
+    sysretq
