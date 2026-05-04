@@ -25,5 +25,13 @@ typedef enum {
         SYS_MALLOC,
         SYS_FREE,
         SYS_MEM_STATS,
+        SYS_CREATE_PROCESS,
+        SYS_GETPID,
+        SYS_YIELD,
+        SYS_KILL,
+        SYS_BLOCK,
+        SYS_UNBLOCK,
+        SYS_NICE,
+        SYS_WAITPID,
         SYS_MAX,
 } syscall_codes;
