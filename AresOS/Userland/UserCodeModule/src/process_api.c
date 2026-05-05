@@ -43,8 +43,19 @@ int64_t my_create_process(char *name, uint64_t argc, char *argv[]) {
         info.name         = name;
         info.foreground   = 0;
         info.exit_handler = (uint64_t)_process_exit_stub;
+        info.stdin_pipe   = NO_PIPE;
+        info.stdout_pipe  = NO_PIPE;
 
         return syscall_create_process(&info);
+}
+
+
+int my_pipe_open(const char *name) {
+        return syscall_pipe_open(name);
+}
+
+int my_pipe_close(int pipe_id) {
+        return syscall_pipe_close(pipe_id);
 }
 
 int64_t my_getpid(void) {
