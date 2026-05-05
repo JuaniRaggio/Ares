@@ -78,5 +78,31 @@ int64_t my_wait(int64_t pid);
  */
 int64_t my_list_processes(uint64_t *pids, int max);
 
+/**
+ * @brief Open or create a named pipe.
+ * @param name Pipe name.
+ * @return Pipe index (>= 0) on success, -1 on failure.
+ */
+int my_pipe_open(const char *name);
+
+/**
+ * @brief Close a named pipe.
+ * @param pipe_id Pipe index.
+ * @return 0 on success, -1 on error.
+ */
+int my_pipe_close(int pipe_id);
+
+/**
+ * @brief Create a new process with pipe redirection.
+ * @param name Registered function name.
+ * @param argc Argument count for the process.
+ * @param argv Argument vector for the process.
+ * @param stdin_pipe  Pipe index for stdin, or NO_PIPE for keyboard.
+ * @param stdout_pipe Pipe index for stdout, or NO_PIPE for console.
+ * @return PID of the new process, or -1 on failure.
+ */
+int64_t my_create_process_piped(char *name, uint64_t argc, char *argv[],
+                                int stdin_pipe, int stdout_pipe);
+
 /** @brief Idle process entry point. Yields in an infinite loop. */
 void idle_process(void);
