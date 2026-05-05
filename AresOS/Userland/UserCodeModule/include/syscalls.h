@@ -260,3 +260,11 @@ static inline int64_t syscall_waitpid(uint64_t pid) {
 static inline int64_t syscall_list_processes(uint64_t *pids, uint64_t max) {
         return (int64_t)_syscall3(SYS_LIST_PROCESSES, (uint64_t)pids, max, 0);
 }
+
+static inline int syscall_pipe_open(const char *name) {
+        return (int)_syscall3(SYS_PIPE_OPEN, (uint64_t)name, 0, 0);
+}
+
+static inline int syscall_pipe_close(int pipe_id) {
+        return (int)_syscall3(SYS_PIPE_CLOSE, (uint64_t)pipe_id, 0, 0);
+}
