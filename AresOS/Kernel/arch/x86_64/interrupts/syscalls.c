@@ -25,6 +25,16 @@ uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
                 return 0;
         }
 
+        /* fd==1 with stdout_pipe redirects to pipe; fd==2 always to console */
+        if (fd == 1) {
+                pcb_t *current = process_get_current();
+                if (current != (void *)0 && current->stdout_pipe >= 0) {
+                        int ret = pipe_write(current->stdout_pipe, buf,
+                                             (int)len);
+                        return (ret < 0) ? 0 : (uint64_t)ret;
+                }
+        }
+
         uint32_t color =
             (fd == 1) ? current_stdout_color_rgb : current_stderr_color_rgb;
 
@@ -47,6 +57,13 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
         if (max_count == 0) {
                 *count = 0;
                 return 1; /* Error */
+        }
+
+        pcb_t *current = process_get_current();
+        if (current != (void *)0 && current->stdin_pipe >= 0) {
+                int ret = pipe_read(current->stdin_pipe, buf, (int)max_count);
+                *count = (ret > 0) ? (uint64_t)ret : 0;
+                return (ret >= 0) ? 0 : 1;
         }
 
         uint64_t i = 0;
