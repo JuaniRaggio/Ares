@@ -102,7 +102,7 @@ void process_init(void) {
         shell->stdin_pipe      = NO_PIPE;
         shell->stdout_pipe     = NO_PIPE;
         shell->blocked_on_pipe = NO_PIPE;
-        shell->kernel_stack_base = (void *)0; /* Static boot stacks */
+        shell->kernel_stack_base = (void *)0;
         shell->user_stack_base   = (void *)0;
         strncpy(shell->name, "shell", PROCESS_NAME_LEN);
 

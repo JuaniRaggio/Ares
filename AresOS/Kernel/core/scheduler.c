@@ -2,6 +2,8 @@
 #include <process.h>
 #include <scheduler.h>
 
+#define SHELL_INDEX 0
+
 extern uint8_t kernel_stack_top[];
 extern char tss64[];
 
@@ -14,7 +16,9 @@ static void set_tss_rsp0(uint64_t rsp0) {
         *(uint64_t *)((uint64_t)tss64 + 4) = rsp0;
 }
 
-static uint64_t kernel_stack_top_of(pcb_t *pcb) {
+static uint64_t kernel_stack_top_of(int index, pcb_t *pcb) {
+        if (index == SHELL_INDEX)
+                return (uint64_t)kernel_stack_top;
         return (uint64_t)pcb->kernel_stack_base + PROCESS_STACK_SIZE;
 }
 
@@ -47,13 +51,30 @@ static void switch_to(int next_index) {
         remaining_quantum = next->priority;
         process_set_current_pid(next->pid);
 
-        uint64_t kstack_top = kernel_stack_top_of(next);
-        /* If shell (index 0), it uses static boot stack for now */
-        if (next_index == 0)
-                kstack_top = (uint64_t)kernel_stack_top;
-
+        uint64_t kstack_top = kernel_stack_top_of(next_index, next);
         current_kernel_stack = kstack_top;
         set_tss_rsp0(kstack_top);
+}
+
+static void reap_if_zombie(pcb_t *process) {
+        if (process->state == PROCESS_ZOMBIE) {
+                process_free_resources(process->pid);
+                process->state = PROCESS_DEAD;
+        }
+}
+
+static void demote_to_ready(pcb_t *process) {
+        if (process->state == PROCESS_RUNNING)
+                process->state = PROCESS_READY;
+}
+
+static int try_continue_current(pcb_t *current, uint64_t current_rsp) {
+        if (current != (void *)0 && current->state == PROCESS_READY) {
+                current->state    = PROCESS_RUNNING;
+                remaining_quantum = current->priority;
+                return 1;
+        }
+        return 0;
 }
 
 uint64_t schedule(uint64_t current_rsp) {
@@ -63,13 +84,8 @@ uint64_t schedule(uint64_t current_rsp) {
 
         if (current != (void *)0) {
                 current->rsp = current_rsp;
-
-                if (current->state == PROCESS_ZOMBIE) {
-                        process_free_resources(current->pid);
-                        current->state = PROCESS_DEAD;
-                } else if (current->state == PROCESS_RUNNING) {
-                        current->state = PROCESS_READY;
-                }
+                reap_if_zombie(current);
+                demote_to_ready(current);
         }
 
         if (remaining_quantum > 0 && current != (void *)0 &&
@@ -82,15 +98,8 @@ uint64_t schedule(uint64_t current_rsp) {
         int next = pick_next_ready();
 
         if (next < 0) {
-                /* No other ready process, keep running current if it's still
-                 * runnable */
-                if (current != (void *)0 && current->state == PROCESS_READY) {
-                        current->state    = PROCESS_RUNNING;
-                        remaining_quantum = current->priority;
+                if (try_continue_current(current, current_rsp))
                         return current_rsp;
-                }
-                /* If nothing is ready (shouldn't happen with idle/shell), just
-                 * return */
                 return current_rsp;
         }
 
