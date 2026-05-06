@@ -15,7 +15,7 @@
  */
 static void enable_speaker(void) {
         uint8_t tmp = inb(SPEAKER_PORT);
-        outb(SPEAKER_PORT, tmp | 3); /* Set bits 0 and 1 to enable speaker */
+        outb(SPEAKER_PORT, tmp | 3);
 }
 
 /**
@@ -28,17 +28,25 @@ static void disable_speaker(void) {
 
 /**
  * Sets the PC Speaker frequency
+ * TODO: Fix this, we can't use busy wait
  * @param frequency Frequency in Hz
  */
+static void busy_wait_ms(uint64_t duration_ms) {
+        uint64_t start_ms = get_time_ms();
+        uint64_t end_ms   = start_ms + duration_ms;
+        while (get_time_ms() < end_ms)
+                ;
+}
+
+#define PIT_SQUARE_WAVE_CH2 0xB6
+
 static void set_speaker_frequency(uint64_t frequency) {
         if (frequency == 0)
                 return;
 
         uint32_t divisor = PIT_FREQUENCY / frequency;
 
-        /* Configure PIT channel 2 for square wave */
-        outb(PIT_COMMAND,
-             0xB6); /* 10110110: Channel 2, lobyte/hibyte, square wave */
+        outb(PIT_COMMAND, PIT_SQUARE_WAVE_CH2);
         outb(PIT_CHANNEL2, (uint8_t)(divisor & 0xFF));
         outb(PIT_CHANNEL2, (uint8_t)((divisor >> 8) & 0xFF));
 }
@@ -55,13 +63,7 @@ void playSound(uint64_t frequency, uint64_t duration_ms) {
 
         set_speaker_frequency(frequency);
         enable_speaker();
-
-        /* Wait for the specified duration */
-        uint64_t start_ms = get_time_ms();
-        uint64_t end_ms   = start_ms + duration_ms;
-        while (get_time_ms() < end_ms)
-                ;
-
+        busy_wait_ms(duration_ms);
         disable_speaker();
 }
 
@@ -69,6 +71,8 @@ void playSound(uint64_t frequency, uint64_t duration_ms) {
  * Plays a short beep sound (blocking)
  * @param frequency Frequency in Hz (typical: 440-880 Hz)
  */
+#define BEEP_DURATION_MS 100
+
 void beep(uint64_t frequency) {
-        playSound(frequency, 100); /* 100ms beep */
+        playSound(frequency, BEEP_DURATION_MS);
 }

@@ -1,40 +1,36 @@
 #include <drivers/time.h>
 
-/* PIT timer tick counter (IRQ 0 fires at TICKS_PER_SECOND Hz) */
 static volatile uint64_t tick_counter = 0;
 static uint64_t start_seconds         = 0;
 static uint64_t start_minutes         = 0;
 static uint64_t start_hours           = 0;
 
-/* PIT ports */
-#define PIT_CHANNEL0 0x40
-#define PIT_COMMAND 0x43
+#define PIT_CHANNEL0     0x40
+#define PIT_COMMAND      0x43
+#define PIT_FREQUENCY    1193182
+#define TICKS_PER_SECOND 18
+#define PIT_DIVISOR      65536
 
-/* PIT frequency configuration */
-#define PIT_FREQUENCY 1193182
-#define TICKS_PER_SECOND 18 /* ~18.2 Hz (55ms per tick) */
-#define PIT_DIVISOR 65536   /* Max divisor for ~18.2 Hz */
+#define PIT_SQUARE_WAVE_CH0 0x36
+#define PIT_MAX_DIVISOR_LO  0x00
+#define PIT_MAX_DIVISOR_HI  0x00
 
-void timer_init(void) {
-        /* Capture initial time */
+static void capture_initial_time(void) {
         start_seconds = get_current_seconds();
         start_minutes = get_current_minutes();
         start_hours   = get_current_hour();
         tick_counter  = 0;
+}
 
-        /* Initialize PIT (Programmable Interval Timer)
-         * Command byte: 0x36
-         * - Channel 0 (bits 7-6: 00)
-         * - Access mode: lobyte/hibyte (bits 5-4: 11)
-         * - Mode 3: square wave (bits 3-1: 011)
-         * - Binary mode (bit 0: 0)
-         */
-        outb(PIT_COMMAND, 0x36);
+static void configure_pit(void) {
+        outb(PIT_COMMAND, PIT_SQUARE_WAVE_CH0);
+        outb(PIT_CHANNEL0, PIT_MAX_DIVISOR_LO);
+        outb(PIT_CHANNEL0, PIT_MAX_DIVISOR_HI);
+}
 
-        /* Set divisor for ~18.2 Hz (55ms per tick)
-         * Divisor 65536 (0x10000) is written as 0x00 0x00 */
-        outb(PIT_CHANNEL0, 0x00); /* Low byte */
-        outb(PIT_CHANNEL0, 0x00); /* High byte */
+void timer_init(void) {
+        capture_initial_time();
+        configure_pit();
 }
 
 uint64_t seconds_elapsed() {
