@@ -34,5 +34,7 @@ typedef enum {
         SYS_NICE,
         SYS_WAITPID,
         SYS_LIST_PROCESSES,
+        SYS_PIPE_OPEN,
+        SYS_PIPE_CLOSE,
         SYS_MAX,
 } syscall_codes;

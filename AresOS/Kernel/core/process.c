@@ -1,6 +1,7 @@
 #include <interrupts.h>
 #include <lib_common.h>
 #include <multi_region_heap.h>
+#include <pipe.h>
 #include <process.h>
 
 #define USER_CS          0x1B
@@ -99,6 +100,9 @@ void process_init(void) {
         shell->foreground = 1;
         shell->parent_pid = NO_PID;
         shell->waiting_for = NO_PID;
+        shell->stdin_pipe      = NO_PIPE;
+        shell->stdout_pipe     = NO_PIPE;
+        shell->blocked_on_pipe = NO_PIPE;
         shell->kernel_stack_base = (void *)0; /* Static boot stacks */
         shell->user_stack_base   = (void *)0;
         strncpy(shell->name, "shell", PROCESS_NAME_LEN);
@@ -134,7 +138,8 @@ pid_t process_getpid(void) {
 }
 
 pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
-                     const char *name, int foreground, uint64_t exit_handler) {
+                     const char *name, int foreground, uint64_t exit_handler,
+                     int stdin_pipe, int stdout_pipe) {
         pcb_t *pcb = find_free_slot();
         if (pcb == (void *)0)
                 return NO_PID;
@@ -156,6 +161,9 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->parent_pid        = current_pid;
         pcb->waiting_for       = NO_PID;
         pcb->exit_code         = 0;
+        pcb->stdin_pipe        = stdin_pipe;
+        pcb->stdout_pipe       = stdout_pipe;
+        pcb->blocked_on_pipe   = NO_PIPE;
         pcb->kernel_stack_base = kstack;
         pcb->user_stack_base   = ustack;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
@@ -169,6 +177,10 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
 
 void process_exit(int code) {
         pcb_t *pcb     = process_get_current();
+        pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
+        pcb->stdin_pipe      = NO_PIPE;
+        pcb->stdout_pipe     = NO_PIPE;
+        pcb->blocked_on_pipe = NO_PIPE;
         pcb->state     = PROCESS_ZOMBIE;
         pcb->exit_code = code;
         wake_waiters(pcb->pid);
@@ -184,6 +196,10 @@ int process_kill(pid_t pid) {
         if (pcb->state == PROCESS_ZOMBIE)
                 return -1;
 
+        pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
+        pcb->stdin_pipe      = NO_PIPE;
+        pcb->stdout_pipe     = NO_PIPE;
+        pcb->blocked_on_pipe = NO_PIPE;
         pcb->state     = PROCESS_ZOMBIE;
         pcb->exit_code = KILLED_EXIT_CODE;
         wake_waiters(pid);

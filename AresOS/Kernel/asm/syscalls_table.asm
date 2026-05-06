@@ -33,6 +33,8 @@ extern sys_unblock_wrapper
 extern sys_nice_wrapper
 extern sys_waitpid_wrapper
 extern sys_list_processes_wrapper
+extern sys_pipe_open_wrapper
+extern sys_pipe_close_wrapper
 
 syscalls_table:
     dq sys_write              ; 0: SYS_WRITE
@@ -68,3 +70,5 @@ syscalls_table:
     dq sys_nice_wrapper       ; 30: SYS_NICE
     dq sys_waitpid_wrapper    ; 31: SYS_WAITPID
     dq sys_list_processes_wrapper ; 32: SYS_LIST_PROCESSES
+    dq sys_pipe_open_wrapper      ; 33: SYS_PIPE_OPEN
+    dq sys_pipe_close_wrapper     ; 34: SYS_PIPE_CLOSE
