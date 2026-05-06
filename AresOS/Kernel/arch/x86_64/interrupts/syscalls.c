@@ -10,6 +10,7 @@
 #include <scheduler.h>
 #include <stdint.h>
 #include <syscalls.h>
+#include <semaphores.h>
 
 regs_snapshot_t saved_regs = {0};
 uint32_t current_bg_color  = 0x000000; /* Default black background */
@@ -261,4 +262,20 @@ uint64_t sys_list_processes(uint64_t pids_ptr, uint64_t max_count) {
         if (pids_ptr == 0)
                 return 0;
         return (uint64_t)process_list((uint64_t *)pids_ptr, (int)max_count);
+}
+
+uint64_t sys_sem_init(uint64_t sem_id, uint64_t value){
+        return (uint64_t)sem_init((sem_id_t)sem_id, value);
+}
+
+uint64_t sys_sem_post(uint64_t sem_id){
+        return (uint64_t)sem_post((sem_id_t)sem_id);
+}
+
+uint64_t sys_sem_wait(uint64_t sem_id){
+        return (uint64_t)sem_wait((sem_id_t)sem_id);
+}
+
+uint64_t sys_sem_close(uint64_t sem_id){
+        return (uint64_t)sem_close((sem_id_t)sem_id);
 }

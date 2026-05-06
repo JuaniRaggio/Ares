@@ -2,6 +2,7 @@
 
 #include <slab.h>
 #include <multi_region_heap.h>
+#define NULL ((void*)0)
 
 static void slab_init(slab_cache_t *cache, size_t size){
     cache->object_size = size;
@@ -33,7 +34,16 @@ void slab_free(slab_cache_t *cache, void *obj){
     return;
 }
 
-//me falta este
+static void delete_slabs(void* obj){
+    if(obj != NULL){
+        delete_slabs(*(void**) obj);
+        mem_free(obj);
+    }
+}
+
 void delete_cache(slab_cache_t *cache){
-void mem_free(void *ptr);
+    if(cache == NULL) return;
+    delete_slabs(cache->free_list);
+    mem_free(cache);
+    return;
 }
