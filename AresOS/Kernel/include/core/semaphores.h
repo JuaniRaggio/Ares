@@ -2,12 +2,7 @@
 #include <stdint.h>
 #define MAX_SEM 20
 
-typedef struct sem{
-    int64_t value;
-    pNode_t *head;
-    pNode_t *tail;
-}sem_t;
-
+typedef struct sem sem_t;
 
 int64_t sem_init(uint64_t sem_id, int64_t value);
 int64_t sem_post(uint64_t sem_id);
