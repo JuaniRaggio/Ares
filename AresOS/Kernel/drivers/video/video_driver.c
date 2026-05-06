@@ -297,14 +297,19 @@ static uint64_t frame_count        = 0;
 static uint64_t last_fps_update_ms = 0;
 static uint64_t current_fps        = 0;
 
+#define FPS_UPDATE_INTERVAL_MS 1000
+
+static int one_second_elapsed(uint64_t elapsed) {
+        return elapsed >= FPS_UPDATE_INTERVAL_MS;
+}
+
 void update_fps_counter(void) {
         frame_count++;
 
         uint64_t current_time_ms = get_time_ms();
         uint64_t elapsed         = current_time_ms - last_fps_update_ms;
 
-        /* Update FPS every second (1000 ms) */
-        if (elapsed >= 1000) {
+        if (one_second_elapsed(elapsed)) {
                 current_fps        = (frame_count * 1000) / elapsed;
                 frame_count        = 0;
                 last_fps_update_ms = current_time_ms;

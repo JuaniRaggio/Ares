@@ -4,16 +4,11 @@
 
 #include <drivers/keyboard_driver.h>
 
-// Hardware interrupt IDs (IRQs remapped to 0x20-0x2F)
-#define ID_TIMER_TICK 0x20
-#define ID_KEYBOARD 0x21
-
-// Software interrupt ID (legacy, not used - we use SYSCALL instruction)
-#define ID_SYSCALL 0x80
-
-// Exception IDs
+#define ID_TIMER_TICK       0x20
+#define ID_KEYBOARD         0x21
+#define ID_SYSCALL          0x80
 #define ID_DIVISION_BY_ZERO 0x00
-#define ID_INVALID_OPCODE 0x06
+#define ID_INVALID_OPCODE   0x06
 
 #pragma pack(push) /* Push current alignment */
 #pragma pack(1)    /* Align following structures to 1 byte */

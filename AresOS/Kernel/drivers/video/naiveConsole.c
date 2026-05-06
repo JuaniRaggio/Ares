@@ -1,10 +1,8 @@
-// naiveConsole.c
 #include <naiveConsole.h>
 
 static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base);
 
-// temp. buffer to print num
-static char buffer[64] = {'0'};
+static char print_buffer[64] = {'0'};
 
 void printLn(const char *str, const uint8_t color) {
         for (int i = 0; str[i] != 0; ++i) {
@@ -82,8 +80,8 @@ void ncPrintBin(uint64_t value) {
 }
 
 void ncPrintBase(uint64_t value, uint32_t base) {
-        uintToBase(value, buffer, base);
-        ncPrint(buffer, VGA_WHITE);
+        uintToBase(value, print_buffer, base);
+        ncPrint(print_buffer, VGA_WHITE);
 }
 
 static uint32_t uintToBase(uint64_t value, char *buffer, uint32_t base) {
@@ -160,15 +158,17 @@ void ncPrintChar(char c, uint8_t color) {
 
 extern uint32_t current_bg_color;
 
+static uint8_t rgb_to_vga(uint32_t rgb) {
+        if (rgb == 0x000000)
+                return VGA_BLACK;
+        if ((rgb & 0xFF0000) > 0x800000)
+                return VGA_WHITE;
+        return VGA_WHITE;
+}
+
 void ncPrintCharRGB(char c, uint32_t rgb) {
         if (videoMode == 0) {
-                /* In text mode, convert RGB to VGA approximation */
-                uint8_t vga_color = VGA_WHITE; /* Default */
-                if (rgb == 0x000000)
-                        vga_color = VGA_BLACK;
-                else if ((rgb & 0xFF0000) > 0x800000)
-                        vga_color = VGA_WHITE;
-                ncPrintCharText(c, vga_color);
+                ncPrintCharText(c, rgb_to_vga(rgb));
         } else {
                 bmp_font_t *font = getFont();
                 if (font == NULL)

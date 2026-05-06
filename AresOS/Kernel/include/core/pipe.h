@@ -15,6 +15,9 @@
 #define PIPE_BUFFER_SIZE 4096
 #define PIPE_NAME_LEN    32
 
+#define PIPE_EOF     0
+#define PIPE_ERR    (-1)
+
 typedef struct {
 	char name[PIPE_NAME_LEN];
 	uint8_t buffer[PIPE_BUFFER_SIZE];

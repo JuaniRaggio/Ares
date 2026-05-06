@@ -17,6 +17,9 @@
 #define DEFAULT_PRIORITY 1
 #define MAX_PRIORITY 4
 
+#define NO_PID           (-1)
+#define KILLED_EXIT_CODE (-1)
+
 typedef int64_t pid_t;
 typedef uint64_t (*process_func_t)(uint64_t argc, char *argv[]);
 

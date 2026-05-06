@@ -96,6 +96,24 @@ static void insert_block_into_free_list(block_list_t *block_to_insert) {
         try_coalesce_with_prev(iterator, block_to_insert);
 }
 
+static void init_free_list_sentinels(void) {
+        free_list_start.block_size      = 0;
+        free_list_start.next_free_block = &free_list_end;
+        free_list_end.block_size        = 0;
+        free_list_end.next_free_block   = (void *)0;
+}
+
+static void init_heap_stats(size_t total_free) {
+        total_heap_size                               = total_free;
+        heap_status.available_heap_space_bytes        = total_free;
+        heap_status.minimum_ever_free_bytes           = total_free;
+        heap_status.successful_allocations            = 0;
+        heap_status.successful_frees                  = 0;
+        heap_status.size_largest_free_block_bytes     = 0;
+        heap_status.size_smallest_free_block_in_bytes = 0;
+        heap_status.number_of_free_blocks             = 0;
+}
+
 void mem_init(heap_region_t *regions, size_t region_count) {
         if (heap_initialized) {
                 return;
@@ -103,11 +121,7 @@ void mem_init(heap_region_t *regions, size_t region_count) {
 
         header_size = align_up((size_t)sizeof(block_list_t));
 
-        /* Set up sentinels first so we can use insert_block_into_free_list */
-        free_list_start.block_size      = 0;
-        free_list_start.next_free_block = &free_list_end;
-        free_list_end.block_size        = 0;
-        free_list_end.next_free_block   = (void *)0;
+        init_free_list_sentinels();
 
         size_t total_free = 0;
 
@@ -131,16 +145,8 @@ void mem_init(heap_region_t *regions, size_t region_count) {
                 total_free += usable;
         }
 
-        /* Initialize heap status */
-        total_heap_size                               = total_free;
-        heap_status.available_heap_space_bytes        = total_free;
-        heap_status.minimum_ever_free_bytes           = total_free;
-        heap_status.successful_allocations            = 0;
-        heap_status.successful_frees                  = 0;
-        heap_status.size_largest_free_block_bytes     = 0;
-        heap_status.size_smallest_free_block_in_bytes = 0;
-        heap_status.number_of_free_blocks             = 0;
-        heap_initialized                              = 1;
+        init_heap_stats(total_free);
+        heap_initialized = 1;
 }
 
 void *mem_alloc(size_t size) {
@@ -194,8 +200,8 @@ void mem_free(void *ptr) {
 
         block_list_t *block = (block_list_t *)((uint8_t *)ptr - header_size);
 
-        /* Guard against double-free: allocated blocks have next == NULL */
-        if (block->next_free_block != (void *)0)
+        int already_free = block->next_free_block != (void *)0;
+        if (already_free)
                 return;
 
         heap_status.available_heap_space_bytes += block->block_size;
