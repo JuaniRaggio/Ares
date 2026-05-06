@@ -3,13 +3,12 @@
 #include <multi_region_heap.h>
 #include <pipe.h>
 #include <process.h>
+#include <status_codes.h>
 
 #define USER_CS          0x1B
 #define USER_SS          0x23
 #define RFLAGS_IF        0x202
-#define NO_PID           (-1)
 #define SHELL_INDEX      0
-#define KILLED_EXIT_CODE (-1)
 
 static pcb_t process_table[MAX_PROCESSES];
 static pid_t current_pid;
@@ -192,9 +191,9 @@ void process_exit(int code) {
 int process_kill(pid_t pid) {
         pcb_t *pcb = process_get(pid);
         if (pcb == (void *)0)
-                return -1;
+                return SYS_ERR;
         if (pcb->state == PROCESS_ZOMBIE)
-                return -1;
+                return SYS_ERR;
 
         pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
         pcb->stdin_pipe      = NO_PIPE;
@@ -208,48 +207,48 @@ int process_kill(pid_t pid) {
                 scheduler_yield();
         }
 
-        return 0;
+        return SYS_OK;
 }
 
 int process_block(pid_t pid) {
         pcb_t *pcb = process_get(pid);
         if (pcb == (void *)0)
-                return -1;
+                return SYS_ERR;
         if (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING)
-                return -1;
+                return SYS_ERR;
 
         pcb->state = PROCESS_BLOCKED;
 
         if (pid == current_pid)
                 scheduler_yield();
 
-        return 0;
+        return SYS_OK;
 }
 
 int process_unblock(pid_t pid) {
         pcb_t *pcb = process_get(pid);
         if (pcb == (void *)0)
-                return -1;
+                return SYS_ERR;
         if (pcb->state != PROCESS_BLOCKED)
-                return -1;
+                return SYS_ERR;
 
         pcb->state = PROCESS_READY;
-        return 0;
+        return SYS_OK;
 }
 
 int process_nice(pid_t pid, uint64_t new_priority) {
         pcb_t *pcb = process_get(pid);
         if (pcb == (void *)0)
-                return -1;
+                return SYS_ERR;
         if (pcb->state == PROCESS_ZOMBIE)
-                return -1;
+                return SYS_ERR;
         if (new_priority > MAX_PRIORITY)
                 new_priority = MAX_PRIORITY;
         if (new_priority < 1)
                 new_priority = 1;
 
         pcb->priority = new_priority;
-        return 0;
+        return SYS_OK;
 }
 
 static pcb_t *find_by_pid_any_state(pid_t pid) {
@@ -272,10 +271,10 @@ static int reap_zombie(pcb_t *target, pid_t pid) {
 int process_wait(pid_t pid) {
         pcb_t *target = find_by_pid_any_state(pid);
         if (target == (void *)0)
-                return -1;
+                return SYS_ERR;
 
         if (target->state == PROCESS_DEAD)
-                return -1;
+                return SYS_ERR;
         if (target->state == PROCESS_ZOMBIE)
                 return reap_zombie(target, pid);
 
@@ -289,7 +288,7 @@ int process_wait(pid_t pid) {
                 return reap_zombie(target, pid);
         if (target->state == PROCESS_DEAD)
                 return target->exit_code;
-        return -1;
+        return SYS_ERR;
 }
 
 int process_list(uint64_t *pids, int max) {

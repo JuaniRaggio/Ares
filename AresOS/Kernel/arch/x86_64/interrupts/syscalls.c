@@ -9,6 +9,7 @@
 #include <process_types.h>
 #include <regs.h>
 #include <scheduler.h>
+#include <status_codes.h>
 #include <stdint.h>
 #include <syscalls.h>
 
@@ -19,10 +20,10 @@ static uint32_t current_stderr_color_rgb = 0xFF0000; /* Default red */
 
 uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
         if (fd != 1 && fd != 2) {
-                return 0;
+                return SYS_OK;
         }
         if (buf == NULL || len == 0) {
-                return 0;
+                return SYS_OK;
         }
 
         /* fd==1 with stdout_pipe redirects to pipe; fd==2 always to console */
@@ -50,20 +51,20 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
                 if (count != NULL) {
                         *count = 0;
                 }
-                return 1; /* Error */
+                return SYS_BAD;
         }
 
         uint64_t max_count = *count;
         if (max_count == 0) {
                 *count = 0;
-                return 1; /* Error */
+                return SYS_BAD;
         }
 
         pcb_t *current = process_get_current();
         if (current != (void *)0 && current->stdin_pipe >= 0) {
                 int ret = pipe_read(current->stdin_pipe, buf, (int)max_count);
                 *count = (ret > 0) ? (uint64_t)ret : 0;
-                return (ret >= 0) ? 0 : 1;
+                return (ret >= 0) ? SYS_OK : SYS_BAD;
         }
 
         uint64_t i = 0;
@@ -72,8 +73,8 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
                 i++;
         }
 
-        *count = i; /* Update count with actual bytes read */
-        return 0;   /* Success */
+        *count = i;
+        return SYS_OK;
 }
 
 uint64_t sys_clear(void) {
@@ -85,15 +86,15 @@ uint64_t sys_clear(void) {
         } else {
                 ncClear();
         }
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_get_ticks(uint64_t *ticks_ptr) {
         if (ticks_ptr == NULL) {
-                return 1;
+                return SYS_BAD;
         }
         *ticks_ptr = ticks_elapsed();
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_get_seconds(void) {
@@ -102,28 +103,28 @@ uint64_t sys_get_seconds(void) {
 
 uint64_t sys_get_resolution(uint32_t *width, uint32_t *height) {
         if (width == NULL || height == NULL) {
-                return 1;
+                return SYS_BAD;
         }
         // TODO: implement when video data access is available
         *width  = 1024;
         *height = 768;
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_get_register_array(regs_snapshot_t *regs) {
         if (regs == NULL) {
-                return 0;
+                return SYS_BAD;
         }
         *regs = saved_regs;
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_set_font_size(uint8_t scale) {
         if (scale < 1 || scale > 5) {
-                return 0;
+                return SYS_BAD;
         }
         fontScale = scale;
-        return 1;
+        return SYS_OK;
 }
 
 uint64_t sys_get_memory(uint64_t addr, uint8_t *buf, uint64_t size) {
@@ -148,7 +149,7 @@ uint64_t sys_draw_rect(uint64_t packed_xy, uint64_t packed_wh, uint64_t color) {
         }
 
         drawRect(x, y, width, height, (uint32_t)color);
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_set_text_color(uint32_t color, uint8_t stream) {
@@ -157,63 +158,63 @@ uint64_t sys_set_text_color(uint32_t color, uint8_t stream) {
         } else if (stream == 2) {
                 current_stderr_color_rgb = color;
         }
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_set_bg_color(uint32_t color) {
         if (videoMode == 1) {
                 current_bg_color = color;
                 clearScreen(current_bg_color);
-                return 0;
+                return SYS_OK;
         }
-        return 1;
+        return SYS_BAD;
 }
 
 uint64_t sys_get_cursor_pos(int *x, int *y) {
         if (x == NULL || y == NULL) {
-                return 0;
+                return SYS_BAD;
         }
         *x = gfxCursorX / (8 * fontScale);
         *y = gfxCursorY / (17 * fontScale);
-        return 1;
+        return SYS_OK;
 }
 
 uint64_t sys_redraw_screen(void) {
         screen_buffer_redraw();
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_get_time(s_time *time) {
         if (time == NULL) {
-                return 1;
+                return SYS_BAD;
         }
         *time = get_current_time();
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_get_rdtsc(uint64_t *rdtsc) {
         *rdtsc = read_tsc();
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_get_time_ms(uint64_t *time_ms) {
         *time_ms = get_time_ms();
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_get_fps(uint64_t *fps) {
         *fps = get_current_fps();
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_play_sound(uint64_t frequency, uint64_t duration_ms) {
         playSound(frequency, duration_ms);
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_beep(uint64_t frequency) {
         beep(frequency);
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_malloc(uint64_t size) {
@@ -222,14 +223,14 @@ uint64_t sys_malloc(uint64_t size) {
 
 uint64_t sys_free(uint64_t ptr) {
         mem_free((void *)ptr);
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_mem_stats(uint64_t stats_ptr) {
         if (stats_ptr == 0)
-                return 1;
+                return SYS_BAD;
         mem_get_stats((heap_stats_t *)stats_ptr);
-        return 0;
+        return SYS_OK;
 }
 
 void sys_exit(uint64_t code) {
@@ -238,7 +239,7 @@ void sys_exit(uint64_t code) {
 
 uint64_t sys_create_process(uint64_t info_ptr) {
         if (info_ptr == 0)
-                return (uint64_t)-1;
+                return (uint64_t)NO_PID;
         create_process_info_t *info = (create_process_info_t *)info_ptr;
         return (uint64_t)process_create(info->entry, info->argc, info->argv,
                                         info->name, info->foreground,
@@ -253,7 +254,7 @@ uint64_t sys_getpid(void) {
 uint64_t sys_yield(void) {
         scheduler_yield();
         _hlt();
-        return 0;
+        return SYS_OK;
 }
 
 uint64_t sys_kill(uint64_t pid) {
@@ -284,7 +285,7 @@ uint64_t sys_list_processes(uint64_t pids_ptr, uint64_t max_count) {
 
 uint64_t sys_pipe_open(uint64_t name_ptr) {
         if (name_ptr == 0)
-                return (uint64_t)-1;
+                return (uint64_t)PIPE_ERR;
         return (uint64_t)pipe_open((const char *)name_ptr);
 }
 

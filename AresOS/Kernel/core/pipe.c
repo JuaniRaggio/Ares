@@ -2,6 +2,7 @@
 #include <pipe.h>
 #include <process.h>
 #include <scheduler.h>
+#include <status_codes.h>
 
 static pipe_t pipe_table[MAX_PIPES];
 
@@ -36,7 +37,7 @@ static void wake_blocked_on_pipe(int pipe_id) {
 
 int pipe_open(const char *name) {
 	if (name == (void *)0)
-		return -1;
+		return PIPE_ERR;
 
 	/* Look for existing pipe with same name */
 	for (int i = 0; i < MAX_PIPES; i++) {
@@ -55,14 +56,14 @@ int pipe_open(const char *name) {
 		}
 	}
 
-	return -1;
+	return PIPE_ERR;
 }
 
 int pipe_close(int pipe_id) {
 	if (pipe_id < 0 || pipe_id >= MAX_PIPES)
-		return -1;
+		return PIPE_ERR;
 	if (!pipe_table[pipe_id].active)
-		return -1;
+		return PIPE_ERR;
 
 	wake_blocked_on_pipe(pipe_id);
 
@@ -71,14 +72,14 @@ int pipe_close(int pipe_id) {
 		pipe_table[pipe_id].active = 0;
 	}
 
-	return 0;
+	return SYS_OK;
 }
 
 int pipe_read(int pipe_id, char *buf, int count) {
 	if (pipe_id < 0 || pipe_id >= MAX_PIPES || !pipe_table[pipe_id].active)
-		return 0;
+		return PIPE_EOF;
 	if (buf == (void *)0 || count <= 0)
-		return 0;
+		return PIPE_EOF;
 
 	pipe_t *pipe = &pipe_table[pipe_id];
 	pcb_t *current = process_get_current();
@@ -86,13 +87,13 @@ int pipe_read(int pipe_id, char *buf, int count) {
 	/* Block while buffer is empty and writers exist */
 	while (pipe->count == 0) {
 		if (!has_writers(pipe_id))
-			return 0; /* EOF */
+			return PIPE_EOF;
 
 		current->blocked_on_pipe = pipe_id;
 		process_block(current->pid);
 		/* After unblock, re-check */
 		if (!pipe->active)
-			return 0;
+			return PIPE_EOF;
 	}
 
 	/* Copy bytes from circular buffer */
@@ -111,9 +112,9 @@ int pipe_read(int pipe_id, char *buf, int count) {
 
 int pipe_write(int pipe_id, const char *buf, int count) {
 	if (pipe_id < 0 || pipe_id >= MAX_PIPES || !pipe_table[pipe_id].active)
-		return -1;
+		return PIPE_ERR;
 	if (buf == (void *)0 || count <= 0)
-		return -1;
+		return PIPE_ERR;
 
 	pipe_t *pipe = &pipe_table[pipe_id];
 	pcb_t *current = process_get_current();
@@ -123,16 +124,16 @@ int pipe_write(int pipe_id, const char *buf, int count) {
 		/* Block while buffer is full and readers exist */
 		while (pipe->count == PIPE_BUFFER_SIZE) {
 			if (!has_readers(pipe_id))
-				return -1; /* Broken pipe */
+				return PIPE_ERR;
 
 			current->blocked_on_pipe = pipe_id;
 			process_block(current->pid);
 			if (!pipe->active)
-				return -1;
+				return PIPE_ERR;
 		}
 
 		if (!has_readers(pipe_id) && bytes_written == 0)
-			return -1; /* Broken pipe */
+			return PIPE_ERR;
 
 		/* Copy bytes into circular buffer */
 		while (bytes_written < count && pipe->count < PIPE_BUFFER_SIZE) {
