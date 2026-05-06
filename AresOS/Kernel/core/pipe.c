@@ -35,17 +35,15 @@ static void wake_blocked_on_pipe(int pipe_id) {
 	}
 }
 
-int pipe_open(const char *name) {
-	if (name == (void *)0)
-		return PIPE_ERR;
-
-	/* Look for existing pipe with same name */
+static int find_pipe_by_name(const char *name) {
 	for (int i = 0; i < MAX_PIPES; i++) {
 		if (pipe_table[i].active && strcmp(pipe_table[i].name, name) == 0)
 			return i;
 	}
+	return PIPE_ERR;
+}
 
-	/* Allocate a new pipe */
+static int allocate_pipe(const char *name) {
 	for (int i = 0; i < MAX_PIPES; i++) {
 		if (!pipe_table[i].active) {
 			memset(&pipe_table[i], 0, sizeof(pipe_t));
@@ -55,8 +53,50 @@ int pipe_open(const char *name) {
 			return i;
 		}
 	}
-
 	return PIPE_ERR;
+}
+
+static void deactivate_if_unreferenced(int pipe_id) {
+	if (!has_readers(pipe_id) && !has_writers(pipe_id)) {
+		pipe_table[pipe_id].active = 0;
+	}
+}
+
+static int drain_from_buffer(pipe_t *pipe, char *buf, int count) {
+	int bytes_read = 0;
+	while (bytes_read < count && pipe->count > 0) {
+		buf[bytes_read++] = pipe->buffer[pipe->read_pos];
+		pipe->read_pos = (pipe->read_pos + 1) % PIPE_BUFFER_SIZE;
+		pipe->count--;
+	}
+	return bytes_read;
+}
+
+static int fill_into_buffer(pipe_t *pipe, const char *buf, int offset,
+                            int count) {
+	int bytes_written = offset;
+	while (bytes_written < count && pipe->count < PIPE_BUFFER_SIZE) {
+		pipe->buffer[pipe->write_pos] = buf[bytes_written++];
+		pipe->write_pos = (pipe->write_pos + 1) % PIPE_BUFFER_SIZE;
+		pipe->count++;
+	}
+	return bytes_written;
+}
+
+static void block_on_pipe(pcb_t *process, int pipe_id) {
+	process->blocked_on_pipe = pipe_id;
+	process_block(process->pid);
+}
+
+int pipe_open(const char *name) {
+	if (name == (void *)0)
+		return PIPE_ERR;
+
+	int existing = find_pipe_by_name(name);
+	if (existing >= 0)
+		return existing;
+
+	return allocate_pipe(name);
 }
 
 int pipe_close(int pipe_id) {
@@ -66,11 +106,7 @@ int pipe_close(int pipe_id) {
 		return PIPE_ERR;
 
 	wake_blocked_on_pipe(pipe_id);
-
-	/* Deactivate only if no process references this pipe */
-	if (!has_readers(pipe_id) && !has_writers(pipe_id)) {
-		pipe_table[pipe_id].active = 0;
-	}
+	deactivate_if_unreferenced(pipe_id);
 
 	return SYS_OK;
 }
@@ -84,27 +120,16 @@ int pipe_read(int pipe_id, char *buf, int count) {
 	pipe_t *pipe = &pipe_table[pipe_id];
 	pcb_t *current = process_get_current();
 
-	/* Block while buffer is empty and writers exist */
 	while (pipe->count == 0) {
 		if (!has_writers(pipe_id))
 			return PIPE_EOF;
 
-		current->blocked_on_pipe = pipe_id;
-		process_block(current->pid);
-		/* After unblock, re-check */
+		block_on_pipe(current, pipe_id);
 		if (!pipe->active)
 			return PIPE_EOF;
 	}
 
-	/* Copy bytes from circular buffer */
-	int bytes_read = 0;
-	while (bytes_read < count && pipe->count > 0) {
-		buf[bytes_read++] = pipe->buffer[pipe->read_pos];
-		pipe->read_pos = (pipe->read_pos + 1) % PIPE_BUFFER_SIZE;
-		pipe->count--;
-	}
-
-	/* Wake writers that were blocked because buffer was full */
+	int bytes_read = drain_from_buffer(pipe, buf, count);
 	wake_blocked_on_pipe(pipe_id);
 
 	return bytes_read;
@@ -121,13 +146,11 @@ int pipe_write(int pipe_id, const char *buf, int count) {
 
 	int bytes_written = 0;
 	while (bytes_written < count) {
-		/* Block while buffer is full and readers exist */
 		while (pipe->count == PIPE_BUFFER_SIZE) {
 			if (!has_readers(pipe_id))
 				return PIPE_ERR;
 
-			current->blocked_on_pipe = pipe_id;
-			process_block(current->pid);
+			block_on_pipe(current, pipe_id);
 			if (!pipe->active)
 				return PIPE_ERR;
 		}
@@ -135,14 +158,7 @@ int pipe_write(int pipe_id, const char *buf, int count) {
 		if (!has_readers(pipe_id) && bytes_written == 0)
 			return PIPE_ERR;
 
-		/* Copy bytes into circular buffer */
-		while (bytes_written < count && pipe->count < PIPE_BUFFER_SIZE) {
-			pipe->buffer[pipe->write_pos] = buf[bytes_written++];
-			pipe->write_pos = (pipe->write_pos + 1) % PIPE_BUFFER_SIZE;
-			pipe->count++;
-		}
-
-		/* Wake readers that were blocked because buffer was empty */
+		bytes_written = fill_into_buffer(pipe, buf, bytes_written, count);
 		wake_blocked_on_pipe(pipe_id);
 	}
 
