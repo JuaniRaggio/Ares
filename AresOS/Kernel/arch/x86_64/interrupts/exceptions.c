@@ -10,6 +10,7 @@ extern regs_snapshot_t saved_regs;
 static void zero_division(regs_snapshot_t *regs);
 static void invalid_opcode(regs_snapshot_t *regs);
 static void print_registers(regs_snapshot_t *regs);
+static void wait_for_keypress(void);
 
 void exceptionDispatcher(int exception, regs_snapshot_t *regs) {
         saved_regs = *regs;
@@ -108,12 +109,14 @@ static void print_registers(regs_snapshot_t *regs) {
         ncPrint("\n", VGA_WHITE);
 
         ncPrint("\nPress any key to continue...", VGA_CYAN);
+        wait_for_keypress();
+}
 
+static void wait_for_keypress(void) {
         char buffer;
         uint64_t byte;
         picMasterMask(PIC_MASK_KBD_ONLY);
         _sti();
-        /* Wait until a key is pressed */
         do {
                 byte = 1;
         } while (sys_read(STDIN, &buffer, &byte) != 0 || byte == 0);

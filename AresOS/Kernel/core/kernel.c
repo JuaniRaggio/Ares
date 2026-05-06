@@ -72,22 +72,13 @@ static inline void restore_cursor() {
         gfxCursorY = 0;
 }
 
-int main() {
-        video_init();
-        timer_init();
-        load_idt();
-        init_syscalls();
-        setup_user_segments();
-        setup_tss();
-
-        // Everything is set up, now we can enable interrupts
+static void enable_interrupts(void) {
         picMasterMask(PIC_MASK_TIMER_KBD);
         picSlaveMask(PIC_MASK_ALL);
         _sti();
+}
 
-        // Initialize the memory manager with two heap regions
-        // Region 1: between end of kernel stack and user code module
-        // Region 2: from 0x600000, 32 MB
+static void init_heap(void) {
         uint8_t *heap_r1_start =
             (uint8_t *)((uint64_t)&endOfKernel + PageSize * 8);
         size_t heap_r1_size =
@@ -98,6 +89,18 @@ int main() {
             {(uint8_t *)heapRegion2Start, heapRegion2Size},
         };
         mem_init(regions, HEAP_REGION_COUNT);
+}
+
+int main() {
+        video_init();
+        timer_init();
+        load_idt();
+        init_syscalls();
+        setup_user_segments();
+        setup_tss();
+
+        enable_interrupts();
+        init_heap();
 
         process_init();
         scheduler_init();
