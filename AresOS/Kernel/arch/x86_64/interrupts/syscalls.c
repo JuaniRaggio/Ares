@@ -13,10 +13,27 @@
 #include <stdint.h>
 #include <syscalls.h>
 
+#define DEFAULT_BG_COLOR     0x000000
+#define DEFAULT_STDOUT_COLOR 0xFFFFFF
+#define DEFAULT_STDERR_COLOR 0xFF0000
+
 regs_snapshot_t saved_regs = {0};
-uint32_t current_bg_color  = 0x000000; /* Default black background */
-static uint32_t current_stdout_color_rgb = 0xFFFFFF; /* Default white */
-static uint32_t current_stderr_color_rgb = 0xFF0000; /* Default red */
+uint32_t current_bg_color  = DEFAULT_BG_COLOR;
+static uint32_t current_stdout_color_rgb = DEFAULT_STDOUT_COLOR;
+static uint32_t current_stderr_color_rgb = DEFAULT_STDERR_COLOR;
+
+static int try_write_to_pipe(const char *buf, uint64_t len) {
+        pcb_t *current = process_get_current();
+        if (current == (void *)0 || current->stdout_pipe < 0)
+                return 0;
+        int ret = pipe_write(current->stdout_pipe, buf, (int)len);
+        return (ret < 0) ? 0 : ret;
+}
+
+static int stdout_is_piped(void) {
+        pcb_t *current = process_get_current();
+        return current != (void *)0 && current->stdout_pipe >= 0;
+}
 
 uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
         if (fd != 1 && fd != 2) {
@@ -26,14 +43,8 @@ uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
                 return SYS_OK;
         }
 
-        /* fd==1 with stdout_pipe redirects to pipe; fd==2 always to console */
-        if (fd == 1) {
-                pcb_t *current = process_get_current();
-                if (current != (void *)0 && current->stdout_pipe >= 0) {
-                        int ret = pipe_write(current->stdout_pipe, buf,
-                                             (int)len);
-                        return (ret < 0) ? 0 : (uint64_t)ret;
-                }
+        if (fd == 1 && stdout_is_piped()) {
+                return (uint64_t)try_write_to_pipe(buf, len);
         }
 
         uint32_t color =
