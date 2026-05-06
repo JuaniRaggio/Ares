@@ -4,6 +4,7 @@
 #include <multi_region_heap.h>
 #include <naiveConsole.h>
 #include <interrupts.h>
+#include <pipe.h>
 #include <process.h>
 #include <process_types.h>
 #include <regs.h>
@@ -22,6 +23,16 @@ uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
         }
         if (buf == NULL || len == 0) {
                 return 0;
+        }
+
+        /* fd==1 with stdout_pipe redirects to pipe; fd==2 always to console */
+        if (fd == 1) {
+                pcb_t *current = process_get_current();
+                if (current != (void *)0 && current->stdout_pipe >= 0) {
+                        int ret = pipe_write(current->stdout_pipe, buf,
+                                             (int)len);
+                        return (ret < 0) ? 0 : (uint64_t)ret;
+                }
         }
 
         uint32_t color =
@@ -46,6 +57,13 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
         if (max_count == 0) {
                 *count = 0;
                 return 1; /* Error */
+        }
+
+        pcb_t *current = process_get_current();
+        if (current != (void *)0 && current->stdin_pipe >= 0) {
+                int ret = pipe_read(current->stdin_pipe, buf, (int)max_count);
+                *count = (ret > 0) ? (uint64_t)ret : 0;
+                return (ret >= 0) ? 0 : 1;
         }
 
         uint64_t i = 0;
@@ -224,7 +242,8 @@ uint64_t sys_create_process(uint64_t info_ptr) {
         create_process_info_t *info = (create_process_info_t *)info_ptr;
         return (uint64_t)process_create(info->entry, info->argc, info->argv,
                                         info->name, info->foreground,
-                                        info->exit_handler);
+                                        info->exit_handler,
+                                        info->stdin_pipe, info->stdout_pipe);
 }
 
 uint64_t sys_getpid(void) {
@@ -261,4 +280,14 @@ uint64_t sys_list_processes(uint64_t pids_ptr, uint64_t max_count) {
         if (pids_ptr == 0)
                 return 0;
         return (uint64_t)process_list((uint64_t *)pids_ptr, (int)max_count);
+}
+
+uint64_t sys_pipe_open(uint64_t name_ptr) {
+        if (name_ptr == 0)
+                return (uint64_t)-1;
+        return (uint64_t)pipe_open((const char *)name_ptr);
+}
+
+uint64_t sys_pipe_close(uint64_t pipe_id) {
+        return (uint64_t)pipe_close((int)pipe_id);
 }

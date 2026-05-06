@@ -7,6 +7,8 @@
 
 #include <stdint.h>
 
+#define NO_PIPE (-1)
+
 typedef struct {
         uint64_t entry;
         uint64_t argc;
@@ -14,4 +16,6 @@ typedef struct {
         char *name;
         uint64_t foreground;
         uint64_t exit_handler;
+        int stdin_pipe;
+        int stdout_pipe;
 } create_process_info_t;

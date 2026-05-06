@@ -247,6 +247,20 @@ uint64_t sys_waitpid(uint64_t pid);
 uint64_t sys_list_processes(uint64_t pids_ptr, uint64_t max_count);
 
 /**
+ * Opens or creates a named pipe.
+ * @param name_ptr Pointer to pipe name string.
+ * @return Pipe index on success, -1 on failure.
+ */
+uint64_t sys_pipe_open(uint64_t name_ptr);
+
+/**
+ * Closes a named pipe.
+ * @param pipe_id Pipe index.
+ * @return 0 on success, -1 on error.
+ */
+uint64_t sys_pipe_close(uint64_t pipe_id);
+
+/**
  * Initializes the syscall subsystem.
  */
 void init_syscalls(void);

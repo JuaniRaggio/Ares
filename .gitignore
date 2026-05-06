@@ -1,5 +1,6 @@
 .DS_Store
 .vscode
+.idea
 *.pdf
 compile_commands.json
 compile_flags.txt
@@ -18,7 +19,7 @@ x64BareBones/Kernel/bin/
 .cache
 *.elf
 
-#The images
+# The images
 *.img
 *.qcow2
 *.vmdk

@@ -9,6 +9,7 @@
  */
 
 #include <stdint.h>
+#include <process_types.h>
 
 #define MAX_PROCESSES 32
 #define PROCESS_NAME_LEN 32
@@ -53,6 +54,9 @@ typedef struct {
         pid_t parent_pid;
         int exit_code;
         pid_t waiting_for;
+        int stdin_pipe;      /* NO_PIPE = keyboard, >= 0 = pipe index */
+        int stdout_pipe;     /* NO_PIPE = console,  >= 0 = pipe index */
+        int blocked_on_pipe; /* NO_PIPE if not blocked on a pipe      */
 } pcb_t;
 
 /**
@@ -83,7 +87,8 @@ void process_init(void);
  * @return PID of the new process, or -1 on failure.
  */
 pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
-                     const char *name, int foreground, uint64_t exit_handler);
+                     const char *name, int foreground, uint64_t exit_handler,
+                     int stdin_pipe, int stdout_pipe);
 
 /**
  * @brief Terminate the current process with the given exit code. Never returns.
