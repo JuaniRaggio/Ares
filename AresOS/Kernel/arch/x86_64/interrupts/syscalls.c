@@ -281,5 +281,5 @@ uint64_t sys_sem_wait(uint64_t sem_idx){
 }
 
 uint64_t sys_sem_close(uint64_t sem_idx){
-        return (uint64_t)sem_close((sem_idx);
+        return (uint64_t)sem_close(sem_idx);
 }
