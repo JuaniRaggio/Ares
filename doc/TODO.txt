@@ -16,23 +16,56 @@ Tasks extra
 
 Importante
 -------------------------------------------------------------------------------
-+ Analizar, probar y comparar:
-    - [X] Medicion de FPS
-    - [X] Rendimiento/Tiempos de procesamiento
-    - [X] Tiempos de acceso a hardware
-  Para las siguientes plataformas:
-    - [X] QEMU
-    - [ ] Hardware fisico en al menos 2 maquinas (dar detalles de HW)
-    - [ ] Virtual Box
+- [ ] Semaforos
+        - [ ] estructuras
+        - [ ] manejo de atomicidad
+        - [ ] Syscalls
+                - sem_open
+                - sem_close
+                - sem_wait => sem_aquire
+                - sem_post => sem_release
+
+- [ ] Shell
+        - [ ] Parseo de | (conectar 2 procesos con pipe)
+        - [ ] Parseo de & (background)
+        - [ ] Ctrl+C (matar proceso foreground)
+        - [ ] Ctrl+D (enviar EOF)
+
+- [ ] User Space Apps
+        - [ ] help
+        - [ ] mem
+        - [ ] ps
+        - [ ] loop
+        - [ ] kill
+        - [ ] nice
+        - [ ] block
+        - [ ] cat
+        - [ ] wc
+        - [ ] filter
+        - [ ] mvar
+
+- [ ] Tests de la catedra
+        - [ ] Integrar test_mm, test_proc, test_prio, test_sync como procesos de usuario
+        - [ ] Verificar que corran en BG y FG
+
+- [ ] Fixes
+        - [ ] Reemplazar busy_wait_ms en sound.c
+
 
 In progress
 -------------------------------------------------------------------------------
 
-Issues
--------------------------------------------------------------------------------
-
 Done tasks
 -------------------------------------------------------------------------------
++ Analizar, probar y comparar:
+    - [X] Medicion de FPS
+    - [X] Rendimiento/Tiempos de procesamiento
+    - [X] Tiempos de acceso a hardware
++ Para las siguientes plataformas:
+    - [X] QEMU
+    - [ ] Hardware fisico en al menos 2 maquinas (dar detalles de HW)
+    - [ ] Virtual Box
+
 - [X] Ver el tema de los segmentos de codigo y dato
 - [X] Getter de los registros
 - [X] int80Hander (Kernel/asm/lib.asm)
