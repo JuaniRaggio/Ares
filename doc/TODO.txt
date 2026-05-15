@@ -8,31 +8,74 @@ Este archivo mantiene:
 
 Dudas para Fede
 -------------------------------------------------------------------------------
+- [ ] Que tenemos que hacer con lo que ya esta en el tp desde Arqui? Tenemos
+      que pasar todo a procesos? El Tron por ejemplo seria un proceso? Nos
+      conviene borrar todo esto?
+
+- [ ] Modo Texto / Modo Video. Va en parte de la mano con la duda anterior,
+      deberiamos mantener los drivers?
+
+- [ ] En caso de que sea mejor que el SO corra en modo texto y no hacer nada en
+      modo video, podemos dejar el codigo muerto o tenemos que borrar lo que no
+      se ejecute? Podriamos modificar la compilacion para que no se compile
+      esa parte y en consecuencia no tenga warnings
+
+Importante
+-------------------------------------------------------------------------------
+- [ ] Semaforos => Victoria esta en esto
+        - [ ] estructuras
+        - [ ] manejo de atomicidad
+        - [ ] Syscalls
+                - sem_open
+                - sem_close
+                - sem_wait => sem_aquire
+                - sem_post => sem_release
+
+- [ ] Shell
+        - [ ] Parseo de | (conectar 2 procesos con pipe)
+        - [ ] Parseo de & (background)
+        - [ ] Ctrl+C (matar proceso foreground)
+        - [ ] Ctrl+D (enviar EOF)
+
+- [ ] User Space Apps
+        - [ ] help
+        - [ ] mem
+        - [ ] ps
+        - [ ] loop
+        - [ ] kill
+        - [ ] nice
+        - [ ] block
+        - [ ] cat
+        - [ ] wc
+        - [ ] filter
+        - [ ] mvar
+
+- [ ] Tests de la catedra
+        - [ ] Integrar test_mm, test_proc, test_prio, test_sync como procesos de usuario
+        - [ ] Verificar que corran en BG y FG
+
+- [ ] Fixes
+        - [ ] Reemplazar busy_wait_ms en sound.c
 
 Tasks extra
 -------------------------------------------------------------------------------
 + [ ] Scrolling
 + [ ] Driver de mouse para hacer scroll
 
-Importante
+In progress
+-------------------------------------------------------------------------------
+
+Done tasks
 -------------------------------------------------------------------------------
 + Analizar, probar y comparar:
     - [X] Medicion de FPS
     - [X] Rendimiento/Tiempos de procesamiento
     - [X] Tiempos de acceso a hardware
-  Para las siguientes plataformas:
++ Para las siguientes plataformas:
     - [X] QEMU
     - [ ] Hardware fisico en al menos 2 maquinas (dar detalles de HW)
     - [ ] Virtual Box
 
-In progress
--------------------------------------------------------------------------------
-
-Issues
--------------------------------------------------------------------------------
-
-Done tasks
--------------------------------------------------------------------------------
 - [X] Ver el tema de los segmentos de codigo y dato
 - [X] Getter de los registros
 - [X] int80Hander (Kernel/asm/lib.asm)
