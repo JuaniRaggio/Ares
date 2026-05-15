@@ -8,15 +8,21 @@ Este archivo mantiene:
 
 Dudas para Fede
 -------------------------------------------------------------------------------
+- [ ] Que tenemos que hacer con lo que ya esta en el tp desde Arqui? Tenemos
+      que pasar todo a procesos? El Tron por ejemplo seria un proceso? Nos
+      conviene borrar todo esto?
 
-Tasks extra
--------------------------------------------------------------------------------
-+ [ ] Scrolling
-+ [ ] Driver de mouse para hacer scroll
+- [ ] Modo Texto / Modo Video. Va en parte de la mano con la duda anterior,
+      deberiamos mantener los drivers?
+
+- [ ] En caso de que sea mejor que el SO corra en modo texto y no hacer nada en
+      modo video, podemos dejar el codigo muerto o tenemos que borrar lo que no
+      se ejecute? Podriamos modificar la compilacion para que no se compile
+      esa parte y en consecuencia no tenga warnings
 
 Importante
 -------------------------------------------------------------------------------
-- [ ] Semaforos
+- [ ] Semaforos => Victoria esta en esto
         - [ ] estructuras
         - [ ] manejo de atomicidad
         - [ ] Syscalls
@@ -51,6 +57,10 @@ Importante
 - [ ] Fixes
         - [ ] Reemplazar busy_wait_ms en sound.c
 
+Tasks extra
+-------------------------------------------------------------------------------
++ [ ] Scrolling
++ [ ] Driver de mouse para hacer scroll
 
 In progress
 -------------------------------------------------------------------------------
