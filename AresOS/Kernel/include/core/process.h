@@ -48,6 +48,7 @@ typedef struct {
         uint8_t *kernel_stack_base;
         uint8_t *user_stack_base;
         process_state_t state;
+        uint8_t blocked_by_semaphore;
         uint64_t priority;
         int foreground;
         pid_t parent_pid;
@@ -105,11 +106,25 @@ pid_t process_getpid(void);
 int process_kill(pid_t pid);
 
 /**
- * @brief Block a process. If pid is the caller, blocks until unblocked.
+ * @brief Block a process by PID due to waiting on a semaphore.
+ * @param pid PID of the process to block.
+ * @return 0 on success, -1 on error.
+ */
+int block_by_semaphore(pid_t pid);
+
+/**
+ * @brief Block a process by PID.
  * @param pid PID of the process to block.
  * @return 0 on success, -1 on error.
  */
 int process_block(pid_t pid);
+
+/**
+ * @brief Unblock a process by PID that was blocked on a semaphore.
+ * @param pid PID of the process to unblock.
+ * @return 0 on success, -1 if not blocked.
+ */
+int unblock_by_semaphore(pid_t pid);
 
 /**
  * @brief Unblock a blocked process.
