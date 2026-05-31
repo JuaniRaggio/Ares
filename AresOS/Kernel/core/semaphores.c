@@ -8,6 +8,7 @@
 #include <process.h>
 #include <stddef.h>
 #include <slab.h>
+#include <spinlock.h>
 
 #define NULL ((void*)0)
 
@@ -19,6 +20,7 @@ typedef struct pnode {
 struct sem {
     char id[MAX_ID_LENGTH];
     int64_t value;
+    spinlock_t *lock;
     pNode_t *head;
     pNode_t *tail;
 };
@@ -104,7 +106,7 @@ uint64_t assign_sem_id(char* sem_id, uint64_t value) {
 int64_t sem_init(char* sem_id, uint64_t value) {
     if (strlen(sem_id) >= MAX_ID_LENGTH || sem_count >= MAX_SEM || value < 0 || search_sem(sem_id) >= 0)
         return -1;
-        
+
     return assign_sem_id(sem_id, value);
 }
 
