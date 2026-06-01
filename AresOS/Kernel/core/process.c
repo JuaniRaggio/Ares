@@ -206,9 +206,6 @@ int block_by_semaphore(pid_t pid) {
         pcb->blocked_by_semaphore = 1;
         pcb->state = PROCESS_BLOCKED;
 
-        if (pid == current_pid)
-                scheduler_yield();
-
         return 0;
 }
 
