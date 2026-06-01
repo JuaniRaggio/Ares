@@ -9,6 +9,7 @@
 #include <naiveConsole.h>
 #include <process.h>
 #include <scheduler.h>
+#include <semaphores.h>
 #include <time.h>
 #include <video_driver.h>
 
@@ -101,6 +102,7 @@ int main() {
 
         process_init();
         scheduler_init();
+        sem_system_init();
 
         clearScreen(BLACK);
         bmp_font_t *font = &font_ubuntu_mono;
