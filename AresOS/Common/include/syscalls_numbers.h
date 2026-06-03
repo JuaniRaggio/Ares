@@ -36,5 +36,9 @@ typedef enum {
         SYS_LIST_PROCESSES,
         SYS_PIPE_OPEN,
         SYS_PIPE_CLOSE,
+        SYS_SEM_OPEN,
+        SYS_SEM_POST,
+        SYS_SEM_WAIT,
+        SYS_SEM_CLOSE,
         SYS_MAX,
 } syscall_codes;

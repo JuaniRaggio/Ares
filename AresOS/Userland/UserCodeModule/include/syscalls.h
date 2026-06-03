@@ -268,3 +268,19 @@ static inline int syscall_pipe_open(const char *name) {
 static inline int syscall_pipe_close(int pipe_id) {
         return (int)_syscall3(SYS_PIPE_CLOSE, (uint64_t)pipe_id, 0, 0);
 }
+
+static inline int64_t syscall_sem_open(char* sem_id, uint64_t value) {
+        return (int64_t)_syscall3(SYS_SEM_OPEN, (uint64_t)sem_id, value, 0);
+}
+
+static inline int64_t syscall_sem_post(char* sem_id) {
+        return (int64_t)_syscall3(SYS_SEM_POST, (uint64_t)sem_id, 0, 0);
+}
+
+static inline int64_t syscall_sem_wait(char* sem_id) {
+        return (int64_t)_syscall3(SYS_SEM_WAIT, (uint64_t)sem_id, 0, 0);
+}
+
+static inline int64_t syscall_sem_close(char* sem_id) {
+        return (int64_t)_syscall3(SYS_SEM_CLOSE, (uint64_t)sem_id, 0, 0);
+}
