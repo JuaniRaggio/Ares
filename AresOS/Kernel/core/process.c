@@ -155,6 +155,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
 
         pcb->pid               = next_pid_to_assign++;
         pcb->state             = PROCESS_READY;
+        pcb->blocked_by_semaphore = 0;
         pcb->priority          = DEFAULT_PRIORITY;
         pcb->foreground        = foreground;
         pcb->parent_pid        = current_pid;
@@ -210,6 +211,19 @@ int process_kill(pid_t pid) {
         return SYS_OK;
 }
 
+int block_by_semaphore(pid_t pid) {
+        pcb_t *pcb = process_get(pid);
+        if (pcb == (void *)0)
+                return -1;
+        if (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING)
+                return -1;
+
+        pcb->blocked_by_semaphore = 1;
+        pcb->state = PROCESS_BLOCKED;
+
+        return 0;
+}
+
 int process_block(pid_t pid) {
         pcb_t *pcb = process_get(pid);
         if (pcb == (void *)0)
@@ -223,6 +237,18 @@ int process_block(pid_t pid) {
                 scheduler_yield();
 
         return SYS_OK;
+}
+
+int unblock_by_semaphore(pid_t pid) {
+        pcb_t *pcb = process_get(pid);
+        if (pcb == (void *)0)
+                return -1;
+        if (pcb->state != PROCESS_BLOCKED || !pcb->blocked_by_semaphore)
+                return -1;
+
+        pcb->blocked_by_semaphore = 0;
+        pcb->state = PROCESS_READY;
+        return 0;
 }
 
 int process_unblock(pid_t pid) {

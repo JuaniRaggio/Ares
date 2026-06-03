@@ -23,12 +23,12 @@ Dudas para Fede
 Importante
 -------------------------------------------------------------------------------
 - [ ] Semaforos => Victoria esta en esto
-        - [ ] estructuras
+        - [X] estructuras
         - [ ] manejo de atomicidad
-        - [ ] Syscalls
+        - [X] Syscalls
                 - sem_open
                 - sem_close
-                - sem_wait => sem_aquire
+                - sem_wait => sem_acquire
                 - sem_post => sem_release
 
 - [ ] Shell

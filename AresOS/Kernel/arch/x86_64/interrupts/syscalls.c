@@ -12,6 +12,7 @@
 #include <status_codes.h>
 #include <stdint.h>
 #include <syscalls.h>
+#include <semaphores.h>
 
 #define DEFAULT_BG_COLOR     0x000000
 #define DEFAULT_STDOUT_COLOR 0xFFFFFF
@@ -302,4 +303,23 @@ uint64_t sys_pipe_open(uint64_t name_ptr) {
 
 uint64_t sys_pipe_close(uint64_t pipe_id) {
         return (uint64_t)pipe_close((int)pipe_id);
+
+uint64_t sys_sem_init(char* sem_id, uint64_t value){
+        return (uint64_t)sem_init(sem_id, value);
+}
+
+uint64_t sys_sem_open(char* sem_id){
+        return (uint64_t)sem_open(sem_id);
+}
+
+uint64_t sys_sem_post(uint64_t sem_idx){
+        return (uint64_t)sem_post(sem_idx);
+}
+
+uint64_t sys_sem_wait(uint64_t sem_idx){
+        return (uint64_t)sem_wait(sem_idx);
+}
+
+uint64_t sys_sem_close(uint64_t sem_idx){
+        return (uint64_t)sem_close(sem_idx);
 }
