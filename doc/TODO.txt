@@ -24,7 +24,7 @@ Importante
 -------------------------------------------------------------------------------
 - [ ] Semaforos => Victoria esta en esto
         - [X] estructuras
-        - [ ] manejo de atomicidad
+        - [X] manejo de atomicidad
         - [X] Syscalls
                 - sem_open
                 - sem_close
