@@ -1,8 +1,12 @@
-#include "syscall.h"
 #include "test_util.h"
+#include <process_api.h>
 #include <stdio.h>
 
-enum State { RUNNING, BLOCKED, KILLED };
+enum State {
+        RUNNING,
+        BLOCKED,
+        KILLED,
+};
 
 typedef struct P_rq {
         int32_t pid;

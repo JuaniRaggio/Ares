@@ -1,5 +1,5 @@
-#include "syscall.h"
 #include "test_util.h"
+#include <process_api.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -9,7 +9,11 @@
 #define MEDIUM 1  // TODO: Change as required
 #define HIGHEST 2 // TODO: Change as required
 
-int64_t prio[TOTAL_PROCESSES] = {LOWEST, MEDIUM, HIGHEST};
+int64_t prio[TOTAL_PROCESSES] = {
+    LOWEST,
+    MEDIUM,
+    HIGHEST,
+};
 
 uint64_t max_value = 0;
 
