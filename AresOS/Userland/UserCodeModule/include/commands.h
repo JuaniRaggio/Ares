@@ -136,7 +136,7 @@ typedef enum {
         CMD_BENCHMARK,
         CMD_TEXTCOLOR,
         CMD_BGCOLOR,
-        CMD_PIPE
+        CMD_PIPE,
         QTY_COMMANDS
 } command_index;
 
@@ -293,11 +293,11 @@ static const command_t bgcolor_command = {
         },
 };
 
-static const comand_t pipe_comand = {
-    .name = "|"
-    .description = "Redirects the output of one process to the input of another. EXAMPLE: s1 | s2"
-    .lamda = {
-        .ftype = bi_function_t
+static const command_t pipe_comand = {
+    .name = "|", 
+    .description = "Redirects the output of one process to the input of another. EXAMPLE: s1 | s2", 
+    .lambda = {
+        .ftype = bi_function_t, 
         .execute.bi_function = &pipe_cmd,
     },
 };
@@ -308,5 +308,5 @@ static const command_t *const commands[QTY_COMMANDS] = {
     &print_mem_command, &history_command,   &exit_command,
     &cursor_command,    &tron_command,      &trigger_opcode,
     &benchmark_command, &textcolor_command, &bgcolor_command,
-    &pipe_comand
+    &pipe_command
 };
