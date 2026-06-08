@@ -1,25 +1,25 @@
 #include <drivers/keyboard_driver.h>
 #include <drivers/sound.h>
+#include <interrupts.h>
 #include <lib.h>
 #include <multi_region_heap.h>
 #include <naiveConsole.h>
-#include <interrupts.h>
 #include <pipe.h>
 #include <process.h>
 #include <process_types.h>
 #include <regs.h>
 #include <scheduler.h>
+#include <semaphores.h>
 #include <status_codes.h>
 #include <stdint.h>
 #include <syscalls.h>
-#include <semaphores.h>
 
-#define DEFAULT_BG_COLOR     0x000000
+#define DEFAULT_BG_COLOR 0x000000
 #define DEFAULT_STDOUT_COLOR 0xFFFFFF
 #define DEFAULT_STDERR_COLOR 0xFF0000
 
-regs_snapshot_t saved_regs = {0};
-uint32_t current_bg_color  = DEFAULT_BG_COLOR;
+regs_snapshot_t saved_regs               = {0};
+uint32_t current_bg_color                = DEFAULT_BG_COLOR;
 static uint32_t current_stdout_color_rgb = DEFAULT_STDOUT_COLOR;
 static uint32_t current_stderr_color_rgb = DEFAULT_STDERR_COLOR;
 
@@ -75,7 +75,7 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
         pcb_t *current = process_get_current();
         if (current != (void *)0 && current->stdin_pipe >= 0) {
                 int ret = pipe_read(current->stdin_pipe, buf, (int)max_count);
-                *count = (ret > 0) ? (uint64_t)ret : 0;
+                *count  = (ret > 0) ? (uint64_t)ret : 0;
                 return (ret >= 0) ? SYS_OK : SYS_BAD;
         }
 
@@ -253,10 +253,9 @@ uint64_t sys_create_process(uint64_t info_ptr) {
         if (info_ptr == 0)
                 return (uint64_t)NO_PID;
         create_process_info_t *info = (create_process_info_t *)info_ptr;
-        return (uint64_t)process_create(info->entry, info->argc, info->argv,
-                                        info->name, info->foreground,
-                                        info->exit_handler,
-                                        info->stdin_pipe, info->stdout_pipe);
+        return (uint64_t)process_create(
+            info->entry, info->argc, info->argv, info->name, info->foreground,
+            info->exit_handler, info->stdin_pipe, info->stdout_pipe);
 }
 
 uint64_t sys_getpid(void) {
@@ -303,23 +302,20 @@ uint64_t sys_pipe_open(uint64_t name_ptr) {
 
 uint64_t sys_pipe_close(uint64_t pipe_id) {
         return (uint64_t)pipe_close((int)pipe_id);
-
-uint64_t sys_sem_init(char* sem_id, uint64_t value){
-        return (uint64_t)sem_init(sem_id, value);
 }
 
-uint64_t sys_sem_open(char* sem_id){
-        return (uint64_t)sem_open(sem_id);
+uint64_t sys_sem_open(char *sem_id, uint64_t value) {
+        return (uint64_t)sem_open(sem_id, value);
 }
 
-uint64_t sys_sem_post(uint64_t sem_idx){
+uint64_t sys_sem_post(char *sem_idx) {
         return (uint64_t)sem_post(sem_idx);
 }
 
-uint64_t sys_sem_wait(uint64_t sem_idx){
+uint64_t sys_sem_wait(char *sem_idx) {
         return (uint64_t)sem_wait(sem_idx);
 }
 
-uint64_t sys_sem_close(uint64_t sem_idx){
+uint64_t sys_sem_close(char *sem_idx) {
         return (uint64_t)sem_close(sem_idx);
 }

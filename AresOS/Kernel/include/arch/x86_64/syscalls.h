@@ -1,4 +1,3 @@
-// syscalls.h
 #pragma once
 
 #include <keyboard_driver.h>
@@ -7,7 +6,7 @@
 #include <regs.h>
 #include <stdint.h>
 #include <syscalls_numbers.h>
-#include <time.h>
+// #include <time.h>
 #include <video_driver.h>
 
 #define STDIN 0
@@ -259,6 +258,14 @@ uint64_t sys_pipe_open(uint64_t name_ptr);
  * @return 0 on success, -1 on error.
  */
 uint64_t sys_pipe_close(uint64_t pipe_id);
+
+uint64_t sys_sem_open(char *sem_id, uint64_t value);
+
+uint64_t sys_sem_post(char *sem_idx);
+
+uint64_t sys_sem_wait(char *sem_idx);
+
+uint64_t sys_sem_close(char *sem_idx);
 
 /**
  * Initializes the syscall subsystem.
