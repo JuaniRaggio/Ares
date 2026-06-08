@@ -35,7 +35,7 @@ extern sys_waitpid_wrapper
 extern sys_list_processes_wrapper
 extern sys_pipe_open_wrapper
 extern sys_pipe_close_wrapper
-extern sys_sem_init_wrapper
+extern sys_sem_open_wrapper
 extern sys_sem_post_wrapper
 extern sys_sem_wait_wrapper
 extern sys_sem_close_wrapper

@@ -2,7 +2,6 @@
 
 #include <lib.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <syscalls.h>
 
 #define MAX_CHARS 256

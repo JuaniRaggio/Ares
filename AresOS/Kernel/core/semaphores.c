@@ -97,12 +97,12 @@ int64_t sem_open(char* sem_id, uint64_t value) {
     if (strlen(sem_id) >= MAX_ID_LENGTH || sem_count >= MAX_SEM )
         return 0;
 
-    cli();
+    _cli();
     acquire_lock(&semaphores_lock);
 
     if(search_sem(sem_id) >= 0){
         release_lock(&semaphores_lock);
-        sti();
+        _sti();
         return 1;
     }
 
@@ -113,12 +113,12 @@ int64_t sem_open(char* sem_id, uint64_t value) {
             semaphores[i].lock = 0;
             sem_count++;
             release_lock(&semaphores_lock);
-            sti();
+            _sti();
             return 1;
         }
     }
     release_lock(&semaphores_lock);
-    sti();
+    _sti();
     return 0;
 }
 
@@ -127,14 +127,14 @@ int64_t sem_post(char* sem_id) {
     if (strlen(sem_id) >= MAX_ID_LENGTH)
         return -1;
         
-    cli();
+    _cli();
     
     acquire_lock(&semaphores_lock);
     int64_t sem_idx = search_sem(sem_id);
 
     if(sem_idx < 0){
         release_lock(&semaphores_lock);
-        sti();
+        _sti();
         return -1;
     }
 
@@ -147,7 +147,7 @@ int64_t sem_post(char* sem_id) {
         if(blocked_pid != -1) unblock_by_semaphore(blocked_pid);
     }else release_lock(&semaphores[sem_idx].lock);
 
-    sti();
+    _sti();
     return 0;
 }
 
@@ -155,14 +155,14 @@ int64_t sem_wait(char* sem_id) {
     if (strlen(sem_id) >= MAX_ID_LENGTH )
         return -1;
 
-    cli();
+    _cli();
     acquire_lock(&semaphores_lock);
 
     int64_t sem_idx = search_sem(sem_id);
 
     if(sem_idx < 0) {
         release_lock(&semaphores_lock);
-        sti();
+        _sti();
         return -1;
     }
 
@@ -176,15 +176,15 @@ int64_t sem_wait(char* sem_id) {
         if (block_by_semaphore(pid) == -1) {
             semaphores[sem_idx].value++;
             release_lock(&semaphores[sem_idx].lock);
-            sti();
+            _sti();
             return -1;
         }
         release_lock(&semaphores[sem_idx].lock);
-        sti();
+        _sti();
         scheduler_yield();
     }else{
         release_lock(&semaphores[sem_idx].lock);
-        sti();
+        _sti();
     }
     return 0;
 }
@@ -192,13 +192,13 @@ int64_t sem_wait(char* sem_id) {
 int64_t sem_close(char* sem_id) {
     if (strlen(sem_id) >= MAX_ID_LENGTH) return -1;
 
-    cli();
+    _cli();
     acquire_lock(&semaphores_lock);
 
     int64_t sem_idx = search_sem(sem_id);
     if(sem_idx < 0){
         release_lock(&semaphores_lock);
-        sti();
+        _sti();
         return 0;
     }
 
@@ -213,7 +213,7 @@ int64_t sem_close(char* sem_id) {
     release_lock(&semaphores[sem_idx].lock);
     sem_count--;
     release_lock(&semaphores_lock);
-    sti();
+    _sti();
 
     return 1;
 }

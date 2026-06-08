@@ -13,6 +13,8 @@
 #define MIN_FONT_SCALE 1
 #define MAX_FONT_SCALE 5
 
+#define MAX_CHARS 256
+
 typedef struct {
         cursor_shape shape;
         uint32_t color;

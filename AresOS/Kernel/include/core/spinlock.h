@@ -5,7 +5,7 @@
 
 typedef volatile uint64_t spinlock_t;
 
-void acquire_lock(spinlock_t *lock);
-void release_lock(spinlock_t *lock);
+extern void acquire_lock(spinlock_t *lock);
+extern void release_lock(spinlock_t *lock);
 
 #endif /* SPINLOCK_H */

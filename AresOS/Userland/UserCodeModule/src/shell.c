@@ -9,7 +9,6 @@
 #define TRUE 1
 #define FALSE !TRUE
 #define for_ever for (;;)
-#define MAX_CHARS 256
 #define CHECK_MAN "Type \"man %s\" to see how the command works\n"
 #define PROMPT_LENGTH 3
 #define CURSOR_BLINK_TICKS 25

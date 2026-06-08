@@ -1,5 +1,5 @@
-#include <stdint.h>
 #include <stdio.h>
+#include <stdint.h>
 
 /*
  * Lee un caracter del stdin (non-blocking)
