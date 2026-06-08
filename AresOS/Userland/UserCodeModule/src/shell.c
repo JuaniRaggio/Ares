@@ -172,7 +172,17 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
 
         for_ever {
                 char c = getchar();
+                
+                if (c == CTRL_C_CHAR) {
+                        // Aca después iría matar al proceso foreground
+                        continue;
+                }
 
+                if (c == CTRL_D_CHAR) {
+                        printf("^D\n");
+                        // acá después iría enviar EOF
+                        continue;
+                }
                 if (c == 0) {
                         uint64_t now = 0;
                         syscall_get_ticks(&now);
@@ -285,11 +295,32 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
 }
 
 uint8_t analize_user_input(uint32_t params) {
-        int idx = get_command_index(shell_status.prompts.user_input[0]);
-        if (idx == INVALID_COMMAND_NAME) {
-                printf(invalid_command);
-                return INVALID_COMMAND_NAME;
-        } else if (commands[idx]->lambda.ftype != params - 1) {
+
+        //La unica forma q sea valido el 2do arg es que sea "|"
+        int idx = INVALID_COMMAND_NAME;
+        if (params > 1) {
+                idx = get_command_index(shell_status.prompts.user_input[1]);
+        }
+        
+        // Solo entra si el inidce "idx" es invalido o si el "idx" es valido pero no corresponde a "|"
+        if (idx == INVALID_COMMAND_NAME || strcmp(commands[idx]->name, "|") != 0) {
+                // Si no es valido el 2do me fijo el 1ero
+                idx = get_command_index(shell_status.prompts.user_input[0]);
+                if(idx == INVALID_COMMAND_NAME){
+                        printf(invalid_command);
+                        return INVALID_COMMAND_NAME;
+                }
+        }
+        else{
+                //Si entro aca es pq la user.input[1] es "|"
+                char aux[MAX_CHARS];
+                strcpy(aux, shell_status.prompts.user_input[0]);
+                strcpy(shell_status.prompts.user_input[0], shell_status.prompts.user_input[1]);
+                strcpy(shell_status.prompts.user_input[1], aux);
+                //Si hice s1 | s2, ahora en user_imput me queda [ "|" , "s1", "s2" ]
+        }
+
+        if (commands[idx]->lambda.ftype != params - 1) {
                 printf(wrong_params);
                 printf(CHECK_MAN, shell_status.prompts.user_input[0]);
                 return INVALID_INPUT;

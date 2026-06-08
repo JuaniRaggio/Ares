@@ -113,6 +113,13 @@ uint8_t textcolor_cmd(char *color);
  */
 uint8_t bgcolor_cmd(char *color);
 
+/**
+ * Redirects the output of one process to the input of another
+ * @param type two strings, that represents the processes names (p1 | p2)
+ * @return 0 on success, -1 on error
+*/
+uint8_t pipe_cmd(char *p1, char*p2);
+
 typedef enum {
         CMD_HELP,
         CMD_MAN,
@@ -129,6 +136,7 @@ typedef enum {
         CMD_BENCHMARK,
         CMD_TEXTCOLOR,
         CMD_BGCOLOR,
+        CMD_PIPE
         QTY_COMMANDS
 } command_index;
 
@@ -285,10 +293,20 @@ static const command_t bgcolor_command = {
         },
 };
 
+static const comand_t pipe_comand = {
+    .name = "|"
+    .description = "Redirects the output of one process to the input of another. EXAMPLE: s1 | s2"
+    .lamda = {
+        .ftype = bi_function_t
+        .execute.bi_function = &pipe_cmd,
+    },
+};
+
 static const command_t *const commands[QTY_COMMANDS] = {
     &help_command,      &man_command,       &inforeg_command,
     &time_command,      &div_command,       &clear_command,
     &print_mem_command, &history_command,   &exit_command,
     &cursor_command,    &tron_command,      &trigger_opcode,
     &benchmark_command, &textcolor_command, &bgcolor_command,
+    &pipe_comand
 };
