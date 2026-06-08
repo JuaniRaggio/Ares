@@ -101,11 +101,11 @@ int main() {
         setup_tss();
 
         enable_interrupts();
-        init_heap();
+        // init_heap();
 
-        process_init();
-        scheduler_init();
-        sem_system_init();
+        // process_init();
+        // scheduler_init();
+        // sem_system_init();
 
         clearScreen(BLACK);
         bmp_font_t *font = &font_ubuntu_mono;
