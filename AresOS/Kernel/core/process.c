@@ -5,10 +5,10 @@
 #include <process.h>
 #include <status_codes.h>
 
-#define USER_CS          0x1B
-#define USER_SS          0x23
-#define RFLAGS_IF        0x202
-#define SHELL_INDEX      0
+#define USER_CS 0x1B
+#define USER_SS 0x23
+#define RFLAGS_IF 0x202
+#define SHELL_INDEX 0
 
 static pcb_t process_table[MAX_PROCESSES];
 static pid_t current_pid;
@@ -92,16 +92,16 @@ void process_init(void) {
                 process_table[i].user_stack_base   = (void *)0;
         }
 
-        pcb_t *shell     = &process_table[SHELL_INDEX];
-        shell->pid       = next_pid_to_assign++;
-        shell->state     = PROCESS_RUNNING;
-        shell->priority  = DEFAULT_PRIORITY;
-        shell->foreground = 1;
-        shell->parent_pid = NO_PID;
-        shell->waiting_for = NO_PID;
-        shell->stdin_pipe      = NO_PIPE;
-        shell->stdout_pipe     = NO_PIPE;
-        shell->blocked_on_pipe = NO_PIPE;
+        pcb_t *shell             = &process_table[SHELL_INDEX];
+        shell->pid               = next_pid_to_assign++;
+        shell->state             = PROCESS_RUNNING;
+        shell->priority          = DEFAULT_PRIORITY;
+        shell->foreground        = 1;
+        shell->parent_pid        = NO_PID;
+        shell->waiting_for       = NO_PID;
+        shell->stdin_pipe        = NO_PIPE;
+        shell->stdout_pipe       = NO_PIPE;
+        shell->blocked_on_pipe   = NO_PIPE;
         shell->kernel_stack_base = (void *)0;
         shell->user_stack_base   = (void *)0;
         strncpy(shell->name, "shell", PROCESS_NAME_LEN);
@@ -153,19 +153,19 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                 return NO_PID;
         }
 
-        pcb->pid               = next_pid_to_assign++;
-        pcb->state             = PROCESS_READY;
+        pcb->pid                  = next_pid_to_assign++;
+        pcb->state                = PROCESS_READY;
         pcb->blocked_by_semaphore = 0;
-        pcb->priority          = DEFAULT_PRIORITY;
-        pcb->foreground        = foreground;
-        pcb->parent_pid        = current_pid;
-        pcb->waiting_for       = NO_PID;
-        pcb->exit_code         = 0;
-        pcb->stdin_pipe        = stdin_pipe;
-        pcb->stdout_pipe       = stdout_pipe;
-        pcb->blocked_on_pipe   = NO_PIPE;
-        pcb->kernel_stack_base = kstack;
-        pcb->user_stack_base   = ustack;
+        pcb->priority             = DEFAULT_PRIORITY;
+        pcb->foreground           = foreground;
+        pcb->parent_pid           = current_pid;
+        pcb->waiting_for          = NO_PID;
+        pcb->exit_code            = 0;
+        pcb->stdin_pipe           = stdin_pipe;
+        pcb->stdout_pipe          = stdout_pipe;
+        pcb->blocked_on_pipe      = NO_PIPE;
+        pcb->kernel_stack_base    = kstack;
+        pcb->user_stack_base      = ustack;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
 
         uint64_t user_rsp;
@@ -176,13 +176,13 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
 }
 
 void process_exit(int code) {
-        pcb_t *pcb     = process_get_current();
+        pcb_t *pcb = process_get_current();
         pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
-        pcb->state     = PROCESS_ZOMBIE;
-        pcb->exit_code = code;
+        pcb->state           = PROCESS_ZOMBIE;
+        pcb->exit_code       = code;
         wake_waiters(pcb->pid);
         scheduler_yield();
         while (1)
@@ -191,17 +191,15 @@ void process_exit(int code) {
 
 int process_kill(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0)
-                return SYS_ERR;
-        if (pcb->state == PROCESS_ZOMBIE)
+        if (pcb == (void *)0 || pcb->state == PROCESS_ZOMBIE)
                 return SYS_ERR;
 
         pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
-        pcb->state     = PROCESS_ZOMBIE;
-        pcb->exit_code = KILLED_EXIT_CODE;
+        pcb->state           = PROCESS_ZOMBIE;
+        pcb->exit_code       = KILLED_EXIT_CODE;
         wake_waiters(pid);
 
         if (pid == current_pid) {
@@ -213,22 +211,20 @@ int process_kill(pid_t pid) {
 
 int block_by_semaphore(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0)
-                return -1;
-        if (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING)
-                return -1;
+        if (pcb == (void *)0 ||
+            (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING))
+                return SYS_ERR;
 
         pcb->blocked_by_semaphore = 1;
-        pcb->state = PROCESS_BLOCKED;
+        pcb->state                = PROCESS_BLOCKED;
 
-        return 0;
+        return SYS_OK;
 }
 
 int process_block(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0)
-                return SYS_ERR;
-        if (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING)
+        if (pcb == (void *)0 ||
+            (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING))
                 return SYS_ERR;
 
         pcb->state = PROCESS_BLOCKED;
@@ -241,21 +237,18 @@ int process_block(pid_t pid) {
 
 int unblock_by_semaphore(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0)
-                return -1;
-        if (pcb->state != PROCESS_BLOCKED || !pcb->blocked_by_semaphore)
+        if (pcb == (void *)0 || pcb->state != PROCESS_BLOCKED ||
+            !pcb->blocked_by_semaphore)
                 return -1;
 
         pcb->blocked_by_semaphore = 0;
-        pcb->state = PROCESS_READY;
+        pcb->state                = PROCESS_READY;
         return 0;
 }
 
 int process_unblock(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0)
-                return SYS_ERR;
-        if (pcb->state != PROCESS_BLOCKED)
+        if (pcb == (void *)0 || pcb->state != PROCESS_BLOCKED)
                 return SYS_ERR;
 
         pcb->state = PROCESS_READY;
@@ -264,9 +257,7 @@ int process_unblock(pid_t pid) {
 
 int process_nice(pid_t pid, uint64_t new_priority) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0)
-                return SYS_ERR;
-        if (pcb->state == PROCESS_ZOMBIE)
+        if (pcb == (void *)0 || pcb->state == PROCESS_ZOMBIE)
                 return SYS_ERR;
         if (new_priority > MAX_PRIORITY)
                 new_priority = MAX_PRIORITY;
@@ -296,11 +287,9 @@ static int reap_zombie(pcb_t *target, pid_t pid) {
 
 int process_wait(pid_t pid) {
         pcb_t *target = find_by_pid_any_state(pid);
-        if (target == (void *)0)
+        if (target == (void *)0 || target->state == PROCESS_DEAD)
                 return SYS_ERR;
 
-        if (target->state == PROCESS_DEAD)
-                return SYS_ERR;
         if (target->state == PROCESS_ZOMBIE)
                 return reap_zombie(target, pid);
 
@@ -325,4 +314,3 @@ int process_list(uint64_t *pids, int max) {
         }
         return count;
 }
-

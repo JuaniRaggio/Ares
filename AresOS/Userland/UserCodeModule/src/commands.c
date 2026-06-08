@@ -3,6 +3,7 @@
 #include <shell.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <syscalls.h>
 
 extern shell_attributes shell_status;
 
