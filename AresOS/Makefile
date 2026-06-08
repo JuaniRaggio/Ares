@@ -34,4 +34,12 @@ clean:
 	cd Kernel; make clean
 	cd Userland; make clean
 
-.PHONY: toolchain bootloader image kernel userland all clean compile_commands
+# Compilar con buddy allocator
+buddy:
+	cd Toolchain; make all
+	cd Bootloader; make all
+	cd Kernel; make buddy
+	cd Userland; make all
+	cd Image; make all
+
+.PHONY: toolchain bootloader image kernel userland all clean compile_commands buddy

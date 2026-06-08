@@ -1,5 +1,6 @@
 /* userCodeModule.c */
 
+#include <stdint.h>
 #include <process_api.h>
 #include <shell.h>
 
