@@ -177,6 +177,14 @@ uint8_t keyboard_handler(uint64_t *stack_ptr) {
                 goto end;
         }
 
+        if (scan_code == C_CODE && keyboard.modifiers == ctl) {
+        return CTRL_C_CHAR; //3
+        }
+
+        if (scan_code == D_CODE && keyboard.modifiers == ctl) {
+                return CTRL_D_CHAR; //4
+        }
+
         if (scan_code == MINUS_CODE && keyboard.modifiers == ctl) {
                 return ZOOM_OUT_CHAR;
         }

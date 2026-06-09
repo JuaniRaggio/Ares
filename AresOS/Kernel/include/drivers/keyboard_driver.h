@@ -17,9 +17,14 @@
 #define RSHIFT_CODE 0x36
 #define LCTRL_CODE 0x1D
 #define R_CODE 0x13
+#define C_CODE 0x2E
+#define D_CODE 0x20
 #define MINUS_CODE 0x0C
 #define EQUALS_CODE 0x0D
 #define BREAK_CODE 0x80
+
+#define CTRL_C_CHAR 0x03
+#define CTRL_D_CHAR 0x04
 
 /**
  * Handles keyboard interrupt
