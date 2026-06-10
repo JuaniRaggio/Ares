@@ -312,3 +312,7 @@ uint8_t bgcolor_cmd(char *color) {
         printf("Background color changed\n");
         return OK;
 }
+
+uint8_t pipe_cmd(char *p1, char*p2){
+        
+}

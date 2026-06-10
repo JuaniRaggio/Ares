@@ -14,6 +14,8 @@
 #define MAX_FONT_SCALE 5
 
 #define MAX_CHARS 256
+#define CTRL_C_CHAR 0x03
+#define CTRL_D_CHAR 0x04
 
 typedef struct {
         cursor_shape shape;
