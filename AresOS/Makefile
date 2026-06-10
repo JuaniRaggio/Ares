@@ -1,21 +1,30 @@
+RED    := \033[0;31m
+GREEN  := \033[0;32m
+YELLOW := \033[0;33m
+NC     := \033[0m
 
-# ORDEN CRÍTICO: Toolchain DEBE compilarse primero
 all: toolchain bootloader kernel userland image compile_commands
+	@echo -e "$(GREEN)Build complete$(NC)"
 
 toolchain:
-	cd Toolchain; make all
+	@echo -e "$(YELLOW)Building toolchain...$(NC)"
+	@cd Toolchain; make all
 
 bootloader:
-	cd Bootloader; make all
+	@echo -e "$(YELLOW)Building bootloader...$(NC)"
+	@cd Bootloader; make all
 
 kernel:
-	cd Kernel; make all
+	@echo -e "$(YELLOW)Building kernel...$(NC)"
+	@cd Kernel; make all
 
 userland:
-	cd Userland; make all
+	@echo -e "$(YELLOW)Building userland...$(NC)"
+	@cd Userland; make all
 
 image: toolchain kernel bootloader userland
-	cd Image; make all
+	@echo -e "$(YELLOW)Building image...$(NC)"
+	@cd Image; make all
 
 # Generar compile_commands.json unificado para IDE/LSP
 compile_commands:
@@ -28,18 +37,21 @@ compile_commands:
 	@echo ']' >> compile_commands.json
 
 clean:
-	cd Toolchain; make clean
-	cd Bootloader; make clean
-	cd Image; make clean
-	cd Kernel; make clean
-	cd Userland; make clean
+	@echo -e "$(YELLOW)Cleaning...$(NC)"
+	@cd Toolchain; make clean
+	@cd Bootloader; make clean
+	@cd Image; make clean
+	@cd Kernel; make clean
+	@cd Userland; make clean
+	@echo -e "$(GREEN)Clean complete$(NC)"
 
-# Compilar con buddy allocator
 buddy:
-	cd Toolchain; make all
-	cd Bootloader; make all
-	cd Kernel; make buddy
-	cd Userland; make all
-	cd Image; make all
+	@echo -e "$(YELLOW)Building with buddy allocator...$(NC)"
+	@cd Toolchain; make all
+	@cd Bootloader; make all
+	@cd Kernel; make buddy
+	@cd Userland; make all
+	@cd Image; make all
+	@echo -e "$(GREEN)Buddy build complete$(NC)"
 
 .PHONY: toolchain bootloader image kernel userland all clean compile_commands buddy

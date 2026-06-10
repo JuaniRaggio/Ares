@@ -20,8 +20,17 @@ static char args_doc[] = "KernelFile Module1 Module2 ...";
 
 /* The options we understand. */
 static struct argp_option options[] = {
-    {"output", 'o', "FILE", 0, "Output to FILE instead of standard output"},
-    {0}};
+    {
+        "output",
+        'o',
+        "FILE",
+        0,
+        "Output to FILE instead of standard output",
+    },
+    {
+        0,
+    },
+};
 
 /* Our argp parser. */
 static struct argp argp = {

@@ -1,42 +1,34 @@
 #!/bin/bash
+# Generate all image formats (qcow2, vmdk) from raw img
+# Requires qemu-img installed locally
 
-# Script para generar todos los formatos de imagen (img, qcow2, vmdk)
-# Requiere qemu-img instalado localmente
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
 
-echo "==========================================="
-echo "Generando todos los formatos de imagen"
-echo "==========================================="
-echo ""
-
-# Verificar que exista la imagen .img
+# Check that .img exists
 if [ ! -f "Image/x64BareBonesImage.img" ]; then
-    echo "ERROR: No existe Image/x64BareBonesImage.img"
-    echo "Primero ejecuta: ./compile_in_container.sh"
+    echo -e "${RED}Error: Image/x64BareBonesImage.img not found${NC}"
+    echo "Run ./compile_in_container.sh first"
     exit 1
 fi
 
-# Verificar que qemu-img esté instalado
+# Check that qemu-img is installed
 if ! command -v qemu-img &> /dev/null; then
-    echo "ERROR: qemu-img no está instalado"
+    echo -e "${RED}Error: qemu-img not installed${NC}"
     echo ""
-    echo "Para instalarlo:"
+    echo "Install with:"
     echo "  macOS:   brew install qemu"
     echo "  Ubuntu:  sudo apt-get install qemu-utils"
     exit 1
 fi
 
-echo "[*] Generando x64BareBonesImage.qcow2..."
-qemu-img convert -f raw -O qcow2 Image/x64BareBonesImage.img Image/x64BareBonesImage.qcow2
+echo "Generating image formats..."
 
-echo "[*] Generando x64BareBonesImage.vmdk..."
-qemu-img convert -f raw -O vmdk Image/x64BareBonesImage.img Image/x64BareBonesImage.vmdk
+qemu-img convert -f raw -O qcow2 Image/x64BareBonesImage.img Image/x64BareBonesImage.qcow2 2>/dev/null
+qemu-img convert -f raw -O vmdk Image/x64BareBonesImage.img Image/x64BareBonesImage.vmdk 2>/dev/null
 
-echo ""
-echo "==========================================="
-echo "Imágenes generadas exitosamente:"
-echo "==========================================="
+echo -e "${GREEN}Done${NC}"
 ls -lh Image/*.img Image/*.qcow2 Image/*.vmdk 2>/dev/null
-
 echo ""
-echo "Ahora podés ejecutar con: ./run.sh"
-echo "(usará automáticamente .qcow2 si existe)"
+echo "Run with: ./run.sh (will use .qcow2 if available)"
