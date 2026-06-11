@@ -19,18 +19,11 @@
 
 #define NO_PID           (-1)
 #define KILLED_EXIT_CODE (-1)
+#define SHELL_PID        0
 
 typedef int64_t pid_t;
 typedef uint64_t (*process_func_t)(uint64_t argc, char *argv[]);
 
-/** @brief Process states. */
-typedef enum {
-        PROCESS_READY   = 0,
-        PROCESS_RUNNING = 1,
-        PROCESS_BLOCKED = 2,
-        PROCESS_DEAD    = 3,
-        PROCESS_ZOMBIE  = 4
-} process_state_t;
 
 /**
  * @brief Internal use by scheduler to update the current PID.
@@ -61,6 +54,8 @@ typedef struct {
         int stdin_pipe;      /* NO_PIPE = keyboard, >= 0 = pipe index */
         int stdout_pipe;     /* NO_PIPE = console,  >= 0 = pipe index */
         int blocked_on_pipe; /* NO_PIPE if not blocked on a pipe      */
+        uint8_t blocked_on_keyboard; /* waiting for keyboard input    */
+        char **argv_copy; /* kernel-owned argv copy, freed on reap    */
 } pcb_t;
 
 /**
@@ -183,3 +178,24 @@ pcb_t *process_get_by_index(int idx);
  * @return Number of PIDs written.
  */
 int process_list(uint64_t *pids, int max);
+
+/**
+ * @brief Fill an array with snapshots of every active process.
+ * @param info Array to fill with process information.
+ * @param max Maximum entries to fill.
+ * @return Number of entries written.
+ */
+int process_snapshot(process_info_t *info, int max);
+
+/**
+ * @brief Kill every foreground process except the shell (Ctrl+C).
+ * @return Number of processes killed.
+ */
+int process_kill_foreground(void);
+
+/**
+ * @brief Wake processes blocked waiting for keyboard input.
+ *
+ * Called from the keyboard interrupt when new input or EOF arrives.
+ */
+void process_wake_keyboard_readers(void);

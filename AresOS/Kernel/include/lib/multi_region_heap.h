@@ -8,6 +8,7 @@
  * non-contiguous memory regions.
  */
 
+#include <mem_info.h>
 #include <stdint.h>
 
 typedef uint64_t size_t;
@@ -27,20 +28,6 @@ typedef struct heap_region {
         uint64_t region_size_in_bytes; /**< Size of the region in bytes. */
 } heap_region_t;
 
-/**
- * @brief Heap statistics for tracking memory usage and detecting leaks.
- */
-typedef struct heap_stats {
-        size_t total_heap_size_bytes;            //< Total managed heap size
-        size_t available_heap_space_bytes;        //< Sum of all free blk
-        size_t occupied_heap_space_bytes;         //< Total - available
-        size_t size_largest_free_block_bytes;     //< Size of largest free blk
-        size_t size_smallest_free_block_in_bytes; //< Size of smallest free blk
-        size_t number_of_free_blocks;   //< Number of free blocks in the list
-        size_t minimum_ever_free_bytes; //< Minimum free memory since boot
-        size_t successful_allocations;  //< Total successful mem_alloc calls
-        size_t successful_frees;        //< Total successful mem_free calls
-} heap_stats_t;
 
 /**
  * @brief Initialize the heap with the given memory regions.
