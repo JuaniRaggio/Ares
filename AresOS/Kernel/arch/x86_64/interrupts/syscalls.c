@@ -58,8 +58,18 @@ uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
         return len;
 }
 
+static uint64_t drain_keyboard_buffer(char *buf, uint64_t max_count) {
+        uint64_t i = 0;
+        while (buffer_has_next() && i < max_count) {
+                buf[i] = buffer_next();
+                i++;
+        }
+        return i;
+}
+
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
-        if (fd != 0 || count == NULL || buf == NULL) {
+        if ((fd != STDIN && fd != FD_KBD_NONBLOCK) || count == NULL ||
+            buf == NULL) {
                 if (count != NULL) {
                         *count = 0;
                 }
@@ -73,19 +83,46 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
         }
 
         pcb_t *current = process_get_current();
-        if (current != (void *)0 && current->stdin_pipe >= 0) {
+        if (fd == STDIN && current != (void *)0 && current->stdin_pipe >= 0) {
                 int ret = pipe_read(current->stdin_pipe, buf, (int)max_count);
                 *count  = (ret > 0) ? (uint64_t)ret : 0;
                 return (ret >= 0) ? SYS_OK : SYS_BAD;
         }
 
-        uint64_t i = 0;
-        while (buffer_has_next() && i < max_count) {
-                buf[i] = buffer_next();
-                i++;
+        if (fd == FD_KBD_NONBLOCK) {
+                *count = drain_keyboard_buffer(buf, max_count);
+                return SYS_OK;
         }
 
-        *count = i;
+        /* Background processes get EOF instead of stealing keystrokes. */
+        if (current != (void *)0 && !current->foreground) {
+                *count = 0;
+                return SYS_OK;
+        }
+
+        /* Blocking read: sleep until the keyboard IRQ wakes us up.
+         * Interrupts are disabled around the check to avoid losing a
+         * wakeup between testing the buffer and blocking. */
+        while (1) {
+                _cli();
+                if (buffer_has_next()) {
+                        _sti();
+                        break;
+                }
+                if (buffer_consume_eof()) {
+                        _sti();
+                        *count = 0;
+                        return SYS_OK;
+                }
+                if (current != (void *)0) {
+                        current->blocked_on_keyboard = 1;
+                        process_block(current->pid);
+                }
+                _sti();
+                _hlt();
+        }
+
+        *count = drain_keyboard_buffer(buf, max_count);
         return SYS_OK;
 }
 
@@ -292,6 +329,13 @@ uint64_t sys_list_processes(uint64_t pids_ptr, uint64_t max_count) {
         if (pids_ptr == 0)
                 return 0;
         return (uint64_t)process_list((uint64_t *)pids_ptr, (int)max_count);
+}
+
+uint64_t sys_ps(uint64_t info_ptr, uint64_t max_count) {
+        if (info_ptr == 0)
+                return 0;
+        return (uint64_t)process_snapshot((process_info_t *)info_ptr,
+                                          (int)max_count);
 }
 
 uint64_t sys_pipe_open(uint64_t name_ptr) {

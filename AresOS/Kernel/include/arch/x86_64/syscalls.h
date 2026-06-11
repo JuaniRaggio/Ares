@@ -246,6 +246,14 @@ uint64_t sys_waitpid(uint64_t pid);
 uint64_t sys_list_processes(uint64_t pids_ptr, uint64_t max_count);
 
 /**
+ * Fills an array with process_info_t snapshots of active processes.
+ * @param info_ptr Pointer to a process_info_t array.
+ * @param max_count Maximum entries to fill.
+ * @return Number of entries written.
+ */
+uint64_t sys_ps(uint64_t info_ptr, uint64_t max_count);
+
+/**
  * Opens or creates a named pipe.
  * @param name_ptr Pointer to pipe name string.
  * @return Pipe index on success, -1 on failure.
