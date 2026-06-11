@@ -135,9 +135,10 @@ static char ascii_table[][TABLE_SIZE] = {
 
 typedef struct {
         uint8_t buffer[TABLE_SIZE];
-        uint8_t write_pos; // head
-        uint8_t read_pos;  // tail
-        uint8_t modifiers; // off, Shift, Ctrl, Alt
+        uint8_t write_pos;   // head
+        uint8_t read_pos;    // tail
+        uint8_t modifiers;   // off, Shift, Ctrl, Alt
+        uint8_t eof_pending; // Ctrl+D was pressed and not yet consumed
 } keyboard_state_t;
 
 static keyboard_state_t keyboard = {0};
@@ -216,6 +217,18 @@ uint8_t buffer_next() {
         keyboard.read_pos = (keyboard.read_pos + 1) & 0xff;
 
         return aux;
+}
+
+void buffer_set_eof(void) {
+        keyboard.eof_pending = 1;
+}
+
+uint8_t buffer_consume_eof(void) {
+        if (!keyboard.eof_pending) {
+                return 0;
+        }
+        keyboard.eof_pending = 0;
+        return 1;
 }
 
 void capture_registers(uint64_t *stack_ptr) {
