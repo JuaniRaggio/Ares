@@ -24,6 +24,8 @@
 typedef int64_t pid_t;
 typedef uint64_t (*process_func_t)(uint64_t argc, char *argv[]);
 
+/* process_state_t lives in Common/include/process_types.h so userland can
+ * decode the SYS_PS snapshot with the same values. */
 
 /**
  * @brief Internal use by scheduler to update the current PID.

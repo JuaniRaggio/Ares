@@ -28,6 +28,8 @@ typedef struct heap_region {
         uint64_t region_size_in_bytes; /**< Size of the region in bytes. */
 } heap_region_t;
 
+/* heap_stats_t lives in Common/include/mem_info.h so userland can decode
+ * the SYS_MEM_STATS syscall output with the same layout. */
 
 /**
  * @brief Initialize the heap with the given memory regions.
