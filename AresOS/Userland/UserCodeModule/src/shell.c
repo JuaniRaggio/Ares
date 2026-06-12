@@ -11,27 +11,10 @@
 #define for_ever for (;;)
 #define CHECK_MAN "Type \"man %s\" to see how the command works\n"
 #define PROMPT_LENGTH 3
-#define CURSOR_BLINK_TICKS 25
-#define MAX_PARAMS 3
+#define SHELL_PIPE_NAME "sh-pipe"
 
-// ========== NOTE: Start Tests Helper Functions ==========
 #include <process_api.h>
-
-extern uint64_t test_mm(uint64_t argc, char *argv[]);
-extern uint64_t test_prio(uint64_t argc, char *argv[]);
-extern int64_t test_processes(uint64_t argc, char *argv[]);  // Retorna int64_t, no uint64_t
-extern uint64_t test_sync(uint64_t argc, char *argv[]);
-
-// Funciones auxiliares de test_util.c
-extern void endless_loop(void);
-extern void endless_loop_print(uint64_t wait);
-
-// Funciones auxiliares de test_prio.c
-extern void zero_to_max(void);
-
-// Funciones auxiliares de test_sync.c
-extern uint64_t my_process_inc(uint64_t argc, char *argv[]);
-// ========== NOTE: End Test Helper functions ==========
+#include <process_types.h>
 
 static const char *const helper_msg =
     "Type 'help' to see available commands\n\n";
@@ -171,15 +154,13 @@ static void erase_cursor(int x, int y) {
                           shell_status.font_height * scale, BLACK);
 }
 
+/* getchar() blocks in the kernel until input arrives, so the shell does not
+ * poll. The cursor stays solid while waiting. */
 int shell_read_line(char input[][MAX_CHARS], int max_params) {
         char buffer[MAX_CHARS];
         int buf_idx       = 0;
         int param_count   = 0;
         int current_param = 0;
-
-        uint64_t last_blink = 0;
-        syscall_get_ticks(&last_blink);
-        int cursor_visible = 1;
 
         for (int i = 0; i < max_params; i++) {
                 input[i][0] = 0;
@@ -189,34 +170,13 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
         draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
 
         for_ever {
-                char c = getchar();
-                
-                if (c == CTRL_C_CHAR) {
-                        // Aca después iría matar al proceso foreground
-                        continue;
-                }
+                int c = getchar();
 
-                if (c == CTRL_D_CHAR) {
+                if (c == EOF) {
+                        /* Ctrl+D at the prompt: nothing to send EOF to */
                         printf("^D\n");
-                        // acá después iría enviar EOF
-                        continue;
-                }
-                if (c == 0) {
-                        uint64_t now = 0;
-                        syscall_get_ticks(&now);
-                        if (now - last_blink > CURSOR_BLINK_TICKS) {
-                                if (cursor_visible) {
-                                        erase_cursor(shell_status.cursor.x,
-                                                     shell_status.cursor.y);
-                                        cursor_visible = 0;
-                                } else {
-                                        draw_cursor(shell_status.cursor.x,
-                                                    shell_status.cursor.y, 1);
-                                        cursor_visible = 1;
-                                }
-                                last_blink = now;
-                        }
-                        continue;
+                        sync_cursor_pos();
+                        return 0;
                 }
 
                 if (c == ZOOM_IN_CHAR &&
@@ -254,25 +214,19 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
                 }
 
                 if (c == '\b' && buf_idx > 0) {
-                        if (cursor_visible) {
-                                erase_cursor(shell_status.cursor.x,
-                                             shell_status.cursor.y);
-                        }
+                        erase_cursor(shell_status.cursor.x,
+                                     shell_status.cursor.y);
                         buf_idx--;
                         putchar('\b');
                         sync_cursor_pos();
                         draw_cursor(shell_status.cursor.x,
                                     shell_status.cursor.y, 1);
-                        cursor_visible = 1;
-                        syscall_get_ticks(&last_blink);
                         continue;
                 }
 
                 if (c == ' ' && buf_idx > 0) {
-                        if (cursor_visible) {
-                                erase_cursor(shell_status.cursor.x,
-                                             shell_status.cursor.y);
-                        }
+                        erase_cursor(shell_status.cursor.x,
+                                     shell_status.cursor.y);
                         buffer[buf_idx] = 0;
                         int j           = 0;
                         for (int i = 0; i <= buf_idx && j < MAX_CHARS;
@@ -285,7 +239,7 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
                         buf_idx = 0;
 
                         if (current_param >= max_params) {
-                                while (getchar() != '\n')
+                                while ((c = getchar()) != '\n' && c != EOF)
                                         ;
                                 putchar('\n');
                                 sync_cursor_pos();
@@ -295,56 +249,120 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
                         sync_cursor_pos();
                         draw_cursor(shell_status.cursor.x,
                                     shell_status.cursor.y, 1);
-                        cursor_visible = 1;
-                        syscall_get_ticks(&last_blink);
                         continue;
                 }
 
-                if (buf_idx < MAX_CHARS - 1) {
-                        buffer[buf_idx++] = c;
+                if (c >= ' ' && buf_idx < MAX_CHARS - 1) {
+                        buffer[buf_idx++] = (char)c;
                         putchar(c);
                         sync_cursor_pos();
                         draw_cursor(shell_status.cursor.x,
                                     shell_status.cursor.y, 1);
-                        cursor_visible = 1;
-                        syscall_get_ticks(&last_blink);
                 }
         }
 }
 
-uint8_t analize_user_input(uint32_t params) {
-
-        //La unica forma q sea valido el 2do arg es que sea "|"
-        int idx = INVALID_COMMAND_NAME;
-        if (params > 1) {
-                idx = get_command_index(shell_status.prompts.user_input[1]);
-        }
-        
-        // Solo entra si el inidce "idx" es invalido o si el "idx" es valido pero no corresponde a "|"
-        if (idx == INVALID_COMMAND_NAME || strcmp(commands[idx]->name, "|") != 0) {
-                // Si no es valido el 2do me fijo el 1ero
-                idx = get_command_index(shell_status.prompts.user_input[0]);
-                if(idx == INVALID_COMMAND_NAME){
-                        printf(invalid_command);
-                        return INVALID_COMMAND_NAME;
-                }
-        }
-        else{
-                //Si entro aca es pq la user.input[1] es "|"
-                char aux[MAX_CHARS];
-                strcpy(aux, shell_status.prompts.user_input[0]);
-                strcpy(shell_status.prompts.user_input[0], shell_status.prompts.user_input[1]);
-                strcpy(shell_status.prompts.user_input[1], aux);
-                //Si hice s1 | s2, ahora en user_imput me queda [ "|" , "s1", "s2" ]
-        }
-
-        if (commands[idx]->lambda.ftype != params - 1) {
+/* Runs a shell built-in using the typed lambda dispatch. Built-ins execute
+ * inside the shell process; everything else runs as a separate process. */
+static void run_builtin(int idx, uint32_t params) {
+        if (commands[idx]->lambda.ftype != (function_type)(params - 1)) {
                 printf(wrong_params);
                 printf(CHECK_MAN, shell_status.prompts.user_input[0]);
-                return INVALID_INPUT;
+                return;
         }
         add_to_history(commands[idx], params);
-        return VALID_INPUT;
+
+        composed_command_t current_prompt =
+            shell_status.prompts.prompt_history[lastest_prompt_idx()];
+        executable_t execute = current_prompt.cmd->lambda.execute;
+        switch (params - 1) {
+        case supplier_t:
+                execute.supplier();
+                break;
+        case function_t:
+                execute.function(current_prompt.args[0]);
+                break;
+        case bi_function_t:
+                execute.bi_function(current_prompt.args[0],
+                                    current_prompt.args[1]);
+                break;
+        }
+}
+
+/* Spawns a registered application as a process. Foreground commands are
+ * waited for; background commands return to the prompt immediately. */
+static void run_external(int tokens, int background) {
+        char *argv[SHELL_MAX_TOKENS];
+        uint64_t argc = tokens - 1;
+        for (uint64_t i = 0; i < argc; i++) {
+                argv[i] = shell_status.prompts.user_input[i + 1];
+        }
+
+        int64_t pid = my_spawn(shell_status.prompts.user_input[0], argc, argv,
+                               !background, NO_PIPE, NO_PIPE);
+        if (pid < 0) {
+                printf("Could not create process\n");
+                return;
+        }
+
+        if (background) {
+                printf("[pid %d] running in background\n", (int)pid);
+        } else {
+                my_wait(pid);
+        }
+}
+
+/* Connects two registered applications with a pipe: left | right.
+ * The reader is created first so the writer always finds it attached. */
+static void run_piped(int pipe_pos, int tokens) {
+        char *left  = shell_status.prompts.user_input[0];
+        char *right = shell_status.prompts.user_input[pipe_pos + 1];
+
+        if (pipe_pos + 1 >= tokens) {
+                printf("Syntax: p1 | p2\n");
+                return;
+        }
+        if (!process_is_registered(left) || !process_is_registered(right)) {
+                printf(invalid_command);
+                return;
+        }
+
+        int pipe_id = my_pipe_open(SHELL_PIPE_NAME);
+        if (pipe_id < 0) {
+                printf("Could not open pipe\n");
+                return;
+        }
+
+        char *largv[SHELL_MAX_TOKENS];
+        uint64_t largc = pipe_pos - 1;
+        for (uint64_t i = 0; i < largc; i++) {
+                largv[i] = shell_status.prompts.user_input[i + 1];
+        }
+
+        char *rargv[SHELL_MAX_TOKENS];
+        uint64_t rargc = tokens - pipe_pos - 2;
+        for (uint64_t i = 0; i < rargc; i++) {
+                rargv[i] = shell_status.prompts.user_input[pipe_pos + 2 + i];
+        }
+
+        int64_t right_pid = my_spawn(right, rargc, rargv, 1, pipe_id, NO_PIPE);
+        if (right_pid < 0) {
+                printf("Could not create process\n");
+                my_pipe_close(pipe_id);
+                return;
+        }
+
+        int64_t left_pid = my_spawn(left, largc, largv, 1, NO_PIPE, pipe_id);
+        if (left_pid < 0) {
+                printf("Could not create process\n");
+                my_kill(right_pid);
+                my_pipe_close(pipe_id);
+                return;
+        }
+
+        my_wait(left_pid);
+        my_wait(right_pid);
+        my_pipe_close(pipe_id);
 }
 
 static void sync_cursor_pos(void) {
@@ -369,54 +387,60 @@ int shell(void) {
         printf(logo_shell);
         printf(helper_msg);
 
-        process_register("idle", (process_entry_t)idle_process);
-
-        process_register("test_mm", (process_entry_t)test_mm);
-        process_register("test_prio", (process_entry_t)test_prio);
-        process_register("test_processes", (process_entry_t)test_processes);
-        process_register("test_sync", (process_entry_t)test_sync);
-
-        process_register("endless_loop", (process_entry_t)endless_loop);
-        process_register("endless_loop_print", (process_entry_t)endless_loop_print);
-        process_register("zero_to_max", (process_entry_t)zero_to_max);
-        process_register("my_process_inc", (process_entry_t)my_process_inc);
-
-        my_create_process("idle", 0, (void *)0);
-
         sync_cursor_pos();
 
         for_ever {
-                uint64_t current_ticks = 0;
-                syscall_get_ticks(&current_ticks);
                 printf(input_prompt);
                 sync_cursor_pos();
-                char error      = VALID_INPUT;
-                int r_arguments = shell_read_line(
-                    shell_status.prompts.user_input, MAX_PARAMS);
+                int r_tokens = shell_read_line(shell_status.prompts.user_input,
+                                               SHELL_MAX_TOKENS);
 
-                if (shell_status.prompts.user_input[0][0] == 0)
+                if (r_tokens == 0 ||
+                    shell_status.prompts.user_input[0][0] == 0)
                         continue;
 
-                error = analize_user_input(r_arguments);
-
-                if (error == INVALID_INPUT || error == INVALID_COMMAND_NAME)
-                        continue;
-
-                composed_command_t current_prompt =
-                    shell_status.prompts.prompt_history[lastest_prompt_idx()];
-                executable_t execute = current_prompt.cmd->lambda.execute;
-                switch (r_arguments - 1) {
-                case supplier_t:
-                        execute.supplier();
-                        break;
-                case function_t:
-                        execute.function(current_prompt.args[0]);
-                        break;
-                case bi_function_t:
-                        execute.bi_function(current_prompt.args[0],
-                                            current_prompt.args[1]);
-                        break;
+                /* A trailing "&" sends the command to the background */
+                int background = FALSE;
+                if (r_tokens > 1 &&
+                    strcmp(shell_status.prompts.user_input[r_tokens - 1],
+                           "&") == 0) {
+                        background = TRUE;
+                        shell_status.prompts.user_input[r_tokens - 1][0] = 0;
+                        r_tokens--;
                 }
+
+                /* A "|" between two commands connects them with a pipe */
+                int pipe_pos = -1;
+                for (int i = 1; i < r_tokens - 1 && pipe_pos < 0; i++) {
+                        if (strcmp(shell_status.prompts.user_input[i], "|") ==
+                            0)
+                                pipe_pos = i;
+                }
+
+                if (pipe_pos > 0) {
+                        run_piped(pipe_pos, r_tokens);
+                        continue;
+                }
+
+                int builtin =
+                    get_command_index(shell_status.prompts.user_input[0]);
+                if (builtin != INVALID_COMMAND_NAME) {
+                        if (background) {
+                                printf("Built-in commands cannot run in "
+                                       "background\n");
+                                continue;
+                        }
+                        run_builtin(builtin, r_tokens);
+                        continue;
+                }
+
+                if (process_is_registered(
+                        shell_status.prompts.user_input[0])) {
+                        run_external(r_tokens, background);
+                        continue;
+                }
+
+                printf(invalid_command);
         }
         return OK;
 }

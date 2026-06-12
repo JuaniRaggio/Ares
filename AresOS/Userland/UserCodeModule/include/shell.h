@@ -17,6 +17,9 @@
 #define CTRL_C_CHAR 0x03
 #define CTRL_D_CHAR 0x04
 
+/* Tokens per line: command + arguments + special tokens like | and & */
+#define SHELL_MAX_TOKENS 8
+
 typedef struct {
         cursor_shape shape;
         uint32_t color;
@@ -30,7 +33,7 @@ typedef struct {
 
 typedef struct {
         uint8_t lastest_prompt_idx;
-        char user_input[max_parameters][MAX_CHARS];
+        char user_input[SHELL_MAX_TOKENS][MAX_CHARS];
         composed_command_t prompt_history[HISTORY_SIZE];
 } prompt_data;
 
