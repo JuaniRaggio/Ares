@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <drivers/keyboard_driver.h>
 #include <drivers/sound.h>
 #include <interrupts.h>
@@ -25,7 +26,7 @@ static uint32_t current_stderr_color_rgb = DEFAULT_STDERR_COLOR;
 
 static int try_write_to_pipe(const char *buf, uint64_t len) {
         pcb_t *current = process_get_current();
-        if (current == (void *)0 || current->stdout_pipe < 0)
+        if (current == NULL || current->stdout_pipe < 0)
                 return 0;
         int ret = pipe_write(current->stdout_pipe, buf, (int)len);
         return (ret < 0) ? 0 : ret;
@@ -33,7 +34,7 @@ static int try_write_to_pipe(const char *buf, uint64_t len) {
 
 static int stdout_is_piped(void) {
         pcb_t *current = process_get_current();
-        return current != (void *)0 && current->stdout_pipe >= 0;
+        return current != NULL && current->stdout_pipe >= 0;
 }
 
 uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
@@ -83,7 +84,7 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
         }
 
         pcb_t *current = process_get_current();
-        if (fd == STDIN && current != (void *)0 && current->stdin_pipe >= 0) {
+        if (fd == STDIN && current != NULL && current->stdin_pipe >= 0) {
                 int ret = pipe_read(current->stdin_pipe, buf, (int)max_count);
                 *count  = (ret > 0) ? (uint64_t)ret : 0;
                 return (ret >= 0) ? SYS_OK : SYS_BAD;
@@ -95,7 +96,7 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
         }
 
         /* Background processes get EOF instead of stealing keystrokes. */
-        if (current != (void *)0 && !current->foreground) {
+        if (current != NULL && !current->foreground) {
                 *count = 0;
                 return SYS_OK;
         }
@@ -114,7 +115,7 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
                         *count = 0;
                         return SYS_OK;
                 }
-                if (current != (void *)0) {
+                if (current != NULL) {
                         current->blocked_on_keyboard = 1;
                         process_block(current->pid);
                 }

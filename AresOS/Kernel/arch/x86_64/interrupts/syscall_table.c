@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdint.h>
 #include <syscalls.h>
 #include <syscalls_numbers.h>
@@ -59,7 +60,7 @@ static const syscall_handler_t syscalls_table[SYS_MAX] = {
 
 uint64_t syscall_dispatch(uint64_t number, uint64_t arg1, uint64_t arg2,
                           uint64_t arg3) {
-        if (number >= SYS_MAX || syscalls_table[number] == (void *)0)
+        if (number >= SYS_MAX || syscalls_table[number] == NULL)
                 return (uint64_t)-1;
         return syscalls_table[number](arg1, arg2, arg3);
 }
