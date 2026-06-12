@@ -10,7 +10,6 @@
 #include <slab.h>
 #include <spinlock.h>
 
-#define NULL ((void*)0)
 
 typedef struct pnode {
     pid_t pid;

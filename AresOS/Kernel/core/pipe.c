@@ -99,6 +99,12 @@ int pipe_open(const char *name) {
 	return allocate_pipe(name);
 }
 
+void pipe_mark_writer(int pipe_id) {
+	if (pipe_id < 0 || pipe_id >= MAX_PIPES || !pipe_table[pipe_id].active)
+		return;
+	pipe_table[pipe_id].had_writer = 1;
+}
+
 int pipe_close(int pipe_id) {
 	if (pipe_id < 0 || pipe_id >= MAX_PIPES)
 		return PIPE_ERR;
@@ -121,7 +127,9 @@ int pipe_read(int pipe_id, char *buf, int count) {
 	pcb_t *current = process_get_current();
 
 	while (pipe->count == 0) {
-		if (!has_writers(pipe_id))
+		/* EOF only once a writer existed and they are all gone;
+		 * otherwise the writer may not have been spawned yet. */
+		if (pipe->had_writer && !has_writers(pipe_id))
 			return PIPE_EOF;
 
 		block_on_pipe(current, pipe_id);
@@ -144,6 +152,7 @@ int pipe_write(int pipe_id, const char *buf, int count) {
 	pipe_t *pipe = &pipe_table[pipe_id];
 	pcb_t *current = process_get_current();
 
+	pipe->had_writer = 1;
 	int bytes_written = 0;
 	while (bytes_written < count) {
 		while (pipe->count == PIPE_BUFFER_SIZE) {
