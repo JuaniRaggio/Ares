@@ -1,0 +1,19 @@
+CompileFlags:
+  Add:
+    - -ferror-limit=0
+    - -fno-delayed-template-parsing
+  Remove:
+    # Remover flags que confunden al LSP
+    - -mno-mmx
+    - -mno-sse
+    - -mno-sse2
+    - -mno-red-zone
+    - -fno-pie
+
+Diagnostics:
+  # Deshabilitar warnings que no son relevantes para freestanding
+  UnusedIncludes: None
+  MissingIncludes: None
+
+Index:
+  Background: Build
