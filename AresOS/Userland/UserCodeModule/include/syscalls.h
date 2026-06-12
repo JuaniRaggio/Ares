@@ -261,6 +261,10 @@ static inline int64_t syscall_list_processes(uint64_t *pids, uint64_t max) {
         return (int64_t)_syscall3(SYS_LIST_PROCESSES, (uint64_t)pids, max, 0);
 }
 
+static inline int64_t syscall_ps(process_info_t *info, uint64_t max) {
+        return (int64_t)_syscall3(SYS_PS, (uint64_t)info, max, 0);
+}
+
 static inline int syscall_pipe_open(const char *name) {
         return (int)_syscall3(SYS_PIPE_OPEN, (uint64_t)name, 0, 0);
 }

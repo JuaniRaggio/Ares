@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <command_defs.h>
 #include <configuration.h>
 #include <lib.h>
@@ -10,7 +11,6 @@
 #include <syscalls.h>
 #include <tron.h>
 
-#define NULL 0
 #define INVALID_COMMAND_NAME -1
 
 static const char *const invalid_command = "Invalid command!\n";
@@ -114,11 +114,10 @@ uint8_t textcolor_cmd(char *color);
 uint8_t bgcolor_cmd(char *color);
 
 /**
- * Redirects the output of one process to the input of another
- * @param type two strings, that represents the processes names (p1 | p2)
- * @return 0 on success, -1 on error
-*/
-uint8_t pipe_cmd(char *p1, char*p2);
+ * Informs that the shell cannot exit
+ * @return: status code
+ */
+uint8_t exit_cmd(void);
 
 typedef enum {
         CMD_HELP,
@@ -136,7 +135,6 @@ typedef enum {
         CMD_BENCHMARK,
         CMD_TEXTCOLOR,
         CMD_BGCOLOR,
-        CMD_PIPE,
         QTY_COMMANDS
 } command_index;
 
@@ -226,7 +224,7 @@ static const command_t exit_command = {
     .description = "Exit Ares OS",
     .lambda =
         {
-            .execute.supplier = NULL,
+            .execute.supplier = &exit_cmd,
             .ftype            = supplier_t,
         },
 };
@@ -293,20 +291,10 @@ static const command_t bgcolor_command = {
         },
 };
 
-static const command_t pipe_comand = {
-    .name = "|", 
-    .description = "Redirects the output of one process to the input of another. EXAMPLE: s1 | s2", 
-    .lambda = {
-        .ftype = bi_function_t, 
-        .execute.bi_function = &pipe_cmd,
-    },
-};
-
 static const command_t *const commands[QTY_COMMANDS] = {
     &help_command,      &man_command,       &inforeg_command,
     &time_command,      &div_command,       &clear_command,
     &print_mem_command, &history_command,   &exit_command,
     &cursor_command,    &tron_command,      &trigger_opcode,
     &benchmark_command, &textcolor_command, &bgcolor_command,
-    &pipe_command
 };
