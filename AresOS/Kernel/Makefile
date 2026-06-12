@@ -62,11 +62,11 @@ GCCFLAGS += -MMD -MP  # Generar dependencias automáticas
 .PHONY: all clean info compile_commands.json
 
 all: $(KERNEL)
-	@echo -e "$(GREEN)Kernel built: $(KERNEL)$(NC)"
+	@printf "$(GREEN)Kernel built: $(KERNEL)$(NC)\n"
 
 # Linkeo del kernel ELF con símbolos de debug
 $(KERNEL_ELF): $(ALL_OBJECTS) | $(BIN_DIR)
-	@echo -e "$(YELLOW)Linking kernel...$(NC)"
+	@printf "$(YELLOW)Linking kernel...$(NC)\n"
 	@$(LD) $(LDFLAGS) --oformat=elf64-x86-64 -T kernel.ld -o $@ $(ALL_OBJECTS)
 
 # Extraer binario plano del ELF
@@ -112,7 +112,7 @@ $(BIN_DIR):
 # Limpiar
 clean:
 	@rm -rf $(BUILD_DIR) $(BIN_DIR)
-	@echo -e "$(GREEN)Clean complete$(NC)"
+	@printf "$(GREEN)Clean complete$(NC)\n"
 
 # Generar compile_commands.json para IDE/LSP
 compile_commands.json:

@@ -4,32 +4,32 @@ YELLOW := \033[0;33m
 NC     := \033[0m
 
 all: toolchain bootloader kernel userland image
-	@echo -e "$(GREEN)Build complete$(NC)"
+	@printf "$(GREEN)Build complete$(NC)\n"
 
 toolchain:
-	@echo -e "$(YELLOW)Building toolchain...$(NC)"
+	@printf "$(YELLOW)Building toolchain...$(NC)\n"
 	@cd Toolchain; make all
 
 bootloader:
-	@echo -e "$(YELLOW)Building bootloader...$(NC)"
+	@printf "$(YELLOW)Building bootloader...$(NC)\n"
 	@cd Bootloader; make all
 
 kernel:
-	@echo -e "$(YELLOW)Building kernel...$(NC)"
+	@printf "$(YELLOW)Building kernel...$(NC)\n"
 	@cd Kernel; make all
 
 userland:
-	@echo -e "$(YELLOW)Building userland...$(NC)"
+	@printf "$(YELLOW)Building userland...$(NC)\n"
 	@cd Userland; make all
 
 image: toolchain kernel bootloader userland
-	@echo -e "$(YELLOW)Building image...$(NC)"
+	@printf "$(YELLOW)Building image...$(NC)\n"
 	@cd Image; make all
 
-# Generar compile_commands.json unificado para IDE/LSP.
-# IMPORTANTE: correr en el HOST, no dentro del contenedor. Las entradas
-# usan rutas absolutas ($(CURDIR)) y si se generan en docker quedan
-# apuntando a /root y clangd no encuentra ningun archivo.
+# Generate the unified compile_commands.json for IDE/LSP usage.
+# IMPORTANT: run this on the HOST, not inside the container. Entries use
+# absolute paths ($(CURDIR)); generated inside docker they point to /root
+# and clangd cannot resolve any file.
 compile_commands:
 	@cd Kernel && $(MAKE) compile_commands.json
 	@cd Userland/UserCodeModule && $(MAKE) compile_commands.json
@@ -37,24 +37,24 @@ compile_commands:
 a = json.load(open('Kernel/compile_commands.json')); \
 b = json.load(open('Userland/UserCodeModule/compile_commands.json')); \
 json.dump(a + b, open('compile_commands.json', 'w'), indent=2)"
-	@echo -e "$(GREEN)compile_commands.json regenerated$(NC)"
+	@printf "$(GREEN)compile_commands.json regenerated$(NC)\n"
 
 clean:
-	@echo -e "$(YELLOW)Cleaning...$(NC)"
+	@printf "$(YELLOW)Cleaning...$(NC)\n"
 	@cd Toolchain; make clean
 	@cd Bootloader; make clean
 	@cd Image; make clean
 	@cd Kernel; make clean
 	@cd Userland; make clean
-	@echo -e "$(GREEN)Clean complete$(NC)"
+	@printf "$(GREEN)Clean complete$(NC)\n"
 
 buddy:
-	@echo -e "$(YELLOW)Building with buddy allocator...$(NC)"
+	@printf "$(YELLOW)Building with buddy allocator...$(NC)\n"
 	@cd Toolchain; make all
 	@cd Bootloader; make all
 	@cd Kernel; make buddy
 	@cd Userland; make all
 	@cd Image; make all
-	@echo -e "$(GREEN)Buddy build complete$(NC)"
+	@printf "$(GREEN)Buddy build complete$(NC)\n"
 
 .PHONY: toolchain bootloader image kernel userland all clean compile_commands buddy
