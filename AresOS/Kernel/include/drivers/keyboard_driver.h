@@ -52,6 +52,17 @@ uint8_t buffer_has_next();
 uint8_t buffer_next();
 
 /**
+ * Marks that an end-of-file (Ctrl+D) was requested on the keyboard
+ */
+void buffer_set_eof(void);
+
+/**
+ * Consumes a pending end-of-file request
+ * @return 1 if an EOF was pending, 0 otherwise
+ */
+uint8_t buffer_consume_eof(void);
+
+/**
  * Captures current CPU register state (triggered by Ctrl+R)
  * @param stack_ptr Pointer to stack containing register values
  */
