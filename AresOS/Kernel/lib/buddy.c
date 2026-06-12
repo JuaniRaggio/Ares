@@ -8,6 +8,7 @@
  * rounded down to the nearest power of two.
  */
 
+#include <stddef.h>
 #include <multi_region_heap.h>
 
 #define MIN_ORDER 5   /* 32 bytes - smallest allocatable block */
@@ -100,11 +101,11 @@ static void add_to_free_list(buddy_pool_t *pool, block_header_t *blk) {
 static void remove_from_free_list(buddy_pool_t *pool, block_header_t *blk) {
         size_t idx           = blk->order - MIN_ORDER;
         block_header_t *cur  = pool->free_lists[idx];
-        block_header_t *prev = (void *)0;
+        block_header_t *prev = NULL;
 
-        while (cur != (void *)0) {
+        while (cur != NULL) {
                 if (cur == blk) {
-                        if (prev == (void *)0) {
+                        if (prev == NULL) {
                                 pool->free_lists[idx] = get_next_free(cur);
                         } else {
                                 set_next_free(prev, get_next_free(cur));
@@ -152,7 +153,7 @@ static buddy_pool_t *find_pool_for_ptr(void *ptr) {
                         return &pools[i];
                 }
         }
-        return (void *)0;
+        return NULL;
 }
 
 static size_t compute_target_order(size_t alloc_size) {
@@ -166,11 +167,11 @@ static size_t compute_target_order(size_t alloc_size) {
 static block_header_t *find_free_block(buddy_pool_t *pool, size_t target_order) {
         size_t order = target_order;
         while (order <= pool->max_order) {
-                if (pool->free_lists[order - MIN_ORDER] != (void *)0)
+                if (pool->free_lists[order - MIN_ORDER] != NULL)
                         return pool->free_lists[order - MIN_ORDER];
                 order++;
         }
-        return (void *)0;
+        return NULL;
 }
 
 static void init_pool(buddy_pool_t *pool, uint8_t *addr, size_t order) {
@@ -179,7 +180,7 @@ static void init_pool(buddy_pool_t *pool, uint8_t *addr, size_t order) {
         pool->max_order  = order;
 
         for (size_t j = 0; j < NUM_ORDERS; j++)
-                pool->free_lists[j] = (void *)0;
+                pool->free_lists[j] = NULL;
 
         block_header_t *root = (block_header_t *)addr;
         root->order          = order;
@@ -229,11 +230,11 @@ void mem_init(heap_region_t *regions, size_t region_count) {
 
 void *mem_alloc(size_t size) {
         if (size == 0 || !buddy_initialized)
-                return (void *)0;
+                return NULL;
 
         size_t target_order = compute_target_order(size);
         if (target_order > MAX_ORDER)
-                return (void *)0;
+                return NULL;
 
         for (size_t p = 0; p < pool_count; p++) {
                 buddy_pool_t *pool = &pools[p];
@@ -241,7 +242,7 @@ void *mem_alloc(size_t size) {
                         continue;
 
                 block_header_t *blk = find_free_block(pool, target_order);
-                if (blk == (void *)0)
+                if (blk == NULL)
                         continue;
 
                 remove_from_free_list(pool, blk);
@@ -256,11 +257,11 @@ void *mem_alloc(size_t size) {
                 return get_block_data(blk);
         }
 
-        return (void *)0;
+        return NULL;
 }
 
 void mem_free(void *ptr) {
-        if (ptr == (void *)0 || !buddy_initialized)
+        if (ptr == NULL || !buddy_initialized)
                 return;
 
         block_header_t *blk = get_block_header(ptr);
@@ -268,7 +269,7 @@ void mem_free(void *ptr) {
                 return;
 
         buddy_pool_t *pool = find_pool_for_ptr(blk);
-        if (pool == (void *)0)
+        if (pool == NULL)
                 return;
 
         size_t freed_bytes = block_size(blk);
@@ -283,7 +284,7 @@ void mem_free(void *ptr) {
 
 
 void mem_get_stats(heap_stats_t *stats) {
-        if (stats == (void *)0)
+        if (stats == NULL)
                 return;
 
         size_t largest  = 0;
@@ -293,7 +294,7 @@ void mem_get_stats(heap_stats_t *stats) {
         for (size_t p = 0; p < pool_count; p++) {
                 for (size_t i = 0; i < NUM_ORDERS; i++) {
                         block_header_t *blk = pools[p].free_lists[i];
-                        while (blk != (void *)0) {
+                        while (blk != NULL) {
                                 size_t bsize = block_size(blk);
                                 count++;
                                 if (bsize > largest)

@@ -2,13 +2,28 @@
 #include <stdint.h>
 
 /*
- * Lee un caracter del stdin (non-blocking)
- * Retorna 0 si no hay datos disponibles, o el caracter leido
+ * Lee un caracter del stdin (bloqueante)
+ * Se bloquea hasta que haya datos. Retorna EOF si el stream termino
+ * (Ctrl+D en teclado o pipe sin escritores)
  */
 int getchar(void) {
         char c         = 0;
         uint64_t count = 1;
         syscall_read(STDIN, &c, &count);
+        if (count == 0) {
+                return EOF;
+        }
+        return (uint8_t)c;
+}
+
+/*
+ * Lee un caracter del teclado sin bloquear (para juegos / polling)
+ * Retorna 0 si no hay datos disponibles, o el caracter leido
+ */
+int getchar_nonblock(void) {
+        char c         = 0;
+        uint64_t count = 1;
+        syscall_read(FD_KBD_NONBLOCK, &c, &count);
         if (count == 0) {
                 return 0; /* No data available */
         }

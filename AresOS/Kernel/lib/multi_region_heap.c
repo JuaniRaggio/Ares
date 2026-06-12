@@ -6,6 +6,7 @@
  * regions through a single address-ordered free list with sentinel nodes.
  */
 
+#include <stddef.h>
 #include <multi_region_heap.h>
 
 /**
@@ -100,7 +101,7 @@ static void init_free_list_sentinels(void) {
         free_list_start.block_size      = 0;
         free_list_start.next_free_block = &free_list_end;
         free_list_end.block_size        = 0;
-        free_list_end.next_free_block   = (void *)0;
+        free_list_end.next_free_block   = NULL;
 }
 
 static void init_heap_stats(size_t total_free) {
@@ -151,13 +152,13 @@ void mem_init(heap_region_t *regions, size_t region_count) {
 
 void *mem_alloc(size_t size) {
         if (size == 0) {
-                return (void *)0;
+                return NULL;
         }
 
         size_t needed = align_up(size + header_size);
 
         if (needed > heap_status.available_heap_space_bytes) {
-                return (void *)0;
+                return NULL;
         }
 
         block_list_t *prev  = &free_list_start;
@@ -171,7 +172,7 @@ void *mem_alloc(size_t size) {
                                 prev->next_free_block = block->next_free_block;
                         }
 
-                        block->next_free_block = (void *)0;
+                        block->next_free_block = NULL;
                         heap_status.available_heap_space_bytes -=
                             block->block_size;
 
@@ -190,17 +191,17 @@ void *mem_alloc(size_t size) {
                 block = block->next_free_block;
         }
 
-        return (void *)0;
+        return NULL;
 }
 
 void mem_free(void *ptr) {
-        if (ptr == (void *)0) {
+        if (ptr == NULL) {
                 return;
         }
 
         block_list_t *block = (block_list_t *)((uint8_t *)ptr - header_size);
 
-        int already_free = block->next_free_block != (void *)0;
+        int already_free = block->next_free_block != NULL;
         if (already_free)
                 return;
 
@@ -211,7 +212,7 @@ void mem_free(void *ptr) {
 }
 
 void mem_get_stats(heap_stats_t *stats) {
-        if (stats == (void *)0) {
+        if (stats == NULL) {
                 return;
         }
 

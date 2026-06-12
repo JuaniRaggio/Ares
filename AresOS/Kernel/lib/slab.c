@@ -1,8 +1,8 @@
 // slab.c creado para manejar lista de procesos en wait por semáforos
 
+#include <stddef.h>
 #include <slab.h>
 #include <multi_region_heap.h>
-#define NULL ((void*)0)
 
 static void slab_init(slab_cache_t *cache, size_t size){
     cache->object_size = size;
