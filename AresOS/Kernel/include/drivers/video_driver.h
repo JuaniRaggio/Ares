@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <colors.h>
 #include <font.h>
 #include <fontManager.h>
@@ -7,8 +8,6 @@
 #include <naiveConsole.h>
 #include <stdint.h>
 #include <time.h>
-
-#define NULL ((void *)0)
 
 #define VIDEO_ADDR_GFX 0x000A0000
 #define VIDEO_ADDR_TEXT 0xB8000

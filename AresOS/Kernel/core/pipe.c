@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <lib_common.h>
 #include <pipe.h>
 #include <process.h>
@@ -9,7 +10,7 @@ static pipe_t pipe_table[MAX_PIPES];
 static int has_writers(int pipe_id) {
 	for (int i = 0; i < MAX_PROCESSES; i++) {
 		pcb_t *p = process_get_by_index(i);
-		if (p != (void *)0 && p->stdout_pipe == pipe_id)
+		if (p != NULL && p->stdout_pipe == pipe_id)
 			return 1;
 	}
 	return 0;
@@ -18,7 +19,7 @@ static int has_writers(int pipe_id) {
 static int has_readers(int pipe_id) {
 	for (int i = 0; i < MAX_PROCESSES; i++) {
 		pcb_t *p = process_get_by_index(i);
-		if (p != (void *)0 && p->stdin_pipe == pipe_id)
+		if (p != NULL && p->stdin_pipe == pipe_id)
 			return 1;
 	}
 	return 0;
@@ -27,7 +28,7 @@ static int has_readers(int pipe_id) {
 static void wake_blocked_on_pipe(int pipe_id) {
 	for (int i = 0; i < MAX_PROCESSES; i++) {
 		pcb_t *p = process_get_by_index(i);
-		if (p != (void *)0 && p->state == PROCESS_BLOCKED &&
+		if (p != NULL && p->state == PROCESS_BLOCKED &&
 		    p->blocked_on_pipe == pipe_id) {
 			p->blocked_on_pipe = NO_PIPE;
 			process_unblock(p->pid);
@@ -89,7 +90,7 @@ static void block_on_pipe(pcb_t *process, int pipe_id) {
 }
 
 int pipe_open(const char *name) {
-	if (name == (void *)0)
+	if (name == NULL)
 		return PIPE_ERR;
 
 	int existing = find_pipe_by_name(name);
@@ -120,7 +121,7 @@ int pipe_close(int pipe_id) {
 int pipe_read(int pipe_id, char *buf, int count) {
 	if (pipe_id < 0 || pipe_id >= MAX_PIPES || !pipe_table[pipe_id].active)
 		return PIPE_EOF;
-	if (buf == (void *)0 || count <= 0)
+	if (buf == NULL || count <= 0)
 		return PIPE_EOF;
 
 	pipe_t *pipe = &pipe_table[pipe_id];
@@ -146,7 +147,7 @@ int pipe_read(int pipe_id, char *buf, int count) {
 int pipe_write(int pipe_id, const char *buf, int count) {
 	if (pipe_id < 0 || pipe_id >= MAX_PIPES || !pipe_table[pipe_id].active)
 		return PIPE_ERR;
-	if (buf == (void *)0 || count <= 0)
+	if (buf == NULL || count <= 0)
 		return PIPE_ERR;
 
 	pipe_t *pipe = &pipe_table[pipe_id];

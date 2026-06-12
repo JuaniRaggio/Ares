@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <interrupts.h>
 #include <lib_common.h>
 #include <multi_region_heap.h>
@@ -26,17 +27,17 @@ void process_free_resources(pid_t pid) {
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 if (process_table[i].pid == pid) {
                         pcb_t *pcb = &process_table[i];
-                        if (pcb->kernel_stack_base != (void *)0) {
+                        if (pcb->kernel_stack_base != NULL) {
                                 mem_free(pcb->kernel_stack_base);
-                                pcb->kernel_stack_base = (void *)0;
+                                pcb->kernel_stack_base = NULL;
                         }
-                        if (pcb->user_stack_base != (void *)0) {
+                        if (pcb->user_stack_base != NULL) {
                                 mem_free(pcb->user_stack_base);
-                                pcb->user_stack_base = (void *)0;
+                                pcb->user_stack_base = NULL;
                         }
-                        if (pcb->argv_copy != (void *)0) {
+                        if (pcb->argv_copy != NULL) {
                                 mem_free(pcb->argv_copy);
-                                pcb->argv_copy = (void *)0;
+                                pcb->argv_copy = NULL;
                         }
                         return;
                 }
@@ -46,16 +47,16 @@ void process_free_resources(pid_t pid) {
 /* Copies argv into a single kernel-owned block so the arguments survive
  * after the creator reuses or frees its own buffers (background processes). */
 static char **clone_argv(uint64_t argc, char **argv) {
-        if (argc == 0 || argv == (void *)0)
-                return (void *)0;
+        if (argc == 0 || argv == NULL)
+                return NULL;
 
         uint64_t total = (argc + 1) * sizeof(char *);
         for (uint64_t i = 0; i < argc; i++)
                 total += strlen(argv[i]) + 1;
 
         char **copy = (char **)mem_alloc(total);
-        if (copy == (void *)0)
-                return (void *)0;
+        if (copy == NULL)
+                return NULL;
 
         char *strings = (char *)(copy + argc + 1);
         for (uint64_t i = 0; i < argc; i++) {
@@ -63,7 +64,7 @@ static char **clone_argv(uint64_t argc, char **argv) {
                 strcpy(strings, argv[i]);
                 strings += strlen(argv[i]) + 1;
         }
-        copy[argc] = (void *)0;
+        copy[argc] = NULL;
         return copy;
 }
 
@@ -82,7 +83,7 @@ static pcb_t *find_free_slot(void) {
                 if (process_table[i].state == PROCESS_DEAD)
                         return &process_table[i];
         }
-        return (void *)0;
+        return NULL;
 }
 
 static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
@@ -116,8 +117,8 @@ void process_init(void) {
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 process_table[i].state             = PROCESS_DEAD;
                 process_table[i].pid               = NO_PID;
-                process_table[i].kernel_stack_base = (void *)0;
-                process_table[i].user_stack_base   = (void *)0;
+                process_table[i].kernel_stack_base = NULL;
+                process_table[i].user_stack_base   = NULL;
         }
 
         pcb_t *shell             = &process_table[SHELL_INDEX];
@@ -131,9 +132,9 @@ void process_init(void) {
         shell->stdout_pipe       = NO_PIPE;
         shell->blocked_on_pipe   = NO_PIPE;
         shell->blocked_on_keyboard = 0;
-        shell->argv_copy         = (void *)0;
-        shell->kernel_stack_base = (void *)0;
-        shell->user_stack_base   = (void *)0;
+        shell->argv_copy         = NULL;
+        shell->kernel_stack_base = NULL;
+        shell->user_stack_base   = NULL;
         strncpy(shell->name, "shell", PROCESS_NAME_LEN);
 
         current_pid = shell->pid;
@@ -145,20 +146,20 @@ pcb_t *process_get_current(void) {
 
 pcb_t *process_get(pid_t pid) {
         if (pid < 0)
-                return (void *)0;
+                return NULL;
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 if (process_table[i].pid == pid &&
                     process_table[i].state != PROCESS_DEAD)
                         return &process_table[i];
         }
-        return (void *)0;
+        return NULL;
 }
 
 pcb_t *process_get_by_index(int idx) {
         if (idx < 0 || idx >= MAX_PROCESSES)
-                return (void *)0;
+                return NULL;
         if (process_table[idx].state == PROCESS_DEAD)
-                return (void *)0;
+                return NULL;
         return &process_table[idx];
 }
 
@@ -170,12 +171,12 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                      const char *name, int foreground, uint64_t exit_handler,
                      int stdin_pipe, int stdout_pipe) {
         pcb_t *pcb = find_free_slot();
-        if (pcb == (void *)0)
+        if (pcb == NULL)
                 return NO_PID;
 
         uint8_t *kstack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
         uint8_t *ustack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
-        if (kstack == (void *)0 || ustack == (void *)0) {
+        if (kstack == NULL || ustack == NULL) {
                 if (kstack)
                         mem_free(kstack);
                 if (ustack)
@@ -184,7 +185,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         }
 
         char **argv_copy = clone_argv(argc, argv);
-        if (argc > 0 && argv_copy == (void *)0) {
+        if (argc > 0 && argv_copy == NULL) {
                 mem_free(kstack);
                 mem_free(ustack);
                 return NO_PID;
@@ -235,7 +236,7 @@ int process_kill(pid_t pid) {
         if (pid == SHELL_PID)
                 return SYS_ERR;
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 || pcb->state == PROCESS_ZOMBIE)
+        if (pcb == NULL || pcb->state == PROCESS_ZOMBIE)
                 return SYS_ERR;
 
         pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
@@ -255,7 +256,7 @@ int process_kill(pid_t pid) {
 
 int block_by_semaphore(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 ||
+        if (pcb == NULL ||
             (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING))
                 return SYS_ERR;
 
@@ -267,7 +268,7 @@ int block_by_semaphore(pid_t pid) {
 
 int process_block(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 ||
+        if (pcb == NULL ||
             (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING))
                 return SYS_ERR;
 
@@ -281,7 +282,7 @@ int process_block(pid_t pid) {
 
 int unblock_by_semaphore(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 || pcb->state != PROCESS_BLOCKED ||
+        if (pcb == NULL || pcb->state != PROCESS_BLOCKED ||
             !pcb->blocked_by_semaphore)
                 return -1;
 
@@ -292,7 +293,7 @@ int unblock_by_semaphore(pid_t pid) {
 
 int process_unblock(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 || pcb->state != PROCESS_BLOCKED)
+        if (pcb == NULL || pcb->state != PROCESS_BLOCKED)
                 return SYS_ERR;
 
         pcb->state = PROCESS_READY;
@@ -301,7 +302,7 @@ int process_unblock(pid_t pid) {
 
 int process_nice(pid_t pid, uint64_t new_priority) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 || pcb->state == PROCESS_ZOMBIE)
+        if (pcb == NULL || pcb->state == PROCESS_ZOMBIE)
                 return SYS_ERR;
         if (new_priority > MAX_PRIORITY)
                 new_priority = MAX_PRIORITY;
@@ -314,12 +315,12 @@ int process_nice(pid_t pid, uint64_t new_priority) {
 
 static pcb_t *find_by_pid_any_state(pid_t pid) {
         if (pid < 0)
-                return (void *)0;
+                return NULL;
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 if (process_table[i].pid == pid)
                         return &process_table[i];
         }
-        return (void *)0;
+        return NULL;
 }
 
 static int reap_zombie(pcb_t *target, pid_t pid) {
@@ -331,7 +332,7 @@ static int reap_zombie(pcb_t *target, pid_t pid) {
 
 int process_wait(pid_t pid) {
         pcb_t *target = find_by_pid_any_state(pid);
-        if (target == (void *)0 || target->state == PROCESS_DEAD)
+        if (target == NULL || target->state == PROCESS_DEAD)
                 return SYS_ERR;
 
         pcb_t *current = process_get_current();

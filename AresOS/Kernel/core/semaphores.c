@@ -61,7 +61,7 @@ static pid_t dequeue_process(uint64_t sem_id) {
 static void enqueue_process(uint64_t sem_id, pid_t pid) {
     pNode_t *new_node = slab_alloc(pNode_cache);
     new_node->pid = pid;
-    new_node->next = (void *)0;
+    new_node->next = NULL;
 
     if(semaphores[sem_id].head == NULL) 
         semaphores[sem_id].head = new_node;
