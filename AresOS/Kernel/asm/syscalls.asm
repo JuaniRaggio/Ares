@@ -53,4 +53,4 @@ syscall_entry:
     pop rsp                     ; restore user RSP
 
     swapgs
-    sysretq
+    o64 sysret

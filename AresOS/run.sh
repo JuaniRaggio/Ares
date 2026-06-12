@@ -10,14 +10,11 @@ if ! command -v qemu-system-x86_64 &> /dev/null; then
     exit 1
 fi
 
-# Select image to use (prefer qcow2 if it exists)
-if [ -f Image/x64BareBonesImage.qcow2 ]; then
-    IMAGE=Image/x64BareBonesImage.qcow2
-    FORMAT=qcow2
-elif [ -f Image/x64BareBonesImage.img ]; then
-    IMAGE=Image/x64BareBonesImage.img
-    FORMAT=raw
-else
+# Always boot the raw image: it is the direct output of the build, so it
+# can never be staler than the last compile
+IMAGE=Image/x64BareBonesImage.img
+FORMAT=raw
+if [ ! -f "$IMAGE" ]; then
     echo -e "${RED}Error: No bootable image found${NC}"
     echo "Run ./compile_in_container.sh first"
     exit 1

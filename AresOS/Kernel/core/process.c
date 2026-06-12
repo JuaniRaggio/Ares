@@ -342,8 +342,11 @@ int process_wait(pid_t pid) {
          * finished instead of checking once and returning early. */
         while (target->pid == pid && target->state != PROCESS_ZOMBIE &&
                target->state != PROCESS_DEAD) {
-                current->state       = PROCESS_BLOCKED;
+                /* waiting_for must be set BEFORE blocking: if a timer tick
+                 * lands in between, wake_waiters would not match us and the
+                 * wakeup would be lost forever. */
                 current->waiting_for = pid;
+                current->state       = PROCESS_BLOCKED;
                 scheduler_yield();
                 _hlt();
         }
