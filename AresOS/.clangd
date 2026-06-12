@@ -1,17 +1,24 @@
+# Configuracion de clangd para AresOS.
+#
+# Las compile flags salen de compile_commands.json, que se regenera con
+# "make compile_commands" EN EL HOST (no en docker, ver Makefile).
+#
+# El codigo se compila para x86-64 Linux freestanding dentro del contenedor,
+# pero clangd corre en la maquina local (posiblemente ARM). Fijar el target
+# hace que los flags -m64/-mno-* sean validos y que el analisis use los
+# tamanios y ABI reales del kernel.
+
 CompileFlags:
   Add:
+    - --target=x86_64-pc-linux-gnu
     - -ferror-limit=0
-    - -fno-delayed-template-parsing
   Remove:
-    # Remover flags que confunden al LSP
-    - -mno-mmx
-    - -mno-sse
-    - -mno-sse2
-    - -mno-red-zone
-    - -fno-pie
+    # Flags de generacion de dependencias, irrelevantes para el analisis
+    - -MMD
+    - -MP
 
 Diagnostics:
-  # Deshabilitar warnings que no son relevantes para freestanding
+  # Sin sugerencias de includes: en freestanding los headers se eligen a mano
   UnusedIncludes: None
   MissingIncludes: None
 
