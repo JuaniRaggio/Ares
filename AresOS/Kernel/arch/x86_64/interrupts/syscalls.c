@@ -68,6 +68,30 @@ static uint64_t drain_keyboard_buffer(char *buf, uint64_t max_count) {
         return i;
 }
 
+/* Blocks until the keyboard IRQ delivers input or an EOF (Ctrl+D).
+ * Interrupts are disabled around the check to avoid losing a wakeup
+ * between testing the buffer and blocking.
+ * Returns 1 when there is data to read, 0 on end of file. */
+static int wait_for_keyboard_input(pcb_t *current) {
+        while (1) {
+                _cli();
+                if (buffer_has_next()) {
+                        _sti();
+                        return 1;
+                }
+                if (buffer_consume_eof()) {
+                        _sti();
+                        return 0;
+                }
+                if (current != NULL) {
+                        current->blocked_on_keyboard = 1;
+                        process_block(current->pid);
+                }
+                _sti();
+                _hlt();
+        }
+}
+
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
         if ((fd != STDIN && fd != FD_KBD_NONBLOCK) || count == NULL ||
             buf == NULL) {
@@ -101,26 +125,9 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
                 return SYS_OK;
         }
 
-        /* Blocking read: sleep until the keyboard IRQ wakes us up.
-         * Interrupts are disabled around the check to avoid losing a
-         * wakeup between testing the buffer and blocking. */
-        while (1) {
-                _cli();
-                if (buffer_has_next()) {
-                        _sti();
-                        break;
-                }
-                if (buffer_consume_eof()) {
-                        _sti();
-                        *count = 0;
-                        return SYS_OK;
-                }
-                if (current != NULL) {
-                        current->blocked_on_keyboard = 1;
-                        process_block(current->pid);
-                }
-                _sti();
-                _hlt();
+        if (!wait_for_keyboard_input(current)) {
+                *count = 0; /* Ctrl+D: end of file */
+                return SYS_OK;
         }
 
         *count = drain_keyboard_buffer(buf, max_count);
