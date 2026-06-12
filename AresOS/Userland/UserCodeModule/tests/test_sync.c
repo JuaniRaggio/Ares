@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "test_util.h"
 #include <process_api.h>
 #include <sem_api.h>
@@ -6,7 +7,6 @@
 
 #define SEM_ID "sem"
 #define TOTAL_PAIR_PROCESSES 2
-#define NULL ((void *) 0)
 
 int64_t global; // shared memory
 
