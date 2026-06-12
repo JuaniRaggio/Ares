@@ -3,7 +3,7 @@ GREEN  := \033[0;32m
 YELLOW := \033[0;33m
 NC     := \033[0m
 
-all: toolchain bootloader kernel userland image compile_commands
+all: toolchain bootloader kernel userland image
 	@echo -e "$(GREEN)Build complete$(NC)"
 
 toolchain:
@@ -26,15 +26,18 @@ image: toolchain kernel bootloader userland
 	@echo -e "$(YELLOW)Building image...$(NC)"
 	@cd Image; make all
 
-# Generar compile_commands.json unificado para IDE/LSP
+# Generar compile_commands.json unificado para IDE/LSP.
+# IMPORTANTE: correr en el HOST, no dentro del contenedor. Las entradas
+# usan rutas absolutas ($(CURDIR)) y si se generan en docker quedan
+# apuntando a /root y clangd no encuentra ningun archivo.
 compile_commands:
 	@cd Kernel && $(MAKE) compile_commands.json
 	@cd Userland/UserCodeModule && $(MAKE) compile_commands.json
-	@echo '[' > compile_commands.json
-	@tail -n +2 Kernel/compile_commands.json | sed '$$d' >> compile_commands.json
-	@echo ',' >> compile_commands.json
-	@tail -n +2 Userland/UserCodeModule/compile_commands.json | sed '$$d' >> compile_commands.json
-	@echo ']' >> compile_commands.json
+	@python3 -c "import json; \
+a = json.load(open('Kernel/compile_commands.json')); \
+b = json.load(open('Userland/UserCodeModule/compile_commands.json')); \
+json.dump(a + b, open('compile_commands.json', 'w'), indent=2)"
+	@echo -e "$(GREEN)compile_commands.json regenerated$(NC)"
 
 clean:
 	@echo -e "$(YELLOW)Cleaning...$(NC)"

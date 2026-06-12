@@ -154,6 +154,45 @@ static void erase_cursor(int x, int y) {
                           shell_status.font_height * scale, BLACK);
 }
 
+/* Copies the finished token from buffer into input[param] */
+static void store_token(char input[][MAX_CHARS], int param,
+                        const char *buffer, int len) {
+        int i;
+        for (i = 0; i < len && i < MAX_CHARS - 1; i++) {
+                input[param][i] = buffer[i];
+        }
+        input[param][i] = 0;
+}
+
+/* Redraws the cursor at the current screen position */
+static void refresh_cursor(void) {
+        sync_cursor_pos();
+        draw_cursor(shell_status.cursor.x, shell_status.cursor.y, 1);
+}
+
+/* Handles Ctrl+- / Ctrl+= font scaling. Returns TRUE if c was a zoom key */
+static int handle_zoom_keys(int c) {
+        if (c == ZOOM_IN_CHAR && shell_status.magnification < MAX_FONT_SCALE) {
+                shell_status.magnification++;
+        } else if (c == ZOOM_OUT_CHAR &&
+                   shell_status.magnification > MIN_FONT_SCALE) {
+                shell_status.magnification--;
+        } else {
+                return FALSE;
+        }
+        syscall_set_font_size(shell_status.magnification);
+        syscall_redraw_screen();
+        sync_cursor_pos();
+        return TRUE;
+}
+
+/* Swallows the rest of the line once the token limit was reached */
+static void discard_until_newline(void) {
+        int c;
+        while ((c = getchar()) != '\n' && c != EOF)
+                ;
+}
+
 /* getchar() blocks in the kernel until input arrives, so the shell does not
  * poll. The cursor stays solid while waiting. */
 int shell_read_line(char input[][MAX_CHARS], int max_params) {
@@ -179,33 +218,13 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
                         return 0;
                 }
 
-                if (c == ZOOM_IN_CHAR &&
-                    shell_status.magnification < MAX_FONT_SCALE) {
-                        shell_status.magnification++;
-                        syscall_set_font_size(shell_status.magnification);
-                        syscall_redraw_screen();
-                        sync_cursor_pos();
+                if (handle_zoom_keys(c))
                         continue;
-                }
-
-                if (c == ZOOM_OUT_CHAR &&
-                    shell_status.magnification > MIN_FONT_SCALE) {
-                        shell_status.magnification--;
-                        syscall_set_font_size(shell_status.magnification);
-                        syscall_redraw_screen();
-                        sync_cursor_pos();
-                        continue;
-                }
 
                 if (c == '\n') {
                         if (buf_idx > 0) {
-                                buffer[buf_idx] = 0;
-                                int j           = 0;
-                                for (int i = 0; i <= buf_idx && j < MAX_CHARS;
-                                     i++, j++) {
-                                        input[current_param][j] = buffer[i];
-                                }
-                                input[current_param][j] = 0;
+                                store_token(input, current_param, buffer,
+                                            buf_idx);
                                 param_count++;
                         }
                         putchar('\n');
@@ -218,46 +237,33 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
                                      shell_status.cursor.y);
                         buf_idx--;
                         putchar('\b');
-                        sync_cursor_pos();
-                        draw_cursor(shell_status.cursor.x,
-                                    shell_status.cursor.y, 1);
+                        refresh_cursor();
                         continue;
                 }
 
                 if (c == ' ' && buf_idx > 0) {
                         erase_cursor(shell_status.cursor.x,
                                      shell_status.cursor.y);
-                        buffer[buf_idx] = 0;
-                        int j           = 0;
-                        for (int i = 0; i <= buf_idx && j < MAX_CHARS;
-                             i++, j++) {
-                                input[current_param][j] = buffer[i];
-                        }
-                        input[current_param][j] = 0;
+                        store_token(input, current_param, buffer, buf_idx);
                         current_param++;
                         param_count++;
                         buf_idx = 0;
 
                         if (current_param >= max_params) {
-                                while ((c = getchar()) != '\n' && c != EOF)
-                                        ;
+                                discard_until_newline();
                                 putchar('\n');
                                 sync_cursor_pos();
                                 return param_count;
                         }
                         putchar(' ');
-                        sync_cursor_pos();
-                        draw_cursor(shell_status.cursor.x,
-                                    shell_status.cursor.y, 1);
+                        refresh_cursor();
                         continue;
                 }
 
                 if (c >= ' ' && buf_idx < MAX_CHARS - 1) {
                         buffer[buf_idx++] = (char)c;
                         putchar(c);
-                        sync_cursor_pos();
-                        draw_cursor(shell_status.cursor.x,
-                                    shell_status.cursor.y, 1);
+                        refresh_cursor();
                 }
         }
 }
@@ -289,14 +295,20 @@ static void run_builtin(int idx, uint32_t params) {
         }
 }
 
+/* Fills argv with the tokens in [from, to) and returns argc */
+static uint64_t collect_args(int from, int to, char *argv[]) {
+        uint64_t argc = 0;
+        for (int i = from; i < to; i++) {
+                argv[argc++] = shell_status.prompts.user_input[i];
+        }
+        return argc;
+}
+
 /* Spawns a registered application as a process. Foreground commands are
  * waited for; background commands return to the prompt immediately. */
 static void run_external(int tokens, int background) {
         char *argv[SHELL_MAX_TOKENS];
-        uint64_t argc = tokens - 1;
-        for (uint64_t i = 0; i < argc; i++) {
-                argv[i] = shell_status.prompts.user_input[i + 1];
-        }
+        uint64_t argc = collect_args(1, tokens, argv);
 
         int64_t pid = my_spawn(shell_status.prompts.user_input[0], argc, argv,
                                !background, NO_PIPE, NO_PIPE);
@@ -334,16 +346,10 @@ static void run_piped(int pipe_pos, int tokens) {
         }
 
         char *largv[SHELL_MAX_TOKENS];
-        uint64_t largc = pipe_pos - 1;
-        for (uint64_t i = 0; i < largc; i++) {
-                largv[i] = shell_status.prompts.user_input[i + 1];
-        }
+        uint64_t largc = collect_args(1, pipe_pos, largv);
 
         char *rargv[SHELL_MAX_TOKENS];
-        uint64_t rargc = tokens - pipe_pos - 2;
-        for (uint64_t i = 0; i < rargc; i++) {
-                rargv[i] = shell_status.prompts.user_input[pipe_pos + 2 + i];
-        }
+        uint64_t rargc = collect_args(pipe_pos + 2, tokens, rargv);
 
         int64_t right_pid = my_spawn(right, rargc, rargv, 1, pipe_id, NO_PIPE);
         if (right_pid < 0) {
@@ -363,6 +369,48 @@ static void run_piped(int pipe_pos, int tokens) {
         my_wait(left_pid);
         my_wait(right_pid);
         my_pipe_close(pipe_id);
+}
+
+/* Detects and removes a trailing "&". Returns TRUE if the command should
+ * run in background */
+static int consume_background_token(int *tokens) {
+        if (*tokens < 2)
+                return FALSE;
+        char *last = shell_status.prompts.user_input[*tokens - 1];
+        if (strcmp(last, "&") != 0)
+                return FALSE;
+        last[0] = 0;
+        (*tokens)--;
+        return TRUE;
+}
+
+/* Returns the position of the "|" token, or -1 if the line has no pipe */
+static int find_pipe_position(int tokens) {
+        for (int i = 1; i < tokens - 1; i++) {
+                if (strcmp(shell_status.prompts.user_input[i], "|") == 0)
+                        return i;
+        }
+        return -1;
+}
+
+/* Resolves a single (non piped) command: built-in, application or error */
+static void run_single(int tokens, int background) {
+        int builtin = get_command_index(shell_status.prompts.user_input[0]);
+        if (builtin != INVALID_COMMAND_NAME) {
+                if (background) {
+                        printf("Built-in commands cannot run in background\n");
+                        return;
+                }
+                run_builtin(builtin, tokens);
+                return;
+        }
+
+        if (process_is_registered(shell_status.prompts.user_input[0])) {
+                run_external(tokens, background);
+                return;
+        }
+
+        printf(invalid_command);
 }
 
 static void sync_cursor_pos(void) {
@@ -399,48 +447,14 @@ int shell(void) {
                     shell_status.prompts.user_input[0][0] == 0)
                         continue;
 
-                /* A trailing "&" sends the command to the background */
-                int background = FALSE;
-                if (r_tokens > 1 &&
-                    strcmp(shell_status.prompts.user_input[r_tokens - 1],
-                           "&") == 0) {
-                        background = TRUE;
-                        shell_status.prompts.user_input[r_tokens - 1][0] = 0;
-                        r_tokens--;
-                }
-
-                /* A "|" between two commands connects them with a pipe */
-                int pipe_pos = -1;
-                for (int i = 1; i < r_tokens - 1 && pipe_pos < 0; i++) {
-                        if (strcmp(shell_status.prompts.user_input[i], "|") ==
-                            0)
-                                pipe_pos = i;
-                }
+                int background = consume_background_token(&r_tokens);
+                int pipe_pos   = find_pipe_position(r_tokens);
 
                 if (pipe_pos > 0) {
                         run_piped(pipe_pos, r_tokens);
-                        continue;
+                } else {
+                        run_single(r_tokens, background);
                 }
-
-                int builtin =
-                    get_command_index(shell_status.prompts.user_input[0]);
-                if (builtin != INVALID_COMMAND_NAME) {
-                        if (background) {
-                                printf("Built-in commands cannot run in "
-                                       "background\n");
-                                continue;
-                        }
-                        run_builtin(builtin, r_tokens);
-                        continue;
-                }
-
-                if (process_is_registered(
-                        shell_status.prompts.user_input[0])) {
-                        run_external(r_tokens, background);
-                        continue;
-                }
-
-                printf(invalid_command);
         }
         return OK;
 }
