@@ -3,7 +3,7 @@
 #include <drivers/sound.h>
 #include <interrupts.h>
 #include <lib.h>
-#include <multi_region_heap.h>
+#include <memory_manager.h>
 #include <naiveConsole.h>
 #include <pipe.h>
 #include <process.h>

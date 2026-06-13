@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 #include <slab.h>
-#include <multi_region_heap.h>
+#include <memory_manager.h>
 
 static void slab_init(slab_cache_t *cache, size_t size){
     cache->object_size = size;

@@ -1,7 +1,7 @@
 #include <stddef.h>
 #include <interrupts.h>
 #include <lib_common.h>
-#include <multi_region_heap.h>
+#include <memory_manager.h>
 #include <pipe.h>
 #include <process.h>
 #include <semaphores.h>
