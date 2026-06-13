@@ -151,7 +151,8 @@ static void erase_cursor(int x, int y) {
         int px        = x * shell_status.font_width * scale;
         int py        = y * shell_status.font_height * scale;
         syscall_draw_rect(px, py, shell_status.font_width * scale,
-                          shell_status.font_height * scale, BLACK);
+                          shell_status.font_height * scale,
+                          shell_status.background_color);
 }
 
 /* Copies the finished token from buffer into input[param] */
@@ -261,6 +262,10 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
                 }
 
                 if (c >= ' ' && buf_idx < MAX_CHARS - 1) {
+                        /* Clear the cursor mark before the glyph overwrites
+                         * the cell, otherwise the underline is left behind. */
+                        erase_cursor(shell_status.cursor.x,
+                                     shell_status.cursor.y);
                         buffer[buf_idx++] = (char)c;
                         putchar(c);
                         refresh_cursor();

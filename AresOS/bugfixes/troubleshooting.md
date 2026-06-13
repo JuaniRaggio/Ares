@@ -182,6 +182,34 @@ area. (`CR4.OSFXSR` and `finit` are already set by Pure64.)
 
 ---
 
+## 8. Shell cursor never visible — dead 768 KB field shifted live fields out of .data
+
+### Symptom
+The shell cursor was never drawn, at the prompt or while typing. Long-standing,
+predating the syscall rework.
+
+### Root Cause
+`shell_attributes` had `char buffer[SCREEN_SIZE]` (768 KB, `1024*768`) as its
+**first** field, unused by anything. `shell_status` is a statically-initialized
+global, so it lives in `.data`; the 768 KB dead field pushed `magnification`,
+`font_width` and `font_height` ~768 KB into the segment, past what the flat
+userland binary actually loaded with initial values. At runtime those fields
+read as 0, so `draw_cursor` computed `px = x * font_width * scale = 0` and
+`py = 0` — the cursor was always drawn at (0,0), hidden behind the banner.
+
+Diagnosed by: a fixed test rect drew fine (syscall works); forcing the cursor
+to a fixed position drew fine (draw_cursor runs); encoding `cursor.x`/`cursor.y`
+as rect positions showed them correct (3, 27); but drawing at the real
+`(px,py)` landed at (0,0) — proving `font_width`/`magnification` were 0.
+
+### Fix
+Remove the unused `buffer[SCREEN_SIZE]` field from `shell_attributes`
+(`include/shell.h`). With it gone, `.data` loads the initialized fields
+correctly and the cursor renders at the right spot. Side effect: the userland
+binary shrank from ~843 KB to ~52 KB.
+
+---
+
 ## Notes for the README "limitations" section
 - Killing a process mid-execution leaks its outstanding heap blocks: the kernel
   does not track block ownership per process.

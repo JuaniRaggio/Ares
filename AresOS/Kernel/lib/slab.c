@@ -35,9 +35,11 @@ void slab_free(slab_cache_t *cache, void *obj){
 }
 
 static void delete_slabs(void* obj){
-    if(obj != NULL){
-        delete_slabs(*(void**) obj);
+    /* Iterative to avoid one stack frame per free object. */
+    while (obj != NULL) {
+        void *next = *(void**) obj;
         mem_free(obj);
+        obj = next;
     }
 }
 
