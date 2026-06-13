@@ -25,7 +25,19 @@ typedef struct {
 	int write_pos;
 	int count;
 	int active;
+	int had_writer; /* a writer was attached at some point */
 } pipe_t;
+
+/**
+ * @brief Mark that a writer process was attached to the pipe.
+ *
+ * Called on process creation. Lets readers distinguish "the writer was not
+ * created yet" (block) from "the last writer is gone" (EOF), regardless of
+ * the order in which the two ends of the pipe are spawned.
+ *
+ * @param pipe_id Pipe index.
+ */
+void pipe_mark_writer(int pipe_id);
 
 /**
  * @brief Open or create a named pipe.

@@ -1,11 +1,12 @@
 #include <colors.h>
+#include <stdint.h>
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
 #include <idtLoader.h>
 #include <interrupts.h>
 #include <lib.h>
 #include <moduleLoader.h>
-#include <multi_region_heap.h>
+#include <memory_manager.h>
 #include <naiveConsole.h>
 #include <process.h>
 #include <scheduler.h>

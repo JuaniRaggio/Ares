@@ -1,3 +1,4 @@
+#include <apps.h>
 #include <benchmarks.h>
 #include <commands.h>
 #include <shell.h>
@@ -69,11 +70,32 @@ int get_command_index(char *command) {
 }
 
 uint8_t help(void) {
-        printf("Available commands:\n");
+        printf("Shell built-ins:\n");
         for (uint8_t i = 0; i < QTY_COMMANDS; i++) {
                 printf("  %s: %s\n", commands[i]->name,
                        commands[i]->description);
         }
+
+        printf("\nApplications (run as separate processes):\n");
+        for (int i = 0; i < app_registry_count; i++) {
+                printf("  %s: %s\n", app_registry[i].name,
+                       app_registry[i].description);
+        }
+
+        printf("\nCatedra tests:\n");
+        printf("  test_mm <max_bytes>: stress the memory manager\n");
+        printf("  test_proc <max_processes>: create, block and kill "
+               "processes\n");
+        printf("  test_prio <max_value>: show priority effect on "
+               "scheduling\n");
+        printf("  test_sync <n> <use_sem>: increment a shared variable with "
+               "or without semaphores\n");
+
+        printf("\nSpecial syntax:\n");
+        printf("  cmd args &  : run cmd in background\n");
+        printf("  p1 | p2     : connect p1 stdout with p2 stdin\n");
+        printf("  Ctrl+C      : kill the foreground process\n");
+        printf("  Ctrl+D      : send end of file\n");
         return OK;
 }
 
@@ -161,14 +183,22 @@ uint8_t print_mem(char *pos_str) {
 
 uint8_t man(char *command) {
         int idx = get_command_index(command);
-        if (idx == -1) {
-                printf(invalid_command);
-                return INVALID_INPUT;
+        if (idx != -1) {
+                printf("Command: %s\n", commands[idx]->name);
+                printf("Description: %s\n", commands[idx]->description);
+                printf("Parameters: %d\n", commands[idx]->lambda.ftype);
+                return OK;
         }
-        printf("Command: %s\n", commands[idx]->name);
-        printf("Description: %s\n", commands[idx]->description);
-        printf("Parameters: %d\n", commands[idx]->lambda.ftype);
-        return OK;
+        for (int i = 0; i < app_registry_count; i++) {
+                if (strcmp(app_registry[i].name, command) == 0) {
+                        printf("Application: %s\n", app_registry[i].name);
+                        printf("Description: %s\n",
+                               app_registry[i].description);
+                        return OK;
+                }
+        }
+        printf(invalid_command);
+        return INVALID_INPUT;
 }
 
 uint8_t cursor_cmd(char *type) {
@@ -310,5 +340,10 @@ uint8_t bgcolor_cmd(char *color) {
         shell_status.background_color = color_value;
         syscall_set_bg_color(color_value);
         printf("Background color changed\n");
+        return OK;
+}
+
+uint8_t exit_cmd(void) {
+        printf("The shell keeps the system alive and cannot exit.\n");
         return OK;
 }

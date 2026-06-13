@@ -1,12 +1,16 @@
+#include <stddef.h>
 #include <interrupts.h>
 #include <lib_common.h>
-#include <multi_region_heap.h>
+#include <memory_manager.h>
 #include <pipe.h>
 #include <process.h>
+#include <semaphores.h>
 #include <status_codes.h>
 
-#define USER_CS 0x1B
-#define USER_SS 0x23
+/* GDT layout puts user data (0x18) before user code (0x20) as SYSRET
+ * requires; both selectors carry RPL=3 */
+#define USER_CS 0x23
+#define USER_SS 0x1B
 #define RFLAGS_IF 0x202
 #define SHELL_INDEX 0
 
@@ -26,17 +30,45 @@ void process_free_resources(pid_t pid) {
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 if (process_table[i].pid == pid) {
                         pcb_t *pcb = &process_table[i];
-                        if (pcb->kernel_stack_base != (void *)0) {
+                        if (pcb->kernel_stack_base != NULL) {
                                 mem_free(pcb->kernel_stack_base);
-                                pcb->kernel_stack_base = (void *)0;
+                                pcb->kernel_stack_base = NULL;
                         }
-                        if (pcb->user_stack_base != (void *)0) {
+                        if (pcb->user_stack_base != NULL) {
                                 mem_free(pcb->user_stack_base);
-                                pcb->user_stack_base = (void *)0;
+                                pcb->user_stack_base = NULL;
+                        }
+                        if (pcb->argv_copy != NULL) {
+                                mem_free(pcb->argv_copy);
+                                pcb->argv_copy = NULL;
                         }
                         return;
                 }
         }
+}
+
+/* Copies argv into a single kernel-owned block so the arguments survive
+ * after the creator reuses or frees its own buffers (background processes). */
+static char **clone_argv(uint64_t argc, char **argv) {
+        if (argc == 0 || argv == NULL)
+                return NULL;
+
+        uint64_t total = (argc + 1) * sizeof(char *);
+        for (uint64_t i = 0; i < argc; i++)
+                total += strlen(argv[i]) + 1;
+
+        char **copy = (char **)mem_alloc(total);
+        if (copy == NULL)
+                return NULL;
+
+        char *strings = (char *)(copy + argc + 1);
+        for (uint64_t i = 0; i < argc; i++) {
+                copy[i] = strings;
+                strcpy(strings, argv[i]);
+                strings += strlen(argv[i]) + 1;
+        }
+        copy[argc] = NULL;
+        return copy;
 }
 
 static void wake_waiters(pid_t dead_pid) {
@@ -54,7 +86,7 @@ static pcb_t *find_free_slot(void) {
                 if (process_table[i].state == PROCESS_DEAD)
                         return &process_table[i];
         }
-        return (void *)0;
+        return NULL;
 }
 
 static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
@@ -88,8 +120,8 @@ void process_init(void) {
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 process_table[i].state             = PROCESS_DEAD;
                 process_table[i].pid               = NO_PID;
-                process_table[i].kernel_stack_base = (void *)0;
-                process_table[i].user_stack_base   = (void *)0;
+                process_table[i].kernel_stack_base = NULL;
+                process_table[i].user_stack_base   = NULL;
         }
 
         pcb_t *shell             = &process_table[SHELL_INDEX];
@@ -102,8 +134,10 @@ void process_init(void) {
         shell->stdin_pipe        = NO_PIPE;
         shell->stdout_pipe       = NO_PIPE;
         shell->blocked_on_pipe   = NO_PIPE;
-        shell->kernel_stack_base = (void *)0;
-        shell->user_stack_base   = (void *)0;
+        shell->blocked_on_keyboard = 0;
+        shell->argv_copy         = NULL;
+        shell->kernel_stack_base = NULL;
+        shell->user_stack_base   = NULL;
         strncpy(shell->name, "shell", PROCESS_NAME_LEN);
 
         current_pid = shell->pid;
@@ -115,20 +149,20 @@ pcb_t *process_get_current(void) {
 
 pcb_t *process_get(pid_t pid) {
         if (pid < 0)
-                return (void *)0;
+                return NULL;
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 if (process_table[i].pid == pid &&
                     process_table[i].state != PROCESS_DEAD)
                         return &process_table[i];
         }
-        return (void *)0;
+        return NULL;
 }
 
 pcb_t *process_get_by_index(int idx) {
         if (idx < 0 || idx >= MAX_PROCESSES)
-                return (void *)0;
+                return NULL;
         if (process_table[idx].state == PROCESS_DEAD)
-                return (void *)0;
+                return NULL;
         return &process_table[idx];
 }
 
@@ -140,16 +174,23 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                      const char *name, int foreground, uint64_t exit_handler,
                      int stdin_pipe, int stdout_pipe) {
         pcb_t *pcb = find_free_slot();
-        if (pcb == (void *)0)
+        if (pcb == NULL)
                 return NO_PID;
 
         uint8_t *kstack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
         uint8_t *ustack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
-        if (kstack == (void *)0 || ustack == (void *)0) {
+        if (kstack == NULL || ustack == NULL) {
                 if (kstack)
                         mem_free(kstack);
                 if (ustack)
                         mem_free(ustack);
+                return NO_PID;
+        }
+
+        char **argv_copy = clone_argv(argc, argv);
+        if (argc > 0 && argv_copy == NULL) {
+                mem_free(kstack);
+                mem_free(ustack);
                 return NO_PID;
         }
 
@@ -164,13 +205,18 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->stdin_pipe           = stdin_pipe;
         pcb->stdout_pipe          = stdout_pipe;
         pcb->blocked_on_pipe      = NO_PIPE;
+        pcb->blocked_on_keyboard  = 0;
+        pcb->argv_copy            = argv_copy;
         pcb->kernel_stack_base    = kstack;
         pcb->user_stack_base      = ustack;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
 
+        if (stdout_pipe != NO_PIPE)
+                pipe_mark_writer(stdout_pipe);
+
         uint64_t user_rsp;
         setup_user_stack(ustack, exit_handler, &user_rsp);
-        setup_kernel_stack(kstack, entry, argc, argv, user_rsp, &pcb->rsp);
+        setup_kernel_stack(kstack, entry, argc, argv_copy, user_rsp, &pcb->rsp);
 
         return pcb->pid;
 }
@@ -178,6 +224,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
 void process_exit(int code) {
         pcb_t *pcb = process_get_current();
         pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
+        sem_remove_from_queues(pcb->pid);
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
@@ -190,11 +237,14 @@ void process_exit(int code) {
 }
 
 int process_kill(pid_t pid) {
+        if (pid == SHELL_PID)
+                return SYS_ERR;
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 || pcb->state == PROCESS_ZOMBIE)
+        if (pcb == NULL || pcb->state == PROCESS_ZOMBIE)
                 return SYS_ERR;
 
         pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
+        sem_remove_from_queues(pid);
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
@@ -211,7 +261,7 @@ int process_kill(pid_t pid) {
 
 int block_by_semaphore(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 ||
+        if (pcb == NULL ||
             (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING))
                 return SYS_ERR;
 
@@ -223,7 +273,7 @@ int block_by_semaphore(pid_t pid) {
 
 int process_block(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 ||
+        if (pcb == NULL ||
             (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING))
                 return SYS_ERR;
 
@@ -237,7 +287,7 @@ int process_block(pid_t pid) {
 
 int unblock_by_semaphore(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 || pcb->state != PROCESS_BLOCKED ||
+        if (pcb == NULL || pcb->state != PROCESS_BLOCKED ||
             !pcb->blocked_by_semaphore)
                 return -1;
 
@@ -248,7 +298,7 @@ int unblock_by_semaphore(pid_t pid) {
 
 int process_unblock(pid_t pid) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 || pcb->state != PROCESS_BLOCKED)
+        if (pcb == NULL || pcb->state != PROCESS_BLOCKED)
                 return SYS_ERR;
 
         pcb->state = PROCESS_READY;
@@ -257,7 +307,7 @@ int process_unblock(pid_t pid) {
 
 int process_nice(pid_t pid, uint64_t new_priority) {
         pcb_t *pcb = process_get(pid);
-        if (pcb == (void *)0 || pcb->state == PROCESS_ZOMBIE)
+        if (pcb == NULL || pcb->state == PROCESS_ZOMBIE)
                 return SYS_ERR;
         if (new_priority > MAX_PRIORITY)
                 new_priority = MAX_PRIORITY;
@@ -270,12 +320,12 @@ int process_nice(pid_t pid, uint64_t new_priority) {
 
 static pcb_t *find_by_pid_any_state(pid_t pid) {
         if (pid < 0)
-                return (void *)0;
+                return NULL;
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 if (process_table[i].pid == pid)
                         return &process_table[i];
         }
-        return (void *)0;
+        return NULL;
 }
 
 static int reap_zombie(pcb_t *target, pid_t pid) {
@@ -287,23 +337,30 @@ static int reap_zombie(pcb_t *target, pid_t pid) {
 
 int process_wait(pid_t pid) {
         pcb_t *target = find_by_pid_any_state(pid);
-        if (target == (void *)0 || target->state == PROCESS_DEAD)
+        if (target == NULL || target->state == PROCESS_DEAD)
                 return SYS_ERR;
 
+        pcb_t *current = process_get_current();
+
+        /* scheduler_yield() only drops the quantum: the actual switch
+         * happens on the next timer tick, so loop until the child really
+         * finished instead of checking once and returning early. */
+        while (target->pid == pid && target->state != PROCESS_ZOMBIE &&
+               target->state != PROCESS_DEAD) {
+                /* waiting_for must be set BEFORE blocking: if a timer tick
+                 * lands in between, wake_waiters would not match us and the
+                 * wakeup would be lost forever. */
+                current->waiting_for = pid;
+                current->state       = PROCESS_BLOCKED;
+                scheduler_yield();
+                _hlt();
+        }
+
+        if (target->pid != pid)
+                return SYS_ERR; /* slot reused, child was already reaped */
         if (target->state == PROCESS_ZOMBIE)
                 return reap_zombie(target, pid);
-
-        pcb_t *current       = process_get_current();
-        current->state       = PROCESS_BLOCKED;
-        current->waiting_for = pid;
-
-        scheduler_yield();
-
-        if (target->state == PROCESS_ZOMBIE)
-                return reap_zombie(target, pid);
-        if (target->state == PROCESS_DEAD)
-                return target->exit_code;
-        return SYS_ERR;
+        return target->exit_code;
 }
 
 int process_list(uint64_t *pids, int max) {
@@ -313,4 +370,48 @@ int process_list(uint64_t *pids, int max) {
                         pids[count++] = process_table[i].pid;
         }
         return count;
+}
+
+int process_snapshot(process_info_t *info, int max) {
+        int count = 0;
+        for (int i = 0; i < MAX_PROCESSES && count < max; i++) {
+                pcb_t *pcb = &process_table[i];
+                if (pcb->state == PROCESS_DEAD)
+                        continue;
+                info[count].pid        = pcb->pid;
+                info[count].priority   = pcb->priority;
+                info[count].rsp        = pcb->rsp;
+                info[count].stack_base = (uint64_t)pcb->user_stack_base;
+                info[count].state      = pcb->state;
+                info[count].foreground = pcb->foreground;
+                strncpy(info[count].name, pcb->name, PROCESS_INFO_NAME_LEN);
+                count++;
+        }
+        return count;
+}
+
+int process_kill_foreground(void) {
+        int killed = 0;
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                pcb_t *pcb = &process_table[i];
+                if (pcb->state == PROCESS_DEAD ||
+                    pcb->state == PROCESS_ZOMBIE)
+                        continue;
+                if (pcb->foreground && pcb->pid != SHELL_PID) {
+                        process_kill(pcb->pid);
+                        killed++;
+                }
+        }
+        return killed;
+}
+
+void process_wake_keyboard_readers(void) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                pcb_t *pcb = &process_table[i];
+                if (pcb->state == PROCESS_BLOCKED &&
+                    pcb->blocked_on_keyboard) {
+                        pcb->blocked_on_keyboard = 0;
+                        pcb->state               = PROCESS_READY;
+                }
+        }
 }

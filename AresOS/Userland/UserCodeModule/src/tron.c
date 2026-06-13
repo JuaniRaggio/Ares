@@ -273,7 +273,7 @@ int tron_game(void) {
         /* Main game loop */
         while (!game.game_over) {
                 /* Read input (non-blocking) */
-                char c = getchar();
+                char c = getchar_nonblock();
 
                 /* Process input - only changes direction */
                 if (c != 0) {
@@ -321,8 +321,6 @@ int tron_game(void) {
         printf("  Press any key to return to shell...\n");
 
         /* Wait for keypress */
-        while (getchar() == 0)
-                ;
         getchar();
 
         syscall_clear();

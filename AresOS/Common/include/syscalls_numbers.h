@@ -40,5 +40,10 @@ typedef enum {
         SYS_SEM_POST,
         SYS_SEM_WAIT,
         SYS_SEM_CLOSE,
+        SYS_PS,
         SYS_MAX,
 } syscall_codes;
+
+/* File descriptor for non-blocking keyboard reads (games, polling UIs).
+ * Regular fd 0 (stdin) reads block until data or EOF is available. */
+#define FD_KBD_NONBLOCK 3

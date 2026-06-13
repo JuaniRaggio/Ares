@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stddef.h>
 #include <command_defs.h>
 #include <configuration.h>
 #include <lib.h>
@@ -10,7 +11,6 @@
 #include <syscalls.h>
 #include <tron.h>
 
-#define NULL 0
 #define INVALID_COMMAND_NAME -1
 
 static const char *const invalid_command = "Invalid command!\n";
@@ -112,6 +112,12 @@ uint8_t textcolor_cmd(char *color);
  * @return: status code
  */
 uint8_t bgcolor_cmd(char *color);
+
+/**
+ * Informs that the shell cannot exit
+ * @return: status code
+ */
+uint8_t exit_cmd(void);
 
 typedef enum {
         CMD_HELP,
@@ -218,7 +224,7 @@ static const command_t exit_command = {
     .description = "Exit Ares OS",
     .lambda =
         {
-            .execute.supplier = NULL,
+            .execute.supplier = &exit_cmd,
             .ftype            = supplier_t,
         },
 };

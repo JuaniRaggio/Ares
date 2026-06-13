@@ -17,9 +17,14 @@
 #define RSHIFT_CODE 0x36
 #define LCTRL_CODE 0x1D
 #define R_CODE 0x13
+#define C_CODE 0x2E
+#define D_CODE 0x20
 #define MINUS_CODE 0x0C
 #define EQUALS_CODE 0x0D
 #define BREAK_CODE 0x80
+
+#define CTRL_C_CHAR 0x03
+#define CTRL_D_CHAR 0x04
 
 /**
  * Handles keyboard interrupt
@@ -45,6 +50,17 @@ uint8_t buffer_has_next();
  * @return Next character from buffer
  */
 uint8_t buffer_next();
+
+/**
+ * Marks that an end-of-file (Ctrl+D) was requested on the keyboard
+ */
+void buffer_set_eof(void);
+
+/**
+ * Consumes a pending end-of-file request
+ * @return 1 if an EOF was pending, 0 otherwise
+ */
+uint8_t buffer_consume_eof(void);
 
 /**
  * Captures current CPU register state (triggered by Ctrl+R)

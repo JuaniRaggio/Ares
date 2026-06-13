@@ -6,7 +6,9 @@
  * regions through a single address-ordered free list with sentinel nodes.
  */
 
-#include <multi_region_heap.h>
+#include <stddef.h>
+#include <interrupts.h>
+#include <memory_manager.h>
 
 /**
  * @brief Free list node.
@@ -100,7 +102,7 @@ static void init_free_list_sentinels(void) {
         free_list_start.block_size      = 0;
         free_list_start.next_free_block = &free_list_end;
         free_list_end.block_size        = 0;
-        free_list_end.next_free_block   = (void *)0;
+        free_list_end.next_free_block   = NULL;
 }
 
 static void init_heap_stats(size_t total_free) {
@@ -149,15 +151,15 @@ void mem_init(heap_region_t *regions, size_t region_count) {
         heap_initialized = 1;
 }
 
-void *mem_alloc(size_t size) {
+static void *do_mem_alloc(size_t size) {
         if (size == 0) {
-                return (void *)0;
+                return NULL;
         }
 
         size_t needed = align_up(size + header_size);
 
         if (needed > heap_status.available_heap_space_bytes) {
-                return (void *)0;
+                return NULL;
         }
 
         block_list_t *prev  = &free_list_start;
@@ -171,7 +173,7 @@ void *mem_alloc(size_t size) {
                                 prev->next_free_block = block->next_free_block;
                         }
 
-                        block->next_free_block = (void *)0;
+                        block->next_free_block = NULL;
                         heap_status.available_heap_space_bytes -=
                             block->block_size;
 
@@ -190,17 +192,24 @@ void *mem_alloc(size_t size) {
                 block = block->next_free_block;
         }
 
-        return (void *)0;
+        return NULL;
 }
 
-void mem_free(void *ptr) {
-        if (ptr == (void *)0) {
+void *mem_alloc(size_t size) {
+        uint64_t flags = irq_save();
+        void *result   = do_mem_alloc(size);
+        irq_restore(flags);
+        return result;
+}
+
+static void do_mem_free(void *ptr) {
+        if (ptr == NULL) {
                 return;
         }
 
         block_list_t *block = (block_list_t *)((uint8_t *)ptr - header_size);
 
-        int already_free = block->next_free_block != (void *)0;
+        int already_free = block->next_free_block != NULL;
         if (already_free)
                 return;
 
@@ -210,8 +219,14 @@ void mem_free(void *ptr) {
         insert_block_into_free_list(block);
 }
 
-void mem_get_stats(heap_stats_t *stats) {
-        if (stats == (void *)0) {
+void mem_free(void *ptr) {
+        uint64_t flags = irq_save();
+        do_mem_free(ptr);
+        irq_restore(flags);
+}
+
+static void do_mem_get_stats(heap_stats_t *stats) {
+        if (stats == NULL) {
                 return;
         }
 
@@ -243,4 +258,10 @@ void mem_get_stats(heap_stats_t *stats) {
         stats->size_largest_free_block_bytes     = largest;
         stats->size_smallest_free_block_in_bytes = smallest;
         stats->number_of_free_blocks             = count;
+}
+
+void mem_get_stats(heap_stats_t *stats) {
+        uint64_t flags = irq_save();
+        do_mem_get_stats(stats);
+        irq_restore(flags);
 }

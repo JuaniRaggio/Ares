@@ -10,7 +10,6 @@
 #include <slab.h>
 #include <spinlock.h>
 
-#define NULL ((void*)0)
 
 typedef struct pnode {
     pid_t pid;
@@ -62,7 +61,7 @@ static pid_t dequeue_process(uint64_t sem_id) {
 static void enqueue_process(uint64_t sem_id, pid_t pid) {
     pNode_t *new_node = slab_alloc(pNode_cache);
     new_node->pid = pid;
-    new_node->next = (void *)0;
+    new_node->next = NULL;
 
     if(semaphores[sem_id].head == NULL) 
         semaphores[sem_id].head = new_node;
@@ -73,16 +72,62 @@ static void enqueue_process(uint64_t sem_id, pid_t pid) {
 }
 
 static void free_pNode(pNode_t *node){
-    if(node != NULL){
-        free_pNode(node->next);
+    /* Iterative: a deep wait queue would otherwise recurse one frame per
+     * blocked process and could overflow the kernel stack. */
+    while (node != NULL) {
+        pNode_t *next = node->next;
         unblock_by_semaphore(node->pid);
         slab_free(pNode_cache, node);
+        node = next;
     }
-    return;
 }
 
 static void free_queue(uint64_t sem_id) {
     return free_pNode(semaphores[sem_id].head);
+}
+
+/* Removes a single pid from a semaphore's wait queue. Returns 1 if found. */
+static int remove_pid_from_queue(uint64_t sem_id, pid_t pid) {
+    pNode_t *prev = NULL;
+    pNode_t *cur  = semaphores[sem_id].head;
+    while (cur != NULL) {
+        if (cur->pid == pid) {
+            if (prev == NULL)
+                semaphores[sem_id].head = cur->next;
+            else
+                prev->next = cur->next;
+            if (semaphores[sem_id].tail == cur)
+                semaphores[sem_id].tail = prev;
+            slab_free(pNode_cache, cur);
+            return 1;
+        }
+        prev = cur;
+        cur  = cur->next;
+    }
+    return 0;
+}
+
+/* Drops a (dying) process from every semaphore wait queue. Without this,
+ * killing a process blocked in sem_wait leaves a stale node: a later
+ * sem_post would dequeue the dead pid, fail to wake it, and swallow the
+ * post -- starving the next real waiter. Undoing the dead process's
+ * decrement (value++) keeps the counter consistent with the queue. */
+void sem_remove_from_queues(int64_t pid) {
+    /* irq_save (not _cli/_sti): this also runs from the keyboard IRQ via
+     * process_kill_foreground (Ctrl+C), where interrupts are already off
+     * and a bare _sti would wrongly re-enable them inside the handler. */
+    uint64_t flags = irq_save();
+    acquire_lock(&semaphores_lock);
+    for (int i = 0; i < MAX_SEM; i++) {
+        if (semaphores[i].id[0] == '\0')
+            continue;
+        acquire_lock(&semaphores[i].lock);
+        if (remove_pid_from_queue(i, (pid_t)pid))
+            semaphores[i].value++;
+        release_lock(&semaphores[i].lock);
+    }
+    release_lock(&semaphores_lock);
+    irq_restore(flags);
 }
 
 int64_t search_sem(char* sem_id) {
@@ -174,6 +219,7 @@ int64_t sem_wait(char* sem_id) {
         enqueue_process(sem_idx, pid);
 
         if (block_by_semaphore(pid) == -1) {
+            remove_pid_from_queue(sem_idx, pid);
             semaphores[sem_idx].value++;
             release_lock(&semaphores[sem_idx].lock);
             _sti();
@@ -181,7 +227,17 @@ int64_t sem_wait(char* sem_id) {
         }
         release_lock(&semaphores[sem_idx].lock);
         _sti();
+
+        /* Block for real. scheduler_yield() only drops the quantum, so the
+         * actual switch happens on the next tick; we must NOT return to
+         * userland while still BLOCKED (the process would keep running and
+         * could re-enter sem_wait, double-enqueueing its pid). Sleep on
+         * _hlt() until sem_post (or a kill) clears the BLOCKED state, the
+         * same pattern process_wait uses. */
+        pcb_t *self = process_get_current();
         scheduler_yield();
+        while (self->state == PROCESS_BLOCKED)
+            _hlt();
     }else{
         release_lock(&semaphores[sem_idx].lock);
         _sti();

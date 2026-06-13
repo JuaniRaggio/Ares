@@ -1,6 +1,12 @@
 # Kernel Makefile simplificado con orden de linkeo explícito
 include Makefile.inc
 
+# Colors
+RED    := \033[0;31m
+GREEN  := \033[0;32m
+YELLOW := \033[0;33m
+NC     := \033[0m
+
 # Directorios
 ARCH_DIR := arch/x86_64
 DRIVERS_DIR := drivers
@@ -24,7 +30,7 @@ INTERRUPTS_ASM := $(ARCH_DIR)/interrupts/interrupts.asm
 INTERRUPTS_OBJ := $(BUILD_DIR)/$(ARCH_DIR)/interrupts/interrupts.o
 
 # 3. ASM de syscalls (orden alfabético explícito)
-SYSCALLS_ASM := asm/libasm.asm asm/sys_wrappers.asm asm/syscalls.asm asm/syscalls_table.asm asm/init_syscalls.asm asm/kernel_stack.asm asm/setup_user_segments.asm asm/jump_to_userland.asm asm/tss.asm asm/spinlock.asm
+SYSCALLS_ASM := asm/libasm.asm asm/syscalls.asm asm/init_syscalls.asm asm/kernel_stack.asm asm/setup_user_segments.asm asm/jump_to_userland.asm asm/tss.asm asm/spinlock.asm
 SYSCALLS_OBJ := $(patsubst %.asm,$(BUILD_DIR)/%.o,$(SYSCALLS_ASM))
 
 # Memory manager: por defecto multi_region_heap, override con MM=buddy
@@ -56,47 +62,40 @@ GCCFLAGS += -MMD -MP  # Generar dependencias automáticas
 .PHONY: all clean info compile_commands.json
 
 all: $(KERNEL)
-	@echo "✓ Kernel compilado: $(KERNEL)"
-	@echo "✓ Símbolos de debug: $(KERNEL_ELF)"
+	@printf "$(GREEN)Kernel built: $(KERNEL)$(NC)\n"
 
 # Linkeo del kernel ELF con símbolos de debug
 $(KERNEL_ELF): $(ALL_OBJECTS) | $(BIN_DIR)
-	@echo "Linkeando kernel ELF..."
+	@printf "$(YELLOW)Linking kernel...$(NC)\n"
 	@$(LD) $(LDFLAGS) --oformat=elf64-x86-64 -T kernel.ld -o $@ $(ALL_OBJECTS)
 
 # Extraer binario plano del ELF
 $(KERNEL): $(KERNEL_ELF)
-	@echo "Generando binario plano..."
 	@objcopy -O binary $< $@
 
 # Compilación de loader (PRIMERO)
 $(LOADER_OBJ): $(LOADER_SRC) | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	@echo "ASM (loader) $<"
 	@$(ASM) $(ASMFLAGS) $< -o $@
 
 # Compilación de interrupts ASM
 $(INTERRUPTS_OBJ): $(INTERRUPTS_ASM) | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	@echo "ASM (interrupts) $<"
 	@$(ASM) $(ASMFLAGS) $< -o $@
 
 # Compilación de syscalls ASM
 $(BUILD_DIR)/asm/%.o: asm/%.asm | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	@echo "ASM (syscalls) $<"
 	@$(ASM) $(ASMFLAGS) $< -o $@
 
 # Compilación de archivos C del Kernel
 $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	@echo "CC  $<"
 	@$(GCC) $(GCCFLAGS) -c $< -o $@
 
 # Compilación de archivos C de Common
 $(BUILD_DIR)/common/%.o: $(COMMON_DIR)/src/%.c | $(BUILD_DIR)
 	@mkdir -p $(dir $@)
-	@echo "CC (common) $<"
 	@$(GCC) $(GCCFLAGS) -c $< -o $@
 
 
@@ -112,9 +111,8 @@ $(BIN_DIR):
 
 # Limpiar
 clean:
-	@echo "Limpiando archivos de compilación..."
 	@rm -rf $(BUILD_DIR) $(BIN_DIR)
-	@echo "✓ Limpieza completa"
+	@printf "$(GREEN)Clean complete$(NC)\n"
 
 # Generar compile_commands.json para IDE/LSP
 compile_commands.json:

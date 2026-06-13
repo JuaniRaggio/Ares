@@ -1,0 +1,59 @@
+#pragma once
+
+/**
+ * @file apps.h
+ * @brief Userland applications required by the assignment.
+ *
+ * Every application follows the standard process entry convention
+ * main(argc, argv) and runs as a separate process created by the shell.
+ */
+
+#include <stdint.h>
+
+typedef uint64_t (*app_main_t)(uint64_t argc, char *argv[]);
+
+typedef struct {
+        const char *name;
+        const char *description;
+        app_main_t main;
+} app_t;
+
+/** @brief Table of user-facing applications (for help and registration). */
+extern const app_t app_registry[];
+extern const int app_registry_count;
+
+/**
+ * @brief Register every application (and internal helpers) by name so the
+ *        shell can spawn them as processes.
+ */
+void register_apps(void);
+
+/** @brief Prints the memory manager state (total, used, free, etc). */
+uint64_t mem_app(uint64_t argc, char *argv[]);
+
+/** @brief Prints every process with pid, name, priority, stack and state. */
+uint64_t ps_app(uint64_t argc, char *argv[]);
+
+/** @brief Prints its pid with a greeting every N seconds (active wait). */
+uint64_t loop_app(uint64_t argc, char *argv[]);
+
+/** @brief Kills the process with the given pid. */
+uint64_t kill_app(uint64_t argc, char *argv[]);
+
+/** @brief Changes the priority of the process with the given pid. */
+uint64_t nice_app(uint64_t argc, char *argv[]);
+
+/** @brief Toggles a process between blocked and ready given its pid. */
+uint64_t block_app(uint64_t argc, char *argv[]);
+
+/** @brief Prints stdin as it is received. */
+uint64_t cat_app(uint64_t argc, char *argv[]);
+
+/** @brief Counts the number of lines in the input. */
+uint64_t wc_app(uint64_t argc, char *argv[]);
+
+/** @brief Filters the vowels out of the input. */
+uint64_t filter_app(uint64_t argc, char *argv[]);
+
+/** @brief Multiple readers / writers over a global variable (Haskell MVar). */
+uint64_t mvar_app(uint64_t argc, char *argv[]);

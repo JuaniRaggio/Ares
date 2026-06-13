@@ -1,6 +1,8 @@
 ;interrupts.asm
 GLOBAL _cli
 GLOBAL _sti
+GLOBAL irq_save
+GLOBAL irq_restore
 GLOBAL picMasterMask
 GLOBAL picSlaveMask
 GLOBAL haltcpu
@@ -156,6 +158,25 @@ _cli:
 
 _sti:
 	sti
+	ret
+
+; uint64_t irq_save(void)
+; Returns the current RFLAGS and disables interrupts. Pairs with
+; irq_restore to nest interrupt-off regions safely: an inner region
+; restores to "disabled" if the outer one already had them off, instead
+; of re-enabling early like a bare cli/sti would.
+irq_save:
+	pushfq
+	pop rax
+	cli
+	ret
+
+; void irq_restore(uint64_t flags)
+; Restores RFLAGS saved by irq_save (re-enables interrupts only if they
+; were enabled at save time).
+irq_restore:
+	push rdi
+	popfq
 	ret
 
 picMasterMask:

@@ -156,6 +156,21 @@ uint64_t sys_get_time_ms(uint64_t *time_ms);
 uint64_t sys_get_fps(uint64_t *fps);
 
 /**
+ * Plays a sound with the given frequency and duration (blocking).
+ * @param frequency Frequency in Hz.
+ * @param duration_ms Duration in milliseconds.
+ * @return 0 on success.
+ */
+uint64_t sys_play_sound(uint64_t frequency, uint64_t duration_ms);
+
+/**
+ * Plays a short beep (blocking).
+ * @param frequency Frequency in Hz.
+ * @return 0 on success.
+ */
+uint64_t sys_beep(uint64_t frequency);
+
+/**
  * Allocates memory from the kernel heap.
  * @param size Number of bytes to allocate.
  * @return Address of the allocated block, or 0 on failure.
@@ -244,6 +259,14 @@ uint64_t sys_waitpid(uint64_t pid);
  * @return Number of PIDs written.
  */
 uint64_t sys_list_processes(uint64_t pids_ptr, uint64_t max_count);
+
+/**
+ * Fills an array with process_info_t snapshots of active processes.
+ * @param info_ptr Pointer to a process_info_t array.
+ * @param max_count Maximum entries to fill.
+ * @return Number of entries written.
+ */
+uint64_t sys_ps(uint64_t info_ptr, uint64_t max_count);
 
 /**
  * Opens or creates a named pipe.

@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <drivers/time.h>
 #include <process.h>
 #include <scheduler.h>
@@ -38,7 +39,7 @@ static int pick_next_ready(void) {
         for (int i = 1; i <= MAX_PROCESSES; i++) {
                 int idx    = (current_index + i) % MAX_PROCESSES;
                 pcb_t *pcb = process_get_by_index(idx);
-                if (pcb != (void *)0 && pcb->state == PROCESS_READY)
+                if (pcb != NULL && pcb->state == PROCESS_READY)
                         return idx;
         }
         return -1;
@@ -69,7 +70,7 @@ static void demote_to_ready(pcb_t *process) {
 }
 
 static int try_continue_current(pcb_t *current, uint64_t current_rsp) {
-        if (current != (void *)0 && current->state == PROCESS_READY) {
+        if (current != NULL && current->state == PROCESS_READY) {
                 current->state    = PROCESS_RUNNING;
                 remaining_quantum = current->priority;
                 return 1;
@@ -82,13 +83,13 @@ uint64_t schedule(uint64_t current_rsp) {
 
         pcb_t *current = process_get_by_index(current_index);
 
-        if (current != (void *)0) {
+        if (current != NULL) {
                 current->rsp = current_rsp;
                 reap_if_zombie(current);
                 demote_to_ready(current);
         }
 
-        if (remaining_quantum > 0 && current != (void *)0 &&
+        if (remaining_quantum > 0 && current != NULL &&
             current->state == PROCESS_READY) {
                 remaining_quantum--;
                 current->state = PROCESS_RUNNING;

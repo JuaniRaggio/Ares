@@ -1,8 +1,8 @@
 // slab.c creado para manejar lista de procesos en wait por semáforos
 
+#include <stddef.h>
 #include <slab.h>
-#include <multi_region_heap.h>
-#define NULL ((void*)0)
+#include <memory_manager.h>
 
 static void slab_init(slab_cache_t *cache, size_t size){
     cache->object_size = size;
@@ -35,9 +35,11 @@ void slab_free(slab_cache_t *cache, void *obj){
 }
 
 static void delete_slabs(void* obj){
-    if(obj != NULL){
-        delete_slabs(*(void**) obj);
+    /* Iterative to avoid one stack frame per free object. */
+    while (obj != NULL) {
+        void *next = *(void**) obj;
         mem_free(obj);
+        obj = next;
     }
 }
 
