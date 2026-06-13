@@ -7,7 +7,8 @@
  */
 
 #include <stddef.h>
-#include <multi_region_heap.h>
+#include <interrupts.h>
+#include <memory_manager.h>
 
 /**
  * @brief Free list node.

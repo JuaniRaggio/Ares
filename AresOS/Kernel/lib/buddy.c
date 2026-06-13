@@ -9,7 +9,8 @@
  */
 
 #include <stddef.h>
-#include <multi_region_heap.h>
+#include <interrupts.h>
+#include <memory_manager.h>
 
 #define MIN_ORDER 5   /* 32 bytes - smallest allocatable block */
 #define MAX_ORDER 25  /* 32 MB - maximum block size */
