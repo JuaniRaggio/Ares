@@ -92,6 +92,19 @@ void _cli(void);
 void _sti(void);
 
 /**
+ * Save RFLAGS and disable interrupts. Nestable: pair with irq_restore.
+ * @return RFLAGS prior to disabling interrupts.
+ */
+uint64_t irq_save(void);
+
+/**
+ * Restore RFLAGS saved by irq_save (re-enables interrupts only if they
+ * were enabled when irq_save ran).
+ * @param flags Value returned by irq_save.
+ */
+void irq_restore(uint64_t flags);
+
+/**
  * Halt the CPU until next interrupt
  */
 void _hlt(void);
