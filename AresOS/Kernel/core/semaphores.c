@@ -84,6 +84,41 @@ static void free_queue(uint64_t sem_id) {
     return free_pNode(semaphores[sem_id].head);
 }
 
+static int remove_pid_from_queue(uint64_t sem_id, pid_t pid) {
+    pNode_t *prev = NULL;
+    pNode_t *cur  = semaphores[sem_id].head;
+    while (cur != NULL) {
+        if (cur->pid == pid) {
+            if (prev == NULL)
+                semaphores[sem_id].head = cur->next;
+            else
+                prev->next = cur->next;
+            if (semaphores[sem_id].tail == cur)
+                semaphores[sem_id].tail = prev;
+            slab_free(pNode_cache, cur);
+            return 1;
+        }
+        prev = cur;
+        cur  = cur->next;
+    }
+    return 0;
+}
+
+void sem_remove_from_queues(int64_t pid) {
+    uint64_t flags = irq_save();
+    acquire_lock(&semaphores_lock);
+    for (int i = 0; i < MAX_SEM; i++) {
+        if (semaphores[i].id[0] == '\0')
+            continue;
+        acquire_lock(&semaphores[i].lock);
+        if (remove_pid_from_queue(i, (pid_t)pid))
+            semaphores[i].value++;
+        release_lock(&semaphores[i].lock);
+    }
+    release_lock(&semaphores_lock);
+    irq_restore(flags);
+}
+
 int64_t search_sem(char* sem_id) {
     for(int i = 0; i < MAX_SEM; i++) {
         if (strcmp(semaphores[i].id, sem_id) == 0)
@@ -173,6 +208,7 @@ int64_t sem_wait(char* sem_id) {
         enqueue_process(sem_idx, pid);
 
         if (block_by_semaphore(pid) == -1) {
+            remove_pid_from_queue(sem_idx, pid);
             semaphores[sem_idx].value++;
             release_lock(&semaphores[sem_idx].lock);
             _sti();
@@ -180,7 +216,11 @@ int64_t sem_wait(char* sem_id) {
         }
         release_lock(&semaphores[sem_idx].lock);
         _sti();
+
+        pcb_t *self = process_get_current();
         scheduler_yield();
+        while (self->state == PROCESS_BLOCKED)
+            _hlt();
     }else{
         release_lock(&semaphores[sem_idx].lock);
         _sti();
