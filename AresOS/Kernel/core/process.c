@@ -4,6 +4,7 @@
 #include <multi_region_heap.h>
 #include <pipe.h>
 #include <process.h>
+#include <semaphores.h>
 #include <status_codes.h>
 
 /* GDT layout puts user data (0x18) before user code (0x20) as SYSRET
@@ -223,6 +224,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
 void process_exit(int code) {
         pcb_t *pcb = process_get_current();
         pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
+        sem_remove_from_queues(pcb->pid);
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
@@ -242,6 +244,7 @@ int process_kill(pid_t pid) {
                 return SYS_ERR;
 
         pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
+        sem_remove_from_queues(pid);
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
