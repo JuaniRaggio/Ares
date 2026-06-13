@@ -38,7 +38,6 @@ typedef struct {
 } prompt_data;
 
 typedef struct {
-        char buffer[SCREEN_SIZE];
         uint8_t magnification;
         uint8_t font_height;
         uint8_t font_width;

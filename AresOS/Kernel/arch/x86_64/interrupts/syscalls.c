@@ -201,10 +201,8 @@ uint64_t sys_draw_rect(uint64_t packed_xy, uint64_t packed_wh, uint64_t color) {
         uint16_t width  = (packed_wh >> 16) & 0xFFFF;
         uint16_t height = packed_wh & 0xFFFF;
 
-        if (color == 0) {
-                color = 0xFFFFFF;
-        }
-
+        /* No remapping of color 0: black is a valid color (used to erase the
+         * cursor against a black background). */
         drawRect(x, y, width, height, (uint32_t)color);
         return SYS_OK;
 }
