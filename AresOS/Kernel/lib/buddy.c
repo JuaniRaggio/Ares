@@ -229,7 +229,7 @@ void mem_init(heap_region_t *regions, size_t region_count) {
         buddy_initialized = 1;
 }
 
-void *mem_alloc(size_t size) {
+static void *do_mem_alloc(size_t size) {
         if (size == 0 || !buddy_initialized)
                 return NULL;
 
@@ -261,7 +261,14 @@ void *mem_alloc(size_t size) {
         return NULL;
 }
 
-void mem_free(void *ptr) {
+void *mem_alloc(size_t size) {
+        uint64_t flags = irq_save();
+        void *result   = do_mem_alloc(size);
+        irq_restore(flags);
+        return result;
+}
+
+static void do_mem_free(void *ptr) {
         if (ptr == NULL || !buddy_initialized)
                 return;
 
@@ -283,8 +290,13 @@ void mem_free(void *ptr) {
         heap_status.successful_frees++;
 }
 
+void mem_free(void *ptr) {
+        uint64_t flags = irq_save();
+        do_mem_free(ptr);
+        irq_restore(flags);
+}
 
-void mem_get_stats(heap_stats_t *stats) {
+static void do_mem_get_stats(heap_stats_t *stats) {
         if (stats == NULL)
                 return;
 
@@ -314,4 +326,10 @@ void mem_get_stats(heap_stats_t *stats) {
         stats->size_largest_free_block_bytes     = largest;
         stats->size_smallest_free_block_in_bytes = (count == 0) ? 0 : smallest;
         stats->number_of_free_blocks             = count;
+}
+
+void mem_get_stats(heap_stats_t *stats) {
+        uint64_t flags = irq_save();
+        do_mem_get_stats(stats);
+        irq_restore(flags);
 }

@@ -14,10 +14,8 @@
  */
 
 #include <mem_info.h>
+#include <stddef.h> /* size_t: provided by the compiler, freestanding-safe */
 #include <stdint.h>
-
-typedef uint64_t size_t;
-typedef int64_t ssize_t;
 
 /** @brief Alignment requirement for all allocations (x86_64). */
 #define HEAP_ALIGNMENT 16

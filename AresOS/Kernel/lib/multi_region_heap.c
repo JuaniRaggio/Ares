@@ -151,7 +151,7 @@ void mem_init(heap_region_t *regions, size_t region_count) {
         heap_initialized = 1;
 }
 
-void *mem_alloc(size_t size) {
+static void *do_mem_alloc(size_t size) {
         if (size == 0) {
                 return NULL;
         }
@@ -195,7 +195,14 @@ void *mem_alloc(size_t size) {
         return NULL;
 }
 
-void mem_free(void *ptr) {
+void *mem_alloc(size_t size) {
+        uint64_t flags = irq_save();
+        void *result   = do_mem_alloc(size);
+        irq_restore(flags);
+        return result;
+}
+
+static void do_mem_free(void *ptr) {
         if (ptr == NULL) {
                 return;
         }
@@ -212,7 +219,13 @@ void mem_free(void *ptr) {
         insert_block_into_free_list(block);
 }
 
-void mem_get_stats(heap_stats_t *stats) {
+void mem_free(void *ptr) {
+        uint64_t flags = irq_save();
+        do_mem_free(ptr);
+        irq_restore(flags);
+}
+
+static void do_mem_get_stats(heap_stats_t *stats) {
         if (stats == NULL) {
                 return;
         }
@@ -245,4 +258,10 @@ void mem_get_stats(heap_stats_t *stats) {
         stats->size_largest_free_block_bytes     = largest;
         stats->size_smallest_free_block_in_bytes = smallest;
         stats->number_of_free_blocks             = count;
+}
+
+void mem_get_stats(heap_stats_t *stats) {
+        uint64_t flags = irq_save();
+        do_mem_get_stats(stats);
+        irq_restore(flags);
 }
