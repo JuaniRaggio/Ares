@@ -6,8 +6,10 @@
 #include <process.h>
 #include <status_codes.h>
 
-#define USER_CS 0x1B
-#define USER_SS 0x23
+/* GDT layout puts user data (0x18) before user code (0x20) as SYSRET
+ * requires; both selectors carry RPL=3 */
+#define USER_CS 0x23
+#define USER_SS 0x1B
 #define RFLAGS_IF 0x202
 #define SHELL_INDEX 0
 

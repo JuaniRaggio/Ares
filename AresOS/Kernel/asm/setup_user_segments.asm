@@ -20,13 +20,18 @@ gdt64_new:
     ; Base=0, Limit=0, Type=Data, DPL=0
     dq 0x0000920000000000
 
-    ; Entrada 3 (0x18): User Code Segment
-    ; Base=0, Limit=0, Type=Code, DPL=3, L=1 (64-bit)
-    dq 0x0020FA0000000000
+    ; SYSRET builds the user selectors as CS = STAR[63:48]+16 and
+    ; SS = STAR[63:48]+8, so user DATA must come BEFORE user CODE
+    ; (same layout used by Linux). With STAR[63:48] = 0x10 this yields
+    ; SS = 0x18|3 = 0x1B and CS = 0x20|3 = 0x23.
 
-    ; Entrada 4 (0x20): User Data Segment
+    ; Entrada 3 (0x18): User Data Segment
     ; Base=0, Limit=0, Type=Data, DPL=3
     dq 0x0000F20000000000
+
+    ; Entrada 4 (0x20): User Code Segment
+    ; Base=0, Limit=0, Type=Code, DPL=3, L=1 (64-bit)
+    dq 0x0020FA0000000000
 
 ; Entrada 5 (0x28): TSS Descriptor (16 bytes en 64-bit)
 ; Este descriptor requiere 2 entradas de 8 bytes
