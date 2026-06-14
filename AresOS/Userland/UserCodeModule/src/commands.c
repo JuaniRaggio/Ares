@@ -9,27 +9,21 @@
 extern shell_attributes shell_status;
 
 uint8_t history_cmd(void) {
-        printf("Command not supported yet! Sorry :(\n");
-        return INVALID_COMMAND_NAME;
-        // if (shell_status.prompts.lastest_prompt_idx == 0) {
-        //         printf("Empty history!\n");
-        //         return EMPTY;
-        // }
-        // printf("Command history:\n");
-        // for (uint8_t i = 0; i < shell_status.prompts.lastest_prompt_idx; i++)
-        // {
-        //         printf("%s", shell_status.prompts.prompt_history[i]);
-        //         for (uint8_t j = 0; j < max_parameters; ++j) {
-        //                 if (shell_status.prompts.prompt_history[i].args[j][0]
-        //                 !=
-        //                     0) {
-        //                         printf(" %s",
-        //                                shell_status.prompts.prompt_history[i]
-        //                                    .args[j]);
-        //                 }
-        //         }
-        //         putchar('\n');
-        // }
+        uint8_t count = shell_status.prompts.history_count;
+        if (count == 0) {
+                printf("Empty history!\n");
+                return OK;
+        }
+
+        /* Show up to the last HISTORY_SIZE lines, oldest first. */
+        uint8_t shown = (count < HISTORY_SIZE) ? count : HISTORY_SIZE;
+        uint8_t start = (count < HISTORY_SIZE) ? 0 : (count % HISTORY_SIZE);
+
+        printf("Command history:\n");
+        for (uint8_t i = 0; i < shown; i++) {
+                uint8_t idx = (start + i) % HISTORY_SIZE;
+                printf("  %d: %s\n", i + 1, shell_status.prompts.history[idx]);
+        }
         return OK;
 }
 

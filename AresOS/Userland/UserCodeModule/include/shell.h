@@ -32,9 +32,10 @@ typedef struct {
 } shell_cursor;
 
 typedef struct {
-        uint8_t lastest_prompt_idx;
         char user_input[SHELL_MAX_TOKENS][MAX_CHARS];
-        composed_command_t prompt_history[HISTORY_SIZE];
+        /* Circular history of the last HISTORY_SIZE command lines typed. */
+        char history[HISTORY_SIZE][MAX_CHARS];
+        uint8_t history_count;
 } prompt_data;
 
 typedef struct {
