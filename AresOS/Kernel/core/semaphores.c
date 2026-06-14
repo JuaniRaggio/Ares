@@ -30,7 +30,7 @@ static sem_t semaphores[MAX_SEM];
 static uint64_t sem_count;
 static spinlock_t semaphores_lock;
 
-slab_cache_t* pNode_cache = NULL;
+static slab_cache_t* pNode_cache = NULL;
 
 void sem_system_init(void) {
     sem_count = 0;
@@ -59,17 +59,19 @@ static pid_t dequeue_process(uint64_t sem_id) {
     return pid;
 }
 
-static void enqueue_process(uint64_t sem_id, pid_t pid) {
+static int enqueue_process(uint64_t sem_id, pid_t pid) {
     pNode_t *new_node = slab_alloc(pNode_cache);
+    if (new_node == NULL)
+        return 0; /* out of memory: caller must undo the value decrement */
     new_node->pid = pid;
     new_node->next = NULL;
 
-    if(semaphores[sem_id].head == NULL) 
+    if(semaphores[sem_id].head == NULL)
         semaphores[sem_id].head = new_node;
     else semaphores[sem_id].tail->next = new_node;
 
     semaphores[sem_id].tail = new_node;
-    return;
+    return 1;
 }
 
 static void free_pNode(pNode_t *node){
@@ -227,7 +229,12 @@ int64_t sem_wait(char* sem_id) {
 
     if (--semaphores[sem_idx].value < 0) {
         pid_t pid = process_getpid();
-        enqueue_process(sem_idx, pid);
+        if (!enqueue_process(sem_idx, pid)) {
+            semaphores[sem_idx].value++; /* undo: could not enqueue */
+            release_lock(&semaphores[sem_idx].lock);
+            _sti();
+            return -1;
+        }
 
         if (block_by_semaphore(pid) == -1) {
             remove_pid_from_queue(sem_idx, pid);
