@@ -266,10 +266,31 @@ Verified: `test_proc 5` runs for 30s with zero exceptions.
 
 ---
 
-## Notes for the README "limitations" section
-- Killing a process mid-execution leaks its outstanding heap blocks: the kernel
-  does not track block ownership per process.
-- A single pipe per command line (`p1 | p2`), space-separated `|` and `&`, and
-  no background pipes (`p1 | p2 &`).
-- The shell reports `STACK BASE 0x0` for pid 0 because it runs on the static
-  kernel stack rather than a heap-allocated one.
+## Known limitations (not bugs to fix; documented decisions)
+
+- **Killing a process mid-execution leaks its outstanding heap blocks**: the
+  kernel does not track heap-block ownership per process. The process's stacks,
+  argv copy and FPU area ARE freed; only `malloc`s it never `free`d leak.
+- **Semaphore reference not released on kill**: `sem_open`/`sem_close` are
+  reference-counted, but a process killed before calling `sem_close` does not
+  decrement the count, so that semaphore is not destroyed (a slot leaks). Not
+  triggered by the assignment's usage: `test_sync` runs to completion (refs
+  balance) and `mvar` resets its semaphores between runs. A general fix
+  (per-process open-set + release on death) conflicts with `mvar`, where the
+  parent opens the semaphores and dies immediately while the children use them.
+- **No user-pointer validation in syscalls**: syscalls (`sys_write`,
+  `sys_read`, `sys_pipe_open`, and `clone_argv`'s `strlen`) trust the pointers
+  userland passes. The kernel has no paged user/kernel isolation, so a bad
+  pointer could read/write kernel memory or fault. Validating the user address
+  range is production-grade hardening, out of scope for this TP.
+- **Single pipe per command line** (`p1 | p2`, not `p1 | p2 | p3`),
+  space-separated `|` and `&`, and no background pipes (`p1 | p2 &`).
+- **`STACK BASE 0x0` for pid 0** in `ps`: the shell runs on the static kernel
+  stack, not a heap-allocated one.
+
+## Note on the keyboard circular buffer (not a race)
+`drain_keyboard_buffer` reads without disabling interrupts, but the buffer is
+single-producer/single-consumer: the only producer is the keyboard IRQ
+(`write_pos`) and the only consumer is the single foreground process that reads
+(`read_pos`). `sys_read` gates keyboard reads on `foreground`, so there is never
+more than one consumer. No lock is needed.
