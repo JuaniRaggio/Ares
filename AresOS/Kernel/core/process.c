@@ -75,10 +75,25 @@ static void wake_waiters(pid_t dead_pid) {
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 if (process_table[i].state == PROCESS_BLOCKED &&
                     process_table[i].waiting_for == dead_pid) {
-                        process_table[i].state       = PROCESS_READY;
-                        process_table[i].waiting_for = NO_PID;
+                        process_table[i].state = PROCESS_READY;
+                        /* Keep waiting_for set: process_has_waiter relies on it
+                         * so the scheduler does not reap this zombie before the
+                         * waiter reads its exit code. process_wait clears it. */
                 }
         }
+}
+
+/* True if a live process is waiting on pid (so only the waiter should reap
+ * it). ZOMBIE/DEAD processes are ignored: a waiter that itself died (e.g. was
+ * killed mid-wait) leaves a stale waiting_for that must not pin the zombie. */
+int process_has_waiter(pid_t pid) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                process_state_t st = process_table[i].state;
+                if (st != PROCESS_DEAD && st != PROCESS_ZOMBIE &&
+                    process_table[i].waiting_for == pid)
+                        return 1;
+        }
+        return 0;
 }
 
 static pcb_t *find_free_slot(void) {
@@ -253,7 +268,14 @@ int process_kill(pid_t pid) {
         wake_waiters(pid);
 
         if (pid == current_pid) {
+                /* Cannot free our own stack here; the scheduler reaps us on
+                 * the next tick (current zombie, no waiter). */
                 scheduler_yield();
+        } else if (!process_has_waiter(pid)) {
+                /* Killed process nobody will wait on: reap now so its stacks
+                 * are not leaked (the scheduler only reaps the running one). */
+                process_free_resources(pid);
+                pcb->state = PROCESS_DEAD;
         }
 
         return SYS_OK;
@@ -356,11 +378,15 @@ int process_wait(pid_t pid) {
                 _hlt();
         }
 
+        /* Done waiting: clear our claim so the scheduler may reap future
+         * orphan zombies, and so a stale waiting_for never lingers. */
+        current->waiting_for = NO_PID;
+
         if (target->pid != pid)
                 return SYS_ERR; /* slot reused, child was already reaped */
         if (target->state == PROCESS_ZOMBIE)
                 return reap_zombie(target, pid);
-        return target->exit_code;
+        return target->exit_code; /* scheduler/kill already reaped it */
 }
 
 int process_list(uint64_t *pids, int max) {

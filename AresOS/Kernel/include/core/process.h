@@ -174,6 +174,16 @@ pcb_t *process_get(pid_t pid);
 pcb_t *process_get_by_index(int idx);
 
 /**
+ * @brief Whether some process is waiting on the given pid.
+ *
+ * Used by the scheduler so it does not reap a zombie that a waiter still
+ * needs to read the exit code from (the waiter reaps it instead).
+ * @param pid PID to check.
+ * @return 1 if a waiter exists, 0 otherwise.
+ */
+int process_has_waiter(pid_t pid);
+
+/**
  * @brief Fill pids array with active process PIDs.
  * @param pids Array to fill with PIDs.
  * @param max Maximum entries to fill.

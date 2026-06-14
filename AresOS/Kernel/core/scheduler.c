@@ -58,7 +58,11 @@ static void switch_to(int next_index) {
 }
 
 static void reap_if_zombie(pcb_t *process) {
-        if (process->state == PROCESS_ZOMBIE) {
+        /* Reap only orphan zombies: if a process is waiting on this one, let
+         * the waiter reap it so it reads a valid exit code (avoids the double
+         * reap between the scheduler and process_wait). */
+        if (process->state == PROCESS_ZOMBIE &&
+            !process_has_waiter(process->pid)) {
                 process_free_resources(process->pid);
                 process->state = PROCESS_DEAD;
         }
