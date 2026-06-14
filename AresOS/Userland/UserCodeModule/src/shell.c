@@ -13,6 +13,9 @@
 #define PROMPT_LENGTH 3
 #define SHELL_PIPE_NAME "sh-pipe"
 
+/* find_pipe_position() returns a token index; this means the line has no "|". */
+#define NO_PIPE_TOKEN (-1)
+
 #include <process_api.h>
 #include <process_types.h>
 
@@ -384,13 +387,13 @@ static int consume_background_token(int *tokens) {
         return TRUE;
 }
 
-/* Returns the position of the "|" token, or -1 if the line has no pipe */
+/* Returns the position of the "|" token, or NO_PIPE_TOKEN if there is none. */
 static int find_pipe_position(int tokens) {
         for (int i = 1; i < tokens - 1; i++) {
                 if (strcmp(shell_status.prompts.user_input[i], "|") == 0)
                         return i;
         }
-        return -1;
+        return NO_PIPE_TOKEN;
 }
 
 /* Resolves a single (non piped) command: built-in, application or error */

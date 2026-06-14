@@ -7,6 +7,9 @@
 
 #include <stdint.h>
 
+/* pid sentinel: returned where a function yields a pid but none exists
+ * (failed spawn, empty queue). Shared so kernel and userland agree on it. */
+#define NO_PID  (-1)
 #define NO_PIPE (-1)
 
 #define PROCESS_INFO_NAME_LEN 32

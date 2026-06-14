@@ -353,11 +353,11 @@ int unblock_by_semaphore(pid_t pid) {
         pcb_t *pcb = process_get(pid);
         if (pcb == NULL || pcb->state != PROCESS_BLOCKED ||
             !pcb->blocked_by_semaphore)
-                return -1;
+                return SYS_ERR;
 
         pcb->blocked_by_semaphore = 0;
         pcb->state                = PROCESS_READY;
-        return 0;
+        return SYS_OK;
 }
 
 int process_unblock(pid_t pid) {

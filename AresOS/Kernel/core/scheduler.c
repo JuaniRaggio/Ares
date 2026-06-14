@@ -5,6 +5,9 @@
 
 #define SHELL_INDEX 0
 
+/* pick_next_ready() returns a table index; this sentinel means "none ready". */
+#define NO_READY_PROCESS (-1)
+
 extern uint8_t kernel_stack_top[];
 extern char tss64[];
 
@@ -42,7 +45,7 @@ static int pick_next_ready(void) {
                 if (pcb != NULL && pcb->state == PROCESS_READY)
                         return idx;
         }
-        return -1;
+        return NO_READY_PROCESS;
 }
 
 static void switch_to(int next_index) {
@@ -104,7 +107,7 @@ uint64_t schedule(uint64_t current_rsp) {
 
         int next = pick_next_ready();
 
-        if (next < 0) {
+        if (next == NO_READY_PROCESS) {
                 if (try_continue_current(current, current_rsp))
                         return current_rsp;
                 return current_rsp;

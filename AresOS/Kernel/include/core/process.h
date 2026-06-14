@@ -17,7 +17,6 @@
 #define DEFAULT_PRIORITY 1
 #define MAX_PRIORITY 4
 
-#define NO_PID           (-1)
 #define KILLED_EXIT_CODE (-1)
 #define SHELL_PID        0
 
