@@ -56,7 +56,6 @@ static void save_to_history(int tokens);
 
 shell_attributes shell_status = {
     .magnification    = MIN_FONT_SCALE,
-    .prompts          = (prompt_data){0},
     .font_height      = FONT_HEIGHT,
     .font_width       = FONT_WIDTH,
     .font_color       = default_font_color,
