@@ -202,26 +202,21 @@ uint8_t man(char *command) {
 }
 
 uint8_t cursor_cmd(char *type) {
-        printf("Cursor not supported yet! Sorry :(\n");
-        // if (!strcmp(type, "block")) {
-        //         shell_status.cursor.shape = block;
-        //         printf("Cursor shape set to: block\n");
-        // } else if (!strcmp(type, "hollow")) {
-        //         shell_status.cursor.shape = hollow;
-        //         printf("Cursor shape set to: hollow\n");
-        // } else if (!strcmp(type, "line")) {
-        //         shell_status.cursor.shape = line;
-        //         printf("Cursor shape set to: line\n");
-        // } else if (!strcmp(type, "underline")) {
-        //         shell_status.cursor.shape = underline;
-        //         printf("Cursor shape set to: underline\n");
-        // } else {
-        //         printf("Invalid cursor type or not supported yet. Current "
-        //                "options: block, hollow, line, underline\nTo add a new
-        //                " "cursor type, contact support@ares.com");
-        //         return INVALID_INPUT;
-        // }
-        return INVALID_COMMAND_NAME;
+        if (!strcmp(type, "block")) {
+                shell_status.cursor.shape = block;
+        } else if (!strcmp(type, "hollow")) {
+                shell_status.cursor.shape = hollow;
+        } else if (!strcmp(type, "line")) {
+                shell_status.cursor.shape = line;
+        } else if (!strcmp(type, "underline")) {
+                shell_status.cursor.shape = underline;
+        } else {
+                printf("Invalid cursor type. Options: block, hollow, line, "
+                       "underline\n");
+                return INVALID_INPUT;
+        }
+        printf("Cursor shape set to: %s\n", type);
+        return OK;
 }
 
 static void wait(char *msg) {
