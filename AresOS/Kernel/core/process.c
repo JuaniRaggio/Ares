@@ -18,7 +18,19 @@ static pcb_t process_table[MAX_PROCESSES];
 static pid_t current_pid;
 static pid_t next_pid_to_assign = 0;
 
+/* Clean FPU state captured once at boot; copied into each new process so its
+ * first fxrstor loads a valid MXCSR instead of garbage. 16-aligned for fxsave. */
+static uint8_t fpu_template[FPU_AREA_SIZE] __attribute__((aligned(16)));
+
 extern void scheduler_yield(void);
+
+/* Allocate and initialize a process FPU save area from the clean template. */
+static uint8_t *alloc_fpu_area(void) {
+        uint8_t *area = (uint8_t *)mem_alloc(FPU_AREA_SIZE);
+        if (area != NULL)
+                memcpy(area, fpu_template, FPU_AREA_SIZE);
+        return area;
+}
 
 void process_set_current_pid(pid_t pid) {
         current_pid = pid;
@@ -41,6 +53,10 @@ void process_free_resources(pid_t pid) {
                         if (pcb->argv_copy != NULL) {
                                 mem_free(pcb->argv_copy);
                                 pcb->argv_copy = NULL;
+                        }
+                        if (pcb->fpu_area != NULL) {
+                                mem_free(pcb->fpu_area);
+                                pcb->fpu_area = NULL;
                         }
                         return;
                 }
@@ -132,11 +148,15 @@ static void setup_kernel_stack(uint8_t *kstack, uint64_t entry, uint64_t argc,
 }
 
 void process_init(void) {
+        /* Capture a clean FPU state once; new processes start from this copy. */
+        fpu_init_area(fpu_template);
+
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 process_table[i].state             = PROCESS_DEAD;
                 process_table[i].pid               = NO_PID;
                 process_table[i].kernel_stack_base = NULL;
                 process_table[i].user_stack_base   = NULL;
+                process_table[i].fpu_area          = NULL;
         }
 
         pcb_t *shell             = &process_table[SHELL_INDEX];
@@ -153,6 +173,7 @@ void process_init(void) {
         shell->argv_copy         = NULL;
         shell->kernel_stack_base = NULL;
         shell->user_stack_base   = NULL;
+        shell->fpu_area          = alloc_fpu_area();
         strncpy(shell->name, "shell", PROCESS_NAME_LEN);
 
         current_pid = shell->pid;
@@ -188,9 +209,16 @@ pid_t process_getpid(void) {
 pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                      const char *name, int foreground, uint64_t exit_handler,
                      int stdin_pipe, int stdout_pipe) {
+        /* Build the whole PCB atomically: the process must not become
+         * schedulable (state READY) until its stack frame and rsp are set up,
+         * otherwise a timer tick could pick it and iretq into a garbage frame. */
+        uint64_t flags = irq_save();
+
         pcb_t *pcb = find_free_slot();
-        if (pcb == NULL)
+        if (pcb == NULL) {
+                irq_restore(flags);
                 return NO_PID;
+        }
 
         uint8_t *kstack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
         uint8_t *ustack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
@@ -199,6 +227,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                         mem_free(kstack);
                 if (ustack)
                         mem_free(ustack);
+                irq_restore(flags);
                 return NO_PID;
         }
 
@@ -206,6 +235,17 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         if (argc > 0 && argv_copy == NULL) {
                 mem_free(kstack);
                 mem_free(ustack);
+                irq_restore(flags);
+                return NO_PID;
+        }
+
+        uint8_t *fpu_area = alloc_fpu_area();
+        if (fpu_area == NULL) {
+                mem_free(kstack);
+                mem_free(ustack);
+                if (argv_copy)
+                        mem_free(argv_copy);
+                irq_restore(flags);
                 return NO_PID;
         }
 
@@ -222,6 +262,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->blocked_on_pipe      = NO_PIPE;
         pcb->blocked_on_keyboard  = 0;
         pcb->argv_copy            = argv_copy;
+        pcb->fpu_area             = fpu_area;
         pcb->kernel_stack_base    = kstack;
         pcb->user_stack_base      = ustack;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
@@ -233,6 +274,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         setup_user_stack(ustack, exit_handler, &user_rsp);
         setup_kernel_stack(kstack, entry, argc, argv_copy, user_rsp, &pcb->rsp);
 
+        irq_restore(flags);
         return pcb->pid;
 }
 

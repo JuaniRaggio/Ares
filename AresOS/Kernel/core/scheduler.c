@@ -89,6 +89,8 @@ uint64_t schedule(uint64_t current_rsp) {
 
         if (current != NULL) {
                 current->rsp = current_rsp;
+                if (current->fpu_area != NULL)
+                        fpu_save(current->fpu_area);
                 reap_if_zombie(current);
                 demote_to_ready(current);
         }
@@ -109,5 +111,8 @@ uint64_t schedule(uint64_t current_rsp) {
         }
 
         switch_to(next);
-        return process_get_by_index(next)->rsp;
+        pcb_t *next_pcb = process_get_by_index(next);
+        if (next_pcb->fpu_area != NULL)
+                fpu_restore(next_pcb->fpu_area);
+        return next_pcb->rsp;
 }
