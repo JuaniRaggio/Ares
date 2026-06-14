@@ -22,6 +22,7 @@ struct sem {
     spinlock_t lock;
     pNode_t *head;
     pNode_t *tail;
+    uint64_t refs; /* open() count; destroyed when the last close() drops it */
 };
 
 typedef struct sem sem_t;
@@ -139,16 +140,25 @@ int64_t search_sem(char* sem_id) {
 }
 
 int64_t sem_open(char* sem_id, uint64_t value) {
-    if (strlen(sem_id) >= MAX_ID_LENGTH || sem_count >= MAX_SEM )
+    if (strlen(sem_id) >= MAX_ID_LENGTH)
         return 0;
 
     _cli();
     acquire_lock(&semaphores_lock);
 
-    if(search_sem(sem_id) >= 0){
+    int64_t existing = search_sem(sem_id);
+    if (existing >= 0) {
+        /* Shared by another process: just take a reference. */
+        semaphores[existing].refs++;
         release_lock(&semaphores_lock);
         _sti();
         return 1;
+    }
+
+    if (sem_count >= MAX_SEM) {
+        release_lock(&semaphores_lock);
+        _sti();
+        return 0;
     }
 
     for(int i = 0; i < MAX_SEM; i++) {
@@ -156,6 +166,7 @@ int64_t sem_open(char* sem_id, uint64_t value) {
             strcpy(semaphores[i].id, sem_id);
             semaphores[i].value = value;
             semaphores[i].lock = 0;
+            semaphores[i].refs = 1;
             sem_count++;
             release_lock(&semaphores_lock);
             _sti();
@@ -259,6 +270,18 @@ int64_t sem_close(char* sem_id) {
     }
 
     acquire_lock(&semaphores[sem_idx].lock);
+
+    /* Only the last close destroys the semaphore; otherwise processes still
+     * sharing it would lose their mutex (this is what made test_sync race). */
+    if (semaphores[sem_idx].refs > 0)
+        semaphores[sem_idx].refs--;
+
+    if (semaphores[sem_idx].refs > 0) {
+        release_lock(&semaphores[sem_idx].lock);
+        release_lock(&semaphores_lock);
+        _sti();
+        return 1;
+    }
 
     free_queue(sem_idx);
     semaphores[sem_idx].head = NULL;
