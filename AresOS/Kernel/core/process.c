@@ -122,7 +122,7 @@ static pcb_t *find_free_slot(void) {
 
 static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
                              uint64_t *out_rsp) {
-        uint64_t top = (uint64_t)ustack + PROCESS_STACK_SIZE;
+        uint64_t top = (uint64_t)ustack + USER_STACK_SIZE;
         top -= sizeof(uint64_t);
         *(uint64_t *)top = exit_handler;
         *out_rsp         = top;
@@ -131,7 +131,7 @@ static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
 static void setup_kernel_stack(uint8_t *kstack, uint64_t entry, uint64_t argc,
                                char **argv, uint64_t user_rsp,
                                uint64_t *out_rsp) {
-        uint64_t top = (uint64_t)kstack + PROCESS_STACK_SIZE;
+        uint64_t top = (uint64_t)kstack + KERNEL_STACK_SIZE;
         top -= sizeof(context_frame_t);
         context_frame_t *frame = (context_frame_t *)top;
         memset(frame, 0, sizeof(context_frame_t));
@@ -220,8 +220,8 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                 return NO_PID;
         }
 
-        uint8_t *kstack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
-        uint8_t *ustack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
+        uint8_t *kstack = (uint8_t *)mem_alloc(KERNEL_STACK_SIZE);
+        uint8_t *ustack = (uint8_t *)mem_alloc(USER_STACK_SIZE);
         if (kstack == NULL || ustack == NULL) {
                 if (kstack)
                         mem_free(kstack);

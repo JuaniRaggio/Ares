@@ -23,7 +23,7 @@ static void set_tss_rsp0(uint64_t rsp0) {
 static uint64_t kernel_stack_top_of(int index, pcb_t *pcb) {
         if (index == SHELL_INDEX)
                 return (uint64_t)kernel_stack_top;
-        return (uint64_t)pcb->kernel_stack_base + PROCESS_STACK_SIZE;
+        return (uint64_t)pcb->kernel_stack_base + KERNEL_STACK_SIZE;
 }
 
 void scheduler_init(void) {

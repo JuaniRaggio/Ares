@@ -13,10 +13,15 @@
 
 #define MAX_PROCESSES 32
 #define PROCESS_NAME_LEN 32
-#define PROCESS_STACK_SIZE (4096 * 4)
+/* Per-process stacks are allocated separately: the kernel stack must hold the
+ * full interrupt/context-switch frame chain, while the user stack only backs
+ * the userland program, so it can be smaller. */
+#define KERNEL_STACK_SIZE (4096 * 4) /* 16 KiB */
+#define USER_STACK_SIZE   (4096 * 2) /* 8 KiB  */
 #define DEFAULT_PRIORITY 1
 #define MAX_PRIORITY 4
 
+/* NO_PID is defined in process_types.h (shared with userland). */
 #define KILLED_EXIT_CODE (-1)
 #define SHELL_PID        0
 
