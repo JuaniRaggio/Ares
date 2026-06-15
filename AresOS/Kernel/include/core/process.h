@@ -17,9 +17,30 @@
 #define DEFAULT_PRIORITY 1
 #define MAX_PRIORITY 4
 
-#define NO_PID           (-1)
 #define KILLED_EXIT_CODE (-1)
 #define SHELL_PID        0
+
+/* Size of the per-process FPU/SSE save area used by fxsave/fxrstor. */
+#define FPU_AREA_SIZE 512
+
+/**
+ * @brief Save the current FPU/SSE state (x87 + XMM + MXCSR) into area.
+ * @param area 512-byte, 16-byte-aligned buffer.
+ */
+void fpu_save(void *area);
+
+/**
+ * @brief Restore FPU/SSE state previously saved with fpu_save.
+ * @param area 512-byte, 16-byte-aligned buffer.
+ */
+void fpu_restore(void *area);
+
+/**
+ * @brief Write a clean (post-fninit) FPU state into area, for use as the
+ *        initial state of new processes.
+ * @param area 512-byte, 16-byte-aligned buffer.
+ */
+void fpu_init_area(void *area);
 
 typedef int64_t pid_t;
 typedef uint64_t (*process_func_t)(uint64_t argc, char *argv[]);
@@ -58,6 +79,7 @@ typedef struct {
         int blocked_on_pipe; /* NO_PIPE if not blocked on a pipe      */
         uint8_t blocked_on_keyboard; /* waiting for keyboard input    */
         char **argv_copy; /* kernel-owned argv copy, freed on reap    */
+        uint8_t *fpu_area; /* FPU/SSE save area (fxsave), freed on reap */
 } pcb_t;
 
 /**
@@ -172,6 +194,16 @@ pcb_t *process_get(pid_t pid);
  * @return Pointer to the PCB, or NULL if dead or invalid index.
  */
 pcb_t *process_get_by_index(int idx);
+
+/**
+ * @brief Whether some process is waiting on the given pid.
+ *
+ * Used by the scheduler so it does not reap a zombie that a waiter still
+ * needs to read the exit code from (the waiter reaps it instead).
+ * @param pid PID to check.
+ * @return 1 if a waiter exists, 0 otherwise.
+ */
+int process_has_waiter(pid_t pid);
 
 /**
  * @brief Fill pids array with active process PIDs.

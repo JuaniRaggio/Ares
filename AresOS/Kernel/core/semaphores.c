@@ -6,9 +6,13 @@
 #include <semaphores.h>
 #include <interrupts.h>
 #include <process.h>
+#include <status_codes.h>
 #include <stddef.h>
 #include <slab.h>
 #include <spinlock.h>
+
+/* search_sem() returns a table index; this sentinel means "no such id". */
+#define SEM_NOT_FOUND (-1)
 
 
 typedef struct pnode {
@@ -22,6 +26,7 @@ struct sem {
     spinlock_t lock;
     pNode_t *head;
     pNode_t *tail;
+    uint64_t refs; /* open() count; destroyed when the last close() drops it */
 };
 
 typedef struct sem sem_t;
@@ -29,7 +34,7 @@ static sem_t semaphores[MAX_SEM];
 static uint64_t sem_count;
 static spinlock_t semaphores_lock;
 
-slab_cache_t* pNode_cache = NULL;
+static slab_cache_t* pNode_cache = NULL;
 
 void sem_system_init(void) {
     sem_count = 0;
@@ -46,7 +51,7 @@ void sem_system_init(void) {
 
 static pid_t dequeue_process(uint64_t sem_id) {
     pNode_t *node = semaphores[sem_id].head;
-    if (node == NULL) return -1;
+    if (node == NULL) return NO_PID;
 
     pid_t pid = node->pid;
     semaphores[sem_id].head = node->next;
@@ -58,17 +63,19 @@ static pid_t dequeue_process(uint64_t sem_id) {
     return pid;
 }
 
-static void enqueue_process(uint64_t sem_id, pid_t pid) {
+static sys_status_t enqueue_process(uint64_t sem_id, pid_t pid) {
     pNode_t *new_node = slab_alloc(pNode_cache);
+    if (new_node == NULL)
+        return SYS_ERR; /* out of memory: caller must undo the value decrement */
     new_node->pid = pid;
     new_node->next = NULL;
 
-    if(semaphores[sem_id].head == NULL) 
+    if(semaphores[sem_id].head == NULL)
         semaphores[sem_id].head = new_node;
     else semaphores[sem_id].tail->next = new_node;
 
     semaphores[sem_id].tail = new_node;
-    return;
+    return SYS_OK;
 }
 
 static void free_pNode(pNode_t *node){
@@ -135,20 +142,29 @@ int64_t search_sem(char* sem_id) {
         if (strcmp(semaphores[i].id, sem_id) == 0)
             return i;
     }
-    return -1;
+    return SEM_NOT_FOUND;
 }
 
 int64_t sem_open(char* sem_id, uint64_t value) {
-    if (strlen(sem_id) >= MAX_ID_LENGTH || sem_count >= MAX_SEM )
-        return 0;
+    if (strlen(sem_id) >= MAX_ID_LENGTH)
+        return SYS_ERR;
 
     _cli();
     acquire_lock(&semaphores_lock);
 
-    if(search_sem(sem_id) >= 0){
+    int64_t existing = search_sem(sem_id);
+    if (existing >= 0) {
+        /* Shared by another process: just take a reference. */
+        semaphores[existing].refs++;
         release_lock(&semaphores_lock);
         _sti();
-        return 1;
+        return SYS_OK;
+    }
+
+    if (sem_count >= MAX_SEM) {
+        release_lock(&semaphores_lock);
+        _sti();
+        return SYS_ERR;
     }
 
     for(int i = 0; i < MAX_SEM; i++) {
@@ -156,31 +172,32 @@ int64_t sem_open(char* sem_id, uint64_t value) {
             strcpy(semaphores[i].id, sem_id);
             semaphores[i].value = value;
             semaphores[i].lock = 0;
+            semaphores[i].refs = 1;
             sem_count++;
             release_lock(&semaphores_lock);
             _sti();
-            return 1;
+            return SYS_OK;
         }
     }
     release_lock(&semaphores_lock);
     _sti();
-    return 0;
+    return SYS_ERR;
 }
 
 
 int64_t sem_post(char* sem_id) {
     if (strlen(sem_id) >= MAX_ID_LENGTH)
-        return -1;
-        
+        return SYS_ERR;
+
     _cli();
-    
+
     acquire_lock(&semaphores_lock);
     int64_t sem_idx = search_sem(sem_id);
 
     if(sem_idx < 0){
         release_lock(&semaphores_lock);
         _sti();
-        return -1;
+        return SYS_ERR;
     }
 
     acquire_lock(&semaphores[sem_idx].lock);
@@ -189,16 +206,16 @@ int64_t sem_post(char* sem_id) {
     if(++semaphores[sem_idx].value <= 0){
         pid_t blocked_pid = dequeue_process(sem_idx);
         release_lock(&semaphores[sem_idx].lock);
-        if(blocked_pid != -1) unblock_by_semaphore(blocked_pid);
+        if(blocked_pid != NO_PID) unblock_by_semaphore(blocked_pid);
     }else release_lock(&semaphores[sem_idx].lock);
 
     _sti();
-    return 0;
+    return SYS_OK;
 }
 
 int64_t sem_wait(char* sem_id) {
     if (strlen(sem_id) >= MAX_ID_LENGTH )
-        return -1;
+        return SYS_ERR;
 
     _cli();
     acquire_lock(&semaphores_lock);
@@ -208,7 +225,7 @@ int64_t sem_wait(char* sem_id) {
     if(sem_idx < 0) {
         release_lock(&semaphores_lock);
         _sti();
-        return -1;
+        return SYS_ERR;
     }
 
     acquire_lock(&semaphores[sem_idx].lock);
@@ -216,14 +233,19 @@ int64_t sem_wait(char* sem_id) {
 
     if (--semaphores[sem_idx].value < 0) {
         pid_t pid = process_getpid();
-        enqueue_process(sem_idx, pid);
+        if (enqueue_process(sem_idx, pid) != SYS_OK) {
+            semaphores[sem_idx].value++; /* undo: could not enqueue */
+            release_lock(&semaphores[sem_idx].lock);
+            _sti();
+            return SYS_ERR;
+        }
 
-        if (block_by_semaphore(pid) == -1) {
+        if (block_by_semaphore(pid) == SYS_ERR) {
             remove_pid_from_queue(sem_idx, pid);
             semaphores[sem_idx].value++;
             release_lock(&semaphores[sem_idx].lock);
             _sti();
-            return -1;
+            return SYS_ERR;
         }
         release_lock(&semaphores[sem_idx].lock);
         _sti();
@@ -242,11 +264,11 @@ int64_t sem_wait(char* sem_id) {
         release_lock(&semaphores[sem_idx].lock);
         _sti();
     }
-    return 0;
+    return SYS_OK;
 }
 
 int64_t sem_close(char* sem_id) {
-    if (strlen(sem_id) >= MAX_ID_LENGTH) return -1;
+    if (strlen(sem_id) >= MAX_ID_LENGTH) return SYS_ERR;
 
     _cli();
     acquire_lock(&semaphores_lock);
@@ -255,10 +277,22 @@ int64_t sem_close(char* sem_id) {
     if(sem_idx < 0){
         release_lock(&semaphores_lock);
         _sti();
-        return 0;
+        return SYS_ERR;
     }
 
     acquire_lock(&semaphores[sem_idx].lock);
+
+    /* Only the last close destroys the semaphore; otherwise processes still
+     * sharing it would lose their mutex (this is what made test_sync race). */
+    if (semaphores[sem_idx].refs > 0)
+        semaphores[sem_idx].refs--;
+
+    if (semaphores[sem_idx].refs > 0) {
+        release_lock(&semaphores[sem_idx].lock);
+        release_lock(&semaphores_lock);
+        _sti();
+        return SYS_OK;
+    }
 
     free_queue(sem_idx);
     semaphores[sem_idx].head = NULL;
@@ -271,5 +305,5 @@ int64_t sem_close(char* sem_id) {
     release_lock(&semaphores_lock);
     _sti();
 
-    return 1;
+    return SYS_OK;
 }

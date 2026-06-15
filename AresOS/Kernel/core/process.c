@@ -18,7 +18,19 @@ static pcb_t process_table[MAX_PROCESSES];
 static pid_t current_pid;
 static pid_t next_pid_to_assign = 0;
 
+/* Clean FPU state captured once at boot; copied into each new process so its
+ * first fxrstor loads a valid MXCSR instead of garbage. 16-aligned for fxsave. */
+static uint8_t fpu_template[FPU_AREA_SIZE] __attribute__((aligned(16)));
+
 extern void scheduler_yield(void);
+
+/* Allocate and initialize a process FPU save area from the clean template. */
+static uint8_t *alloc_fpu_area(void) {
+        uint8_t *area = (uint8_t *)mem_alloc(FPU_AREA_SIZE);
+        if (area != NULL)
+                memcpy(area, fpu_template, FPU_AREA_SIZE);
+        return area;
+}
 
 void process_set_current_pid(pid_t pid) {
         current_pid = pid;
@@ -41,6 +53,10 @@ void process_free_resources(pid_t pid) {
                         if (pcb->argv_copy != NULL) {
                                 mem_free(pcb->argv_copy);
                                 pcb->argv_copy = NULL;
+                        }
+                        if (pcb->fpu_area != NULL) {
+                                mem_free(pcb->fpu_area);
+                                pcb->fpu_area = NULL;
                         }
                         return;
                 }
@@ -75,10 +91,25 @@ static void wake_waiters(pid_t dead_pid) {
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 if (process_table[i].state == PROCESS_BLOCKED &&
                     process_table[i].waiting_for == dead_pid) {
-                        process_table[i].state       = PROCESS_READY;
-                        process_table[i].waiting_for = NO_PID;
+                        process_table[i].state = PROCESS_READY;
+                        /* Keep waiting_for set: process_has_waiter relies on it
+                         * so the scheduler does not reap this zombie before the
+                         * waiter reads its exit code. process_wait clears it. */
                 }
         }
+}
+
+/* True if a live process is waiting on pid (so only the waiter should reap
+ * it). ZOMBIE/DEAD processes are ignored: a waiter that itself died (e.g. was
+ * killed mid-wait) leaves a stale waiting_for that must not pin the zombie. */
+int process_has_waiter(pid_t pid) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                process_state_t st = process_table[i].state;
+                if (st != PROCESS_DEAD && st != PROCESS_ZOMBIE &&
+                    process_table[i].waiting_for == pid)
+                        return 1;
+        }
+        return 0;
 }
 
 static pcb_t *find_free_slot(void) {
@@ -117,11 +148,15 @@ static void setup_kernel_stack(uint8_t *kstack, uint64_t entry, uint64_t argc,
 }
 
 void process_init(void) {
+        /* Capture a clean FPU state once; new processes start from this copy. */
+        fpu_init_area(fpu_template);
+
         for (int i = 0; i < MAX_PROCESSES; i++) {
                 process_table[i].state             = PROCESS_DEAD;
                 process_table[i].pid               = NO_PID;
                 process_table[i].kernel_stack_base = NULL;
                 process_table[i].user_stack_base   = NULL;
+                process_table[i].fpu_area          = NULL;
         }
 
         pcb_t *shell             = &process_table[SHELL_INDEX];
@@ -138,6 +173,7 @@ void process_init(void) {
         shell->argv_copy         = NULL;
         shell->kernel_stack_base = NULL;
         shell->user_stack_base   = NULL;
+        shell->fpu_area          = alloc_fpu_area();
         strncpy(shell->name, "shell", PROCESS_NAME_LEN);
 
         current_pid = shell->pid;
@@ -173,9 +209,16 @@ pid_t process_getpid(void) {
 pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                      const char *name, int foreground, uint64_t exit_handler,
                      int stdin_pipe, int stdout_pipe) {
+        /* Build the whole PCB atomically: the process must not become
+         * schedulable (state READY) until its stack frame and rsp are set up,
+         * otherwise a timer tick could pick it and iretq into a garbage frame. */
+        uint64_t flags = irq_save();
+
         pcb_t *pcb = find_free_slot();
-        if (pcb == NULL)
+        if (pcb == NULL) {
+                irq_restore(flags);
                 return NO_PID;
+        }
 
         uint8_t *kstack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
         uint8_t *ustack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
@@ -184,6 +227,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                         mem_free(kstack);
                 if (ustack)
                         mem_free(ustack);
+                irq_restore(flags);
                 return NO_PID;
         }
 
@@ -191,6 +235,17 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         if (argc > 0 && argv_copy == NULL) {
                 mem_free(kstack);
                 mem_free(ustack);
+                irq_restore(flags);
+                return NO_PID;
+        }
+
+        uint8_t *fpu_area = alloc_fpu_area();
+        if (fpu_area == NULL) {
+                mem_free(kstack);
+                mem_free(ustack);
+                if (argv_copy)
+                        mem_free(argv_copy);
+                irq_restore(flags);
                 return NO_PID;
         }
 
@@ -207,6 +262,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->blocked_on_pipe      = NO_PIPE;
         pcb->blocked_on_keyboard  = 0;
         pcb->argv_copy            = argv_copy;
+        pcb->fpu_area             = fpu_area;
         pcb->kernel_stack_base    = kstack;
         pcb->user_stack_base      = ustack;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
@@ -218,6 +274,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         setup_user_stack(ustack, exit_handler, &user_rsp);
         setup_kernel_stack(kstack, entry, argc, argv_copy, user_rsp, &pcb->rsp);
 
+        irq_restore(flags);
         return pcb->pid;
 }
 
@@ -253,7 +310,14 @@ int process_kill(pid_t pid) {
         wake_waiters(pid);
 
         if (pid == current_pid) {
+                /* Cannot free our own stack here; the scheduler reaps us on
+                 * the next tick (current zombie, no waiter). */
                 scheduler_yield();
+        } else if (!process_has_waiter(pid)) {
+                /* Killed process nobody will wait on: reap now so its stacks
+                 * are not leaked (the scheduler only reaps the running one). */
+                process_free_resources(pid);
+                pcb->state = PROCESS_DEAD;
         }
 
         return SYS_OK;
@@ -289,11 +353,11 @@ int unblock_by_semaphore(pid_t pid) {
         pcb_t *pcb = process_get(pid);
         if (pcb == NULL || pcb->state != PROCESS_BLOCKED ||
             !pcb->blocked_by_semaphore)
-                return -1;
+                return SYS_ERR;
 
         pcb->blocked_by_semaphore = 0;
         pcb->state                = PROCESS_READY;
-        return 0;
+        return SYS_OK;
 }
 
 int process_unblock(pid_t pid) {
@@ -356,11 +420,15 @@ int process_wait(pid_t pid) {
                 _hlt();
         }
 
+        /* Done waiting: clear our claim so the scheduler may reap future
+         * orphan zombies, and so a stale waiting_for never lingers. */
+        current->waiting_for = NO_PID;
+
         if (target->pid != pid)
                 return SYS_ERR; /* slot reused, child was already reaped */
         if (target->state == PROCESS_ZOMBIE)
                 return reap_zombie(target, pid);
-        return target->exit_code;
+        return target->exit_code; /* scheduler/kill already reaped it */
 }
 
 int process_list(uint64_t *pids, int max) {

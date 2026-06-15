@@ -5,6 +5,7 @@
 #include <idtLoader.h>
 #include <interrupts.h>
 #include <lib.h>
+#include <memory_layout.h>
 #include <moduleLoader.h>
 #include <memory_manager.h>
 #include <naiveConsole.h>
@@ -28,11 +29,11 @@ extern void setup_user_segments(void);
 extern void setup_tss(void);
 extern void jump_to_userland(void *entry_point);
 
-static const uint64_t PageSize           = 0x1000;
-static void *const userCodeModuleAddress = (void *)0x400000;
-static void *const userDataModuleAddress = (void *)0x500000;
-static void *const heapRegion2Start      = (void *)0x600000;
-static const uint64_t heapRegion2Size    = 0x2000000; // 32 MB
+static const uint64_t PageSize           = PAGE_SIZE;
+static void *const userCodeModuleAddress = (void *)USER_CODE_MODULE_ADDR;
+static void *const userDataModuleAddress = (void *)USER_DATA_MODULE_ADDR;
+static void *const heapRegion2Start      = (void *)HEAP_REGION2_START;
+static const uint64_t heapRegion2Size    = HEAP_REGION2_SIZE;
 
 typedef int (*EntryPoint)();
 

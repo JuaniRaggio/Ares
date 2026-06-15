@@ -1,15 +1,15 @@
 #include <drivers/keyboard_driver.h>
 #include <regs.h>
 
-typedef enum {
-        off,
-        shift,
-        ctl,
-        alt,
-} modifiers;
+/* Modifier bitmask: Shift and Ctrl are independent bits so they can be held
+ * together and releasing one does not clear the other. */
+#define MOD_SHIFT 0x01
+#define MOD_CTRL  0x02
 
-// This table either must be initialized matching the modifiers enum
-// or should be assigned using modifiers as indexes
+/* ascii_table rows: 0 = normal, 1 = shift. */
+#define ROW_NORMAL 0
+#define ROW_SHIFT  1
+
 static char ascii_table[][TABLE_SIZE] = {
     // off - normal version
     {
@@ -137,7 +137,7 @@ typedef struct {
         uint8_t buffer[TABLE_SIZE];
         uint8_t write_pos;   // head
         uint8_t read_pos;    // tail
-        uint8_t modifiers;   // off, Shift, Ctrl, Alt
+        uint8_t modifiers;   // bitmask: MOD_SHIFT | MOD_CTRL
         uint8_t eof_pending; // Ctrl+D was pressed and not yet consumed
 } keyboard_state_t;
 
@@ -153,48 +153,40 @@ uint8_t keyboard_handler(uint64_t *stack_ptr) {
         if (scan_code & BREAK_CODE) {
                 uint8_t make_code = scan_code & 0x7F; // Remove bit 7
 
-                if (make_code == LSHIFT_CODE || make_code == RSHIFT_CODE) {
-                        keyboard.modifiers = (uint8_t)off; // Shift released
-                }
-                if (make_code == LCTRL_CODE) {
-                        keyboard.modifiers = (uint8_t)off; // Ctrl released
-                }
+                if (make_code == LSHIFT_CODE || make_code == RSHIFT_CODE)
+                        keyboard.modifiers &= ~MOD_SHIFT;
+                else if (make_code == LCTRL_CODE)
+                        keyboard.modifiers &= ~MOD_CTRL;
                 goto end;
         }
         // MAKE_CODE -> Key pressed
         if (scan_code == LSHIFT_CODE || scan_code == RSHIFT_CODE) {
-                keyboard.modifiers = (uint8_t)shift; // Shift pressed
+                keyboard.modifiers |= MOD_SHIFT;
                 goto end;
         }
 
         if (scan_code == LCTRL_CODE) {
-                keyboard.modifiers = (uint8_t)ctl; // Ctrl pressed
+                keyboard.modifiers |= MOD_CTRL;
                 goto end;
         }
 
-        // Hotkey to capture registers (Ctrl+R)
-        if (scan_code == R_CODE && keyboard.modifiers == ctl) {
-                capture_registers(stack_ptr);
-                goto end;
+        if (keyboard.modifiers & MOD_CTRL) {
+                if (scan_code == R_CODE) { // Ctrl+R: capture registers
+                        capture_registers(stack_ptr);
+                        goto end;
+                }
+                if (scan_code == C_CODE)
+                        return CTRL_C_CHAR;
+                if (scan_code == D_CODE)
+                        return CTRL_D_CHAR;
+                if (scan_code == MINUS_CODE)
+                        return ZOOM_OUT_CHAR;
+                if (scan_code == EQUALS_CODE)
+                        return ZOOM_IN_CHAR;
         }
 
-        if (scan_code == C_CODE && keyboard.modifiers == ctl) {
-        return CTRL_C_CHAR; //3
-        }
-
-        if (scan_code == D_CODE && keyboard.modifiers == ctl) {
-                return CTRL_D_CHAR; //4
-        }
-
-        if (scan_code == MINUS_CODE && keyboard.modifiers == ctl) {
-                return ZOOM_OUT_CHAR;
-        }
-
-        if (scan_code == EQUALS_CODE && keyboard.modifiers == ctl) {
-                return ZOOM_IN_CHAR;
-        }
-
-        return ascii_table[keyboard.modifiers][scan_code];
+        uint8_t row = (keyboard.modifiers & MOD_SHIFT) ? ROW_SHIFT : ROW_NORMAL;
+        return ascii_table[row][scan_code];
 end:
         return 0;
 }

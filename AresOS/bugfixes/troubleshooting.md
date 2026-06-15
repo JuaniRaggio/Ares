@@ -154,31 +154,28 @@ interrupts in the middle of a semaphore critical section.)
 
 ---
 
-## 7. FPU/SSE state not preserved across context switches (known limitation)
+## 7. FPU/SSE state not preserved across context switches (fixed)
 
 ### Symptom
-None observable. `test_sync` and `mvar` (which call `GetUniform` concurrently)
-produce correct results without crashing.
+No crash, but `GetUniform` (cátedra `test_util.c`) uses `double` arithmetic,
+which compiles to SSE. `pushState`/`popState` saved only the 15 general-purpose
+registers, so two processes evaluating it concurrently could clobber each
+other's XMM registers (benign here: it only perturbed a random value).
 
-### Root Cause
-`pushState`/`popState` save only the 15 general-purpose registers, never the
-XMM/x87 state. `GetUniform` (in the cátedra-provided `test_util.c`) uses `double`
-arithmetic, which compiles to SSE. Two processes evaluating it concurrently can
-clobber each other's XMM registers.
+### Fix
+Per-process FPU/SSE save area with fxsave/fxrstor:
+- `fpu_save`/`fpu_restore`/`fpu_init_area` in `asm/libasm.asm`
+  (fxsave/fxrstor/fninit on a 512-byte, 16-aligned buffer).
+- A clean template is captured once at boot (`fpu_init_area(fpu_template)` in
+  `process_init`); each process copies it into its own `pcb->fpu_area`
+  (allocated from the heap, which is 16-aligned), so the first fxrstor loads a
+  valid MXCSR rather than garbage.
+- `schedule` (scheduler.c) does `fpu_save(current->fpu_area)` before switching
+  and `fpu_restore(next->fpu_area)` after. The area is freed in
+  `process_free_resources`.
 
-### Status
-Left as a documented limitation rather than fixed, because:
-- The impact is benign: the corrupted value only changes a *random* decision
-  (whether `slowInc` yields, how long `mvar` busy-waits). It never affects
-  correctness — semaphores still serialize, `test_sync` still returns 0 — and
-  never crashes (verified empirically with the original float `GetUniform`).
-- The proper fix (`fxsave`/`fxrstor` per process, plus 16-byte-aligned save
-  areas and FPU init) adds real complexity to the context-switch hot path.
-- The test is cátedra-provided and must not be modified.
-
-If full FP support across processes is ever needed, add `fxsave [area]` /
-`fxrstor [area]` around the switch in `_irq00Handler` with a per-PCB aligned save
-area. (`CR4.OSFXSR` and `finit` are already set by Pure64.)
+`CR4.OSFXSR` and `finit` are already set by Pure64, so fxsave/fxrstor are valid.
+Verified: test_sync=0, test_proc 5 runs with zero exceptions, mvar alternates.
 
 ---
 
@@ -210,10 +207,90 @@ binary shrank from ~843 KB to ~52 KB.
 
 ---
 
-## Notes for the README "limitations" section
-- Killing a process mid-execution leaks its outstanding heap blocks: the kernel
-  does not track block ownership per process.
-- A single pipe per command line (`p1 | p2`), space-separated `|` and `&`, and
-  no background pipes (`p1 | p2 &`).
-- The shell reports `STACK BASE 0x0` for pid 0 because it runs on the static
-  kernel stack rather than a heap-allocated one.
+## 9. Zombie reaped twice (scheduler vs process_wait)
+
+### Symptom
+Latent. Under heavy process churn, `waitpid` could read a stale exit code or
+return a spurious error, because both the scheduler (`reap_if_zombie`) and
+`process_wait` (`reap_zombie`) could transition the same zombie to DEAD.
+
+### Fix
+Centralize reaping: the scheduler reaps only *orphan* zombies (no waiter); if a
+process is waiting on the zombie, the waiter reaps it and reads the exit code.
+`process_has_waiter` (process.c) gates `reap_if_zombie` (scheduler.c).
+`wake_waiters` no longer clears `waiting_for` (process_wait clears it when done),
+and `process_kill` reaps a killed orphan immediately so its stacks are not
+leaked (the scheduler only reaps the running one).
+
+---
+
+## 10. test_sync gave non-zero results: sem_close destroyed a shared semaphore
+
+### Symptom
+`test_sync N 1` (with semaphores) returned a non-zero "Final value" (e.g. -2)
+non-deterministically, when it must always be 0.
+
+### Root Cause
+Every one of the test's processes does `sem_open(SEM_ID)` (sharing one mutex)
+and `sem_close(SEM_ID)` when done. `sem_close` destroyed the semaphore
+outright, so the *first* process to finish destroyed it; the others then ran
+their critical section (`slowInc`) with `sem_wait`/`sem_post` on a now-missing
+semaphore (which return without blocking) -> race -> non-zero result.
+
+### Fix
+Reference-counted semaphores (`refs` field, semaphores.c). `sem_open` increments
+the count (creating only on first open); `sem_close` decrements and destroys
+only when it reaches 0 — POSIX-like semantics. Verified: `test_sync 10 1`
+returns 0 deterministically across runs.
+
+---
+
+## 11. test_proc triple-faulted: process became schedulable before its frame existed
+
+### Symptom
+`test_proc N` reset the machine within ~100 ms (#GP on the timer handler's
+`iretq`, then double/triple fault). The faulting frame was all zeros (CS=0).
+
+### Root Cause
+`process_create` set `pcb->state = PROCESS_READY` *before* `setup_kernel_stack`
+built the context frame and set `pcb->rsp`. With interrupts enabled during the
+syscall, a timer tick in that window let the scheduler pick the half-built
+process and `iretq` into a garbage/zero frame. `test_proc` creates processes in
+a tight loop, so it hit the window quickly; `test_sync` (few creations) almost
+never did.
+
+### Fix
+Wrap `process_create` in `irq_save`/`irq_restore` so the PCB (including the
+frame and rsp) is fully built atomically before the process can be scheduled.
+Verified: `test_proc 5` runs for 30s with zero exceptions.
+
+---
+
+## Known limitations (not bugs to fix; documented decisions)
+
+- **Killing a process mid-execution leaks its outstanding heap blocks**: the
+  kernel does not track heap-block ownership per process. The process's stacks,
+  argv copy and FPU area ARE freed; only `malloc`s it never `free`d leak.
+- **Semaphore reference not released on kill**: `sem_open`/`sem_close` are
+  reference-counted, but a process killed before calling `sem_close` does not
+  decrement the count, so that semaphore is not destroyed (a slot leaks). Not
+  triggered by the assignment's usage: `test_sync` runs to completion (refs
+  balance) and `mvar` resets its semaphores between runs. A general fix
+  (per-process open-set + release on death) conflicts with `mvar`, where the
+  parent opens the semaphores and dies immediately while the children use them.
+- **No user-pointer validation in syscalls**: syscalls (`sys_write`,
+  `sys_read`, `sys_pipe_open`, and `clone_argv`'s `strlen`) trust the pointers
+  userland passes. The kernel has no paged user/kernel isolation, so a bad
+  pointer could read/write kernel memory or fault. Validating the user address
+  range is production-grade hardening, out of scope for this TP.
+- **Single pipe per command line** (`p1 | p2`, not `p1 | p2 | p3`),
+  space-separated `|` and `&`, and no background pipes (`p1 | p2 &`).
+- **`STACK BASE 0x0` for pid 0** in `ps`: the shell runs on the static kernel
+  stack, not a heap-allocated one.
+
+## Note on the keyboard circular buffer (not a race)
+`drain_keyboard_buffer` reads without disabling interrupts, but the buffer is
+single-producer/single-consumer: the only producer is the keyboard IRQ
+(`write_pos`) and the only consumer is the single foreground process that reads
+(`read_pos`). `sys_read` gates keyboard reads on `foreground`, so there is never
+more than one consumer. No lock is needed.

@@ -13,6 +13,9 @@
 #define PROMPT_LENGTH 3
 #define SHELL_PIPE_NAME "sh-pipe"
 
+/* find_pipe_position() returns a token index; this means the line has no "|". */
+#define NO_PIPE_TOKEN (-1)
+
 #include <process_api.h>
 #include <process_types.h>
 
@@ -52,12 +55,10 @@ static const char *const input_prompt = " > ";
 static s_time start_time;
 
 static void sync_cursor_pos(void);
-static uint8_t lastest_prompt_idx();
-static void add_to_history(const command_t *command, uint32_t params);
+static void save_to_history(int tokens);
 
 shell_attributes shell_status = {
     .magnification    = MIN_FONT_SCALE,
-    .prompts          = (prompt_data){0},
     .font_height      = FONT_HEIGHT,
     .font_width       = FONT_WIDTH,
     .font_color       = default_font_color,
@@ -75,25 +76,24 @@ shell_attributes shell_status = {
         },
 };
 
-static uint8_t lastest_prompt_idx() {
-        return shell_status.prompts.lastest_prompt_idx;
-}
-
-static void add_to_history(const command_t *command, uint32_t params) {
-        shell_status.prompts.prompt_history[lastest_prompt_idx()].cmd = command;
-        int i;
-        for (uint32_t p = 1; p < params; p++) {
-                for (i = 0;
-                     shell_status.prompts.user_input[p][i] && i < MAX_CHARS - 1;
-                     i++) {
-                        shell_status.prompts
-                            .prompt_history[lastest_prompt_idx()]
-                            .args[p - 1][i] =
-                            shell_status.prompts.user_input[p][i];
+/* Rebuilds the typed line from its tokens and stores it in the circular
+ * history. Registers every command (built-ins and applications). */
+static void save_to_history(int tokens) {
+        char *slot =
+            shell_status.prompts
+                .history[shell_status.prompts.history_count % HISTORY_SIZE];
+        int pos = 0;
+        for (int t = 0; t < tokens && pos < MAX_CHARS - 1; t++) {
+                if (t > 0 && pos < MAX_CHARS - 1)
+                        slot[pos++] = ' ';
+                for (int j = 0; shell_status.prompts.user_input[t][j] &&
+                                pos < MAX_CHARS - 1;
+                     j++) {
+                        slot[pos++] = shell_status.prompts.user_input[t][j];
                 }
-                shell_status.prompts.prompt_history[lastest_prompt_idx()]
-                    .args[p - 1][i] = '\0';
         }
+        slot[pos] = '\0';
+        shell_status.prompts.history_count++;
 }
 
 static void draw_cursor(uint8_t x, uint8_t y, uint8_t visible) {
@@ -281,21 +281,19 @@ static void run_builtin(int idx, uint32_t params) {
                 printf(CHECK_MAN, shell_status.prompts.user_input[0]);
                 return;
         }
-        add_to_history(commands[idx], params);
 
-        composed_command_t current_prompt =
-            shell_status.prompts.prompt_history[lastest_prompt_idx()];
-        executable_t execute = current_prompt.cmd->lambda.execute;
+        /* user_input[0] is the command; [1] and [2] are its arguments. */
+        executable_t execute = commands[idx]->lambda.execute;
         switch (params - 1) {
         case supplier_t:
                 execute.supplier();
                 break;
         case function_t:
-                execute.function(current_prompt.args[0]);
+                execute.function(shell_status.prompts.user_input[1]);
                 break;
         case bi_function_t:
-                execute.bi_function(current_prompt.args[0],
-                                    current_prompt.args[1]);
+                execute.bi_function(shell_status.prompts.user_input[1],
+                                    shell_status.prompts.user_input[2]);
                 break;
         }
 }
@@ -389,13 +387,13 @@ static int consume_background_token(int *tokens) {
         return TRUE;
 }
 
-/* Returns the position of the "|" token, or -1 if the line has no pipe */
+/* Returns the position of the "|" token, or NO_PIPE_TOKEN if there is none. */
 static int find_pipe_position(int tokens) {
         for (int i = 1; i < tokens - 1; i++) {
                 if (strcmp(shell_status.prompts.user_input[i], "|") == 0)
                         return i;
         }
-        return -1;
+        return NO_PIPE_TOKEN;
 }
 
 /* Resolves a single (non piped) command: built-in, application or error */
@@ -451,6 +449,8 @@ int shell(void) {
                 if (r_tokens == 0 ||
                     shell_status.prompts.user_input[0][0] == 0)
                         continue;
+
+                save_to_history(r_tokens);
 
                 int background = consume_background_token(&r_tokens);
                 int pipe_pos   = find_pipe_position(r_tokens);

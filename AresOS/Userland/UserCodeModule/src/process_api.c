@@ -40,7 +40,7 @@ int64_t my_spawn(char *name, uint64_t argc, char *argv[], int foreground,
                  int stdin_pipe, int stdout_pipe) {
         process_entry_t func = lookup_function(name);
         if (func == NULL)
-                return -1;
+                return NO_PID;
 
         create_process_info_t info;
         info.entry        = (uint64_t)func;
