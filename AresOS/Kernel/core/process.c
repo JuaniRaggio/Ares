@@ -409,15 +409,29 @@ int process_wait(pid_t pid) {
         /* scheduler_yield() only drops the quantum: the actual switch
          * happens on the next timer tick, so loop until the child really
          * finished instead of checking once and returning early. */
-        while (target->pid == pid && target->state != PROCESS_ZOMBIE &&
-               target->state != PROCESS_DEAD) {
-                /* waiting_for must be set BEFORE blocking: if a timer tick
-                 * lands in between, wake_waiters would not match us and the
-                 * wakeup would be lost forever. */
+        for (;;) {
+                /* Test the child's state and transition to BLOCKED atomically
+                 * with interrupts off. Syscalls run with IF enabled (FMASK is
+                 * 0), so without this guard a timer tick could land between the
+                 * test and the BLOCKED store: the child would exit, run
+                 * wake_waiters while we are still RUNNING (no match), and we
+                 * would then block forever on an already-dead child. This
+                 * mirrors the cli-protected block in sem_wait. */
+                uint64_t flags = irq_save();
+                if (target->pid != pid || target->state == PROCESS_ZOMBIE ||
+                    target->state == PROCESS_DEAD) {
+                        irq_restore(flags);
+                        break;
+                }
                 current->waiting_for = pid;
                 current->state       = PROCESS_BLOCKED;
+                irq_restore(flags);
+
                 scheduler_yield();
-                _hlt();
+                /* Sleep until wake_waiters flips us back to READY; do not spin
+                 * if the wakeup already arrived before we reached the halt. */
+                while (current->state == PROCESS_BLOCKED)
+                        _hlt();
         }
 
         /* Done waiting: clear our claim so the scheduler may reap future
