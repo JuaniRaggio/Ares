@@ -48,13 +48,6 @@ uint8_t print_info_reg(void);
 uint8_t man(char *command);
 
 /**
- * Prints memory dump from specified address
- * @param pos Memory address (as string)
- * @return: status code
- */
-uint8_t print_mem(char *pos);
-
-/**
  * Displays command history
  * @return: status code
  */
@@ -73,18 +66,6 @@ int get_command_index(char *command);
  * @return 0 on success, -1 on error
  */
 uint8_t cursor_cmd(char *type);
-
-/**
- * Launches the Tron game
- * @return: status code
- */
-uint8_t tron_cmd(void);
-
-/**
- * Runs performance benchmarks
- * @return: status code
- */
-uint8_t benchmark_cmd(void);
 
 /**
  * Changes text color
@@ -112,12 +93,9 @@ typedef enum {
         CMD_INFOREG,
         CMD_TIME,
         CMD_CLEAR,
-        CMD_PRINTMEM,
         CMD_HISTORY,
         CMD_EXIT,
         CMD_CURSOR,
-        CMD_TRON,
-        CMD_BENCHMARK,
         CMD_TEXTCOLOR,
         CMD_BGCOLOR,
         QTY_COMMANDS
@@ -174,16 +152,6 @@ static const command_t clear_command = {
         },
 };
 
-static const command_t print_mem_command = {
-    .name        = "printmem",
-    .description = "Memory dump of 32 bytes from an address",
-    .lambda =
-        {
-            .execute.function = &print_mem,
-            .ftype            = function_t,
-        },
-};
-
 static const command_t history_command = {
     .name        = "history",
     .description = "Show command history",
@@ -214,26 +182,6 @@ static const command_t cursor_command = {
         },
 };
 
-static const command_t tron_command = {
-    .name        = "tron",
-    .description = "Play the Tron game (WASD vs IJKL)",
-    .lambda =
-        {
-            .execute.supplier = &tron_cmd,
-            .ftype            = supplier_t,
-        },
-};
-
-static const command_t benchmark_command = {
-    .name        = "benchmark",
-    .description = "Run performance benchmarks",
-    .lambda =
-        {
-            .ftype            = supplier_t,
-            .execute.supplier = &benchmark_cmd,
-        },
-};
-
 static const command_t textcolor_command = {
     .name        = "textcolor",
     .description = "Change text color (black, white, red, green, blue, yellow, "
@@ -257,9 +205,8 @@ static const command_t bgcolor_command = {
 };
 
 static const command_t *const commands[QTY_COMMANDS] = {
-    &help_command,      &man_command,     &inforeg_command,
-    &time_command,      &clear_command,   &print_mem_command,
-    &history_command,   &exit_command,    &cursor_command,
-    &tron_command,      &benchmark_command, &textcolor_command,
+    &help_command,    &man_command,      &inforeg_command,
+    &time_command,    &clear_command,    &history_command,
+    &exit_command,    &cursor_command,   &textcolor_command,
     &bgcolor_command,
 };

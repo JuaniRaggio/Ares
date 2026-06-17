@@ -136,35 +136,6 @@ uint8_t clear_cmd(void) {
         return OK;
 }
 
-uint8_t print_mem(char *pos_str) {
-        uint64_t addr = 0;
-
-        if (pos_str[0] == '0' && (pos_str[1] == 'x' || pos_str[1] == 'X'))
-                pos_str += 2;
-
-        for (uint8_t i = 0; pos_str[i]; i++) {
-                char c = pos_str[i];
-                addr <<= 4;
-                if (c >= '0' && c <= '9')
-                        addr += c - '0';
-                else if (c >= 'a' && c <= 'f')
-                        addr += c - 'a' + 10;
-                else if (c >= 'A' && c <= 'F')
-                        addr += c - 'A' + 10;
-        }
-
-        uint8_t buffer[32];
-        syscall_get_memory(addr, buffer, 32);
-
-        printf("Memory at 0x%x:\n", addr);
-        for (uint8_t i = 0; i < 32; i++) {
-                printf("%x ", buffer[i]);
-                if ((i + 1) % 8 == 0)
-                        printf("\n");
-        }
-        return OK;
-}
-
 uint8_t man(char *command) {
         int idx = get_command_index(command);
         if (idx != -1) {
@@ -239,11 +210,6 @@ uint8_t benchmark_cmd(void) {
         show_timer_benchmark(timer);
         show_keyboard_benchmark(keyboard);
         printf("%s\n", end_benchmark_msg);
-        return OK;
-}
-
-uint8_t tron_cmd(void) {
-        tron_game();
         return OK;
 }
 

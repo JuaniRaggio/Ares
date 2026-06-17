@@ -8,6 +8,11 @@
 #include <stdio.h>
 #include <syscalls.h>
 #include <test_util.h>
+#include <tron.h>
+
+/* Implemented in commands.c; it depends on a file-static helper there, so it
+ * stays put and is exposed here only as a spawnable app. */
+uint8_t benchmark_cmd(void);
 
 #define MAX_SNAPSHOT 32
 #define DEFAULT_LOOP_SECONDS 2
@@ -331,6 +336,50 @@ uint64_t opcode_app(uint64_t argc, char *argv[]) {
         return 0;
 }
 
+uint64_t tron_app(uint64_t argc, char *argv[]) {
+        tron_game();
+        return 0;
+}
+
+uint64_t printmem_app(uint64_t argc, char *argv[]) {
+        if (argc != 1) {
+                printf("Usage: printmem <hex_address>\n");
+                return 1;
+        }
+
+        char *pos = argv[0];
+        if (pos[0] == '0' && (pos[1] == 'x' || pos[1] == 'X'))
+                pos += 2;
+
+        uint64_t addr = 0;
+        for (uint8_t i = 0; pos[i]; i++) {
+                char c = pos[i];
+                addr <<= 4;
+                if (c >= '0' && c <= '9')
+                        addr += c - '0';
+                else if (c >= 'a' && c <= 'f')
+                        addr += c - 'a' + 10;
+                else if (c >= 'A' && c <= 'F')
+                        addr += c - 'A' + 10;
+        }
+
+        uint8_t buffer[32];
+        syscall_get_memory(addr, buffer, 32);
+
+        printf("Memory at 0x%x:\n", addr);
+        for (uint8_t i = 0; i < 32; i++) {
+                printf("%x ", buffer[i]);
+                if ((i + 1) % 8 == 0)
+                        printf("\n");
+        }
+        return 0;
+}
+
+uint64_t benchmark_app(uint64_t argc, char *argv[]) {
+        benchmark_cmd();
+        return 0;
+}
+
 const app_t app_registry[] = {
     {"mem", "Print the memory manager state", mem_app},
     {"ps", "List every process and its properties", ps_app},
@@ -345,6 +394,10 @@ const app_t app_registry[] = {
     {"mvar", "Readers/writers over a global variable: mvar <w> <r>", mvar_app},
     {"div", "Integer division of two numbers: div <num> <divisor>", div_app},
     {"opcode", "Triggers an invalid opcode exception", opcode_app},
+    {"tron", "Play the Tron game (WASD vs IJKL)", tron_app},
+    {"printmem", "Memory dump of 32 bytes from an address: printmem <hex>",
+     printmem_app},
+    {"benchmark", "Run performance benchmarks", benchmark_app},
 };
 
 const int app_registry_count = sizeof(app_registry) / sizeof(app_registry[0]);
