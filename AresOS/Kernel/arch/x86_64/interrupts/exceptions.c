@@ -2,6 +2,7 @@
 #include "syscalls.h"
 #include <colors.h>
 #include <naiveConsole.h>
+#include <process.h>
 #include <regs.h>
 #include <stdint.h>
 
@@ -21,6 +22,12 @@ void exceptionDispatcher(int exception, regs_snapshot_t *regs) {
                 invalid_opcode(regs);
 
         print_registers(regs);
+
+        /* Kill the faulting process instead of resuming it. process_exit never
+         * returns, so the handler's tail (iretq to userland 0x400000) only runs
+         * for the shell, which is still restarted in place. */
+        if (process_getpid() != SHELL_PID)
+                process_exit(KILLED_EXIT_CODE);
 }
 
 static void zero_division(regs_snapshot_t *regs) {
