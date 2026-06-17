@@ -68,14 +68,6 @@ uint8_t history_cmd(void);
 int get_command_index(char *command);
 
 /**
- * Performs integer division
- * @param num Numerator (as string)
- * @param div Divisor (as string)
- * @return 0 on success, -1 on error
- */
-uint8_t div_cmd(char *num, char *div);
-
-/**
  * Changes cursor shape
  * @param type Cursor type (block, hollow, line, underline)
  * @return 0 on success, -1 on error
@@ -87,11 +79,6 @@ uint8_t cursor_cmd(char *type);
  * @return: status code
  */
 uint8_t tron_cmd(void);
-
-/**
- * Triggers OPCode exception (6)
- */
-uint8_t trigger_opcode_cmd(void);
 
 /**
  * Runs performance benchmarks
@@ -124,14 +111,12 @@ typedef enum {
         CMD_MAN,
         CMD_INFOREG,
         CMD_TIME,
-        CMD_DIV,
         CMD_CLEAR,
         CMD_PRINTMEM,
         CMD_HISTORY,
         CMD_EXIT,
         CMD_CURSOR,
         CMD_TRON,
-        CMD_TRIGGER_OPCODE,
         CMD_BENCHMARK,
         CMD_TEXTCOLOR,
         CMD_BGCOLOR,
@@ -176,16 +161,6 @@ static const command_t time_command = {
         {
             .execute.supplier = &show_time,
             .ftype            = supplier_t,
-        },
-};
-
-static const command_t div_command = {
-    .name        = "div",
-    .description = "Integer division of two numbers",
-    .lambda =
-        {
-            .execute.bi_function = &div_cmd,
-            .ftype               = bi_function_t,
         },
 };
 
@@ -249,16 +224,6 @@ static const command_t tron_command = {
         },
 };
 
-static const command_t trigger_opcode = {
-    .name        = "opcode",
-    .description = "Triggers an invalid opcode exception",
-    .lambda =
-        {
-            .ftype            = supplier_t,
-            .execute.supplier = &trigger_opcode_cmd,
-        },
-};
-
 static const command_t benchmark_command = {
     .name        = "benchmark",
     .description = "Run performance benchmarks",
@@ -292,9 +257,9 @@ static const command_t bgcolor_command = {
 };
 
 static const command_t *const commands[QTY_COMMANDS] = {
-    &help_command,      &man_command,       &inforeg_command,
-    &time_command,      &div_command,       &clear_command,
-    &print_mem_command, &history_command,   &exit_command,
-    &cursor_command,    &tron_command,      &trigger_opcode,
-    &benchmark_command, &textcolor_command, &bgcolor_command,
+    &help_command,      &man_command,     &inforeg_command,
+    &time_command,      &clear_command,   &print_mem_command,
+    &history_command,   &exit_command,    &cursor_command,
+    &tron_command,      &benchmark_command, &textcolor_command,
+    &bgcolor_command,
 };

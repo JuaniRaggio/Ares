@@ -57,3 +57,9 @@ uint64_t filter_app(uint64_t argc, char *argv[]);
 
 /** @brief Multiple readers / writers over a global variable (Haskell MVar). */
 uint64_t mvar_app(uint64_t argc, char *argv[]);
+
+/** @brief Integer division of two numbers: div <num> <divisor>. */
+uint64_t div_app(uint64_t argc, char *argv[]);
+
+/** @brief Triggers an invalid opcode exception (process-isolated demo). */
+uint64_t opcode_app(uint64_t argc, char *argv[]);

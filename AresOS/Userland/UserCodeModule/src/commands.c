@@ -93,16 +93,6 @@ uint8_t help(void) {
         return OK;
 }
 
-uint8_t div_cmd(char *num_str, char *div_str) {
-        uint8_t num = 0, div = 0;
-        for (uint8_t i = 0; num_str[i] >= '0' && num_str[i] <= '9'; i++)
-                num = num * 10 + (num_str[i] - '0');
-        for (uint8_t i = 0; div_str[i] >= '0' && div_str[i] <= '9'; i++)
-                div = div * 10 + (div_str[i] - '0');
-        printf("%d / %d = %d\n", num, div, num / div);
-        return OK;
-}
-
 s_time get_elapsed_time(s_time current_time) {
         s_time start = get_shell_start_time();
 
@@ -254,13 +244,6 @@ uint8_t benchmark_cmd(void) {
 
 uint8_t tron_cmd(void) {
         tron_game();
-        return OK;
-}
-
-extern void opcode_asm(void);
-
-uint8_t trigger_opcode_cmd(void) {
-        opcode_asm();
         return OK;
 }
 

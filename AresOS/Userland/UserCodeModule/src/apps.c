@@ -311,6 +311,26 @@ uint64_t mvar_app(uint64_t argc, char *argv[]) {
         return 0;
 }
 
+uint64_t div_app(uint64_t argc, char *argv[]) {
+        if (argc != 2) {
+                printf("Usage: div <num> <divisor>\n");
+                return 1;
+        }
+        int num     = (int)satoi(argv[0]);
+        int divisor = (int)satoi(argv[1]);
+        /* No divisor guard on purpose: div by zero triggers exception 0, now
+         * isolated to this process instead of taking down the shell. */
+        printf("%d / %d = %d\n", num, divisor, num / divisor);
+        return 0;
+}
+
+extern void opcode_asm(void);
+
+uint64_t opcode_app(uint64_t argc, char *argv[]) {
+        opcode_asm();
+        return 0;
+}
+
 const app_t app_registry[] = {
     {"mem", "Print the memory manager state", mem_app},
     {"ps", "List every process and its properties", ps_app},
@@ -323,6 +343,8 @@ const app_t app_registry[] = {
     {"wc", "Count the number of lines of the input", wc_app},
     {"filter", "Filter the vowels out of the input", filter_app},
     {"mvar", "Readers/writers over a global variable: mvar <w> <r>", mvar_app},
+    {"div", "Integer division of two numbers: div <num> <divisor>", div_app},
+    {"opcode", "Triggers an invalid opcode exception", opcode_app},
 };
 
 const int app_registry_count = sizeof(app_registry) / sizeof(app_registry[0]);
