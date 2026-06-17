@@ -174,7 +174,7 @@ void process_init(void) {
         shell->kernel_stack_base = NULL;
         shell->user_stack_base   = NULL;
         shell->fpu_area          = alloc_fpu_area();
-        strncpy(shell->name, "shell", PROCESS_NAME_LEN);
+        strncpy(shell->name, "sh", PROCESS_NAME_LEN);
 
         current_pid = shell->pid;
 }
