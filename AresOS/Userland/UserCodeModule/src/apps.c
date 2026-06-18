@@ -240,13 +240,35 @@ uint64_t filter_app(uint64_t argc, char *argv[]) {
         return 0;
 }
 
+typedef struct {
+        uint32_t z, w;
+} mvar_rng_t;
+
+static void mvar_srand(mvar_rng_t *r, uint32_t seed) {
+        r->z = 362436069u ^ seed;
+        r->w = 521288629u ^ (seed * 2654435761u);
+        if (r->z == 0)
+                r->z = 1;
+        if (r->w == 0)
+                r->w = 1;
+}
+
+static uint32_t mvar_rand(mvar_rng_t *r, uint32_t max) {
+        r->z = 36969 * (r->z & 0xFFFF) + (r->z >> 16);
+        r->w = 18000 * (r->w & 0xFFFF) + (r->w >> 16);
+        return ((r->z << 16) + r->w) % max;
+}
+
 static uint64_t mvar_writer(uint64_t argc, char *argv[]) {
         if (argc != 1)
                 return 1;
         char letter = argv[0][0];
 
+        mvar_rng_t rng;
+        mvar_srand(&rng, (uint32_t)my_getpid());
+
         for (;;) {
-                uint32_t spins = GetUniform(MVAR_YIELD_MAX);
+                uint32_t spins = mvar_rand(&rng, MVAR_YIELD_MAX);
                 while (spins-- > 0)
                         my_yield();
                 my_sem_wait(MVAR_EMPTY_SEM);
@@ -261,8 +283,11 @@ static uint64_t mvar_reader(uint64_t argc, char *argv[]) {
                 return 1;
         uint32_t color = reader_colors[satoi(argv[0]) % READER_COLORS_COUNT];
 
+        mvar_rng_t rng;
+        mvar_srand(&rng, (uint32_t)my_getpid());
+
         for (;;) {
-                uint32_t spins = GetUniform(MVAR_YIELD_MAX);
+                uint32_t spins = mvar_rand(&rng, MVAR_YIELD_MAX);
                 while (spins-- > 0)
                         my_yield();
                 my_sem_wait(MVAR_FULL_SEM);
