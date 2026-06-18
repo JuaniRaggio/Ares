@@ -54,23 +54,8 @@ uint8_t print_info_reg(void) {
         return ret;
 }
 
-int get_command_index(char *command) {
-        for (uint8_t idx = 0; idx < QTY_COMMANDS; idx++) {
-                if (commands[idx]->name &&
-                    !strcmp(commands[idx]->name, command))
-                        return idx;
-        }
-        return INVALID_COMMAND_NAME;
-}
-
 uint8_t help(void) {
-        printf("Shell built-ins:\n");
-        for (uint8_t i = 0; i < QTY_COMMANDS; i++) {
-                printf("  %s: %s\n", commands[i]->name,
-                       commands[i]->description);
-        }
-
-        printf("\nApplications (run as separate processes):\n");
+        printf("Applications (run as separate processes):\n");
         for (int i = 0; i < app_registry_count; i++) {
                 printf("  %s: %s\n", app_registry[i].name,
                        app_registry[i].description);
@@ -90,16 +75,6 @@ uint8_t help(void) {
         printf("  p1 | p2     : connect p1 stdout with p2 stdin\n");
         printf("  Ctrl+C      : kill the foreground process\n");
         printf("  Ctrl+D      : send end of file\n");
-        return OK;
-}
-
-uint8_t div_cmd(char *num_str, char *div_str) {
-        uint8_t num = 0, div = 0;
-        for (uint8_t i = 0; num_str[i] >= '0' && num_str[i] <= '9'; i++)
-                num = num * 10 + (num_str[i] - '0');
-        for (uint8_t i = 0; div_str[i] >= '0' && div_str[i] <= '9'; i++)
-                div = div * 10 + (div_str[i] - '0');
-        printf("%d / %d = %d\n", num, div, num / div);
         return OK;
 }
 
@@ -146,43 +121,7 @@ uint8_t clear_cmd(void) {
         return OK;
 }
 
-uint8_t print_mem(char *pos_str) {
-        uint64_t addr = 0;
-
-        if (pos_str[0] == '0' && (pos_str[1] == 'x' || pos_str[1] == 'X'))
-                pos_str += 2;
-
-        for (uint8_t i = 0; pos_str[i]; i++) {
-                char c = pos_str[i];
-                addr <<= 4;
-                if (c >= '0' && c <= '9')
-                        addr += c - '0';
-                else if (c >= 'a' && c <= 'f')
-                        addr += c - 'a' + 10;
-                else if (c >= 'A' && c <= 'F')
-                        addr += c - 'A' + 10;
-        }
-
-        uint8_t buffer[32];
-        syscall_get_memory(addr, buffer, 32);
-
-        printf("Memory at 0x%x:\n", addr);
-        for (uint8_t i = 0; i < 32; i++) {
-                printf("%x ", buffer[i]);
-                if ((i + 1) % 8 == 0)
-                        printf("\n");
-        }
-        return OK;
-}
-
 uint8_t man(char *command) {
-        int idx = get_command_index(command);
-        if (idx != -1) {
-                printf("Command: %s\n", commands[idx]->name);
-                printf("Description: %s\n", commands[idx]->description);
-                printf("Parameters: %d\n", commands[idx]->lambda.ftype);
-                return OK;
-        }
         for (int i = 0; i < app_registry_count; i++) {
                 if (strcmp(app_registry[i].name, command) == 0) {
                         printf("Application: %s\n", app_registry[i].name);
@@ -249,18 +188,6 @@ uint8_t benchmark_cmd(void) {
         show_timer_benchmark(timer);
         show_keyboard_benchmark(keyboard);
         printf("%s\n", end_benchmark_msg);
-        return OK;
-}
-
-uint8_t tron_cmd(void) {
-        tron_game();
-        return OK;
-}
-
-extern void opcode_asm(void);
-
-uint8_t trigger_opcode_cmd(void) {
-        opcode_asm();
         return OK;
 }
 

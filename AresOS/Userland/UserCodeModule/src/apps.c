@@ -8,20 +8,42 @@
 #include <stdio.h>
 #include <syscalls.h>
 #include <test_util.h>
+#include <tron.h>
+
+/* Command implementations live in commands.c (they touch shell-side state via
+ * shared globals); here they are wrapped as spawnable apps so every command is
+ * a process, with no built-in/process distinction. */
+uint8_t benchmark_cmd(void);
+uint8_t help(void);
+uint8_t man(char *command);
+uint8_t show_time(void);
+uint8_t clear_cmd(void);
+uint8_t print_info_reg(void);
+uint8_t history_cmd(void);
+uint8_t exit_cmd(void);
+uint8_t cursor_cmd(char *type);
+uint8_t textcolor_cmd(char *color);
+uint8_t bgcolor_cmd(char *color);
 
 #define MAX_SNAPSHOT 32
 #define DEFAULT_LOOP_SECONDS 2
 #define MVAR_EMPTY_SEM "mvar_empty"
 #define MVAR_FULL_SEM "mvar_full"
 #define MVAR_MAX_WRITERS 26
-#define MVAR_WAIT_RANGE 50000000
+/* Active wait done by yielding the CPU a random number of times (cooperative):
+ * it does not hog CPU, so no process is starved, and because a higher-priority
+ * process is scheduled more often it counts its yields down faster and reaches
+ * the variable more often -- that is what makes nice() observable here. */
+#define MVAR_YIELD_MAX 20
 
 static const char *const state_names[] = {
     "READY", "RUNNING", "BLOCKED", "DEAD", "ZOMBIE",
 };
 
+/* Order matches the statement's example (red, "black" -> white on our black
+ * background, green); the rest extend it for more readers. */
 static const uint32_t reader_colors[] = {
-    RED, GREEN, BLUE, YELLOW, CYAN, MAGENTA, GRAY, WHITE,
+    RED, WHITE, GREEN, BLUE, YELLOW, CYAN, MAGENTA, GRAY,
 };
 #define READER_COLORS_COUNT 8
 
@@ -229,13 +251,37 @@ uint64_t filter_app(uint64_t argc, char *argv[]) {
         return 0;
 }
 
+typedef struct {
+        uint32_t z, w;
+} mvar_rng_t;
+
+static void mvar_srand(mvar_rng_t *r, uint32_t seed) {
+        r->z = 362436069u ^ seed;
+        r->w = 521288629u ^ (seed * 2654435761u);
+        if (r->z == 0)
+                r->z = 1;
+        if (r->w == 0)
+                r->w = 1;
+}
+
+static uint32_t mvar_rand(mvar_rng_t *r, uint32_t max) {
+        r->z = 36969 * (r->z & 0xFFFF) + (r->z >> 16);
+        r->w = 18000 * (r->w & 0xFFFF) + (r->w >> 16);
+        return ((r->z << 16) + r->w) % max;
+}
+
 static uint64_t mvar_writer(uint64_t argc, char *argv[]) {
         if (argc != 1)
                 return 1;
         char letter = argv[0][0];
 
+        mvar_rng_t rng;
+        mvar_srand(&rng, (uint32_t)my_getpid());
+
         for (;;) {
-                bussy_wait(GetUniform(MVAR_WAIT_RANGE));
+                uint32_t spins = mvar_rand(&rng, MVAR_YIELD_MAX);
+                while (spins-- > 0)
+                        my_yield();
                 my_sem_wait(MVAR_EMPTY_SEM);
                 mvar_value = letter;
                 my_sem_post(MVAR_FULL_SEM);
@@ -248,8 +294,13 @@ static uint64_t mvar_reader(uint64_t argc, char *argv[]) {
                 return 1;
         uint32_t color = reader_colors[satoi(argv[0]) % READER_COLORS_COUNT];
 
+        mvar_rng_t rng;
+        mvar_srand(&rng, (uint32_t)my_getpid());
+
         for (;;) {
-                bussy_wait(GetUniform(MVAR_WAIT_RANGE));
+                uint32_t spins = mvar_rand(&rng, MVAR_YIELD_MAX);
+                while (spins-- > 0)
+                        my_yield();
                 my_sem_wait(MVAR_FULL_SEM);
                 /* Print inside the critical section so the color of this
                  * reader cannot be clobbered by another reader. */
@@ -311,6 +362,136 @@ uint64_t mvar_app(uint64_t argc, char *argv[]) {
         return 0;
 }
 
+uint64_t div_app(uint64_t argc, char *argv[]) {
+        if (argc != 2) {
+                printf("Usage: div <num> <divisor>\n");
+                return 1;
+        }
+        int num     = (int)satoi(argv[0]);
+        int divisor = (int)satoi(argv[1]);
+        /* No divisor guard on purpose: div by zero triggers exception 0, now
+         * isolated to this process instead of taking down the shell. */
+        printf("%d / %d = %d\n", num, divisor, num / divisor);
+        return 0;
+}
+
+extern void opcode_asm(void);
+
+uint64_t opcode_app(uint64_t argc, char *argv[]) {
+        opcode_asm();
+        return 0;
+}
+
+uint64_t tron_app(uint64_t argc, char *argv[]) {
+        tron_game();
+        return 0;
+}
+
+uint64_t printmem_app(uint64_t argc, char *argv[]) {
+        if (argc != 1) {
+                printf("Usage: printmem <hex_address>\n");
+                return 1;
+        }
+
+        char *pos = argv[0];
+        if (pos[0] == '0' && (pos[1] == 'x' || pos[1] == 'X'))
+                pos += 2;
+
+        uint64_t addr = 0;
+        for (uint8_t i = 0; pos[i]; i++) {
+                char c = pos[i];
+                addr <<= 4;
+                if (c >= '0' && c <= '9')
+                        addr += c - '0';
+                else if (c >= 'a' && c <= 'f')
+                        addr += c - 'a' + 10;
+                else if (c >= 'A' && c <= 'F')
+                        addr += c - 'A' + 10;
+        }
+
+        uint8_t buffer[32];
+        syscall_get_memory(addr, buffer, 32);
+
+        printf("Memory at 0x%x:\n", addr);
+        for (uint8_t i = 0; i < 32; i++) {
+                printf("%x ", buffer[i]);
+                if ((i + 1) % 8 == 0)
+                        printf("\n");
+        }
+        return 0;
+}
+
+uint64_t benchmark_app(uint64_t argc, char *argv[]) {
+        benchmark_cmd();
+        return 0;
+}
+
+uint64_t help_app(uint64_t argc, char *argv[]) {
+        help();
+        return 0;
+}
+
+uint64_t man_app(uint64_t argc, char *argv[]) {
+        if (argc != 1) {
+                printf("Usage: man <command>\n");
+                return 1;
+        }
+        man(argv[0]);
+        return 0;
+}
+
+uint64_t time_app(uint64_t argc, char *argv[]) {
+        show_time();
+        return 0;
+}
+
+uint64_t clear_app(uint64_t argc, char *argv[]) {
+        clear_cmd();
+        return 0;
+}
+
+uint64_t inforeg_app(uint64_t argc, char *argv[]) {
+        print_info_reg();
+        return 0;
+}
+
+uint64_t history_app(uint64_t argc, char *argv[]) {
+        history_cmd();
+        return 0;
+}
+
+uint64_t exit_app(uint64_t argc, char *argv[]) {
+        exit_cmd();
+        return 0;
+}
+
+uint64_t cursor_app(uint64_t argc, char *argv[]) {
+        if (argc != 1) {
+                printf("Usage: cursor <block|hollow|line|underline>\n");
+                return 1;
+        }
+        cursor_cmd(argv[0]);
+        return 0;
+}
+
+uint64_t textcolor_app(uint64_t argc, char *argv[]) {
+        if (argc != 1) {
+                printf("Usage: textcolor <color>\n");
+                return 1;
+        }
+        textcolor_cmd(argv[0]);
+        return 0;
+}
+
+uint64_t bgcolor_app(uint64_t argc, char *argv[]) {
+        if (argc != 1) {
+                printf("Usage: bgcolor <color>\n");
+                return 1;
+        }
+        bgcolor_cmd(argv[0]);
+        return 0;
+}
+
 const app_t app_registry[] = {
     {"mem", "Print the memory manager state", mem_app},
     {"ps", "List every process and its properties", ps_app},
@@ -323,6 +504,24 @@ const app_t app_registry[] = {
     {"wc", "Count the number of lines of the input", wc_app},
     {"filter", "Filter the vowels out of the input", filter_app},
     {"mvar", "Readers/writers over a global variable: mvar <w> <r>", mvar_app},
+    {"div", "Integer division of two numbers: div <num> <divisor>", div_app},
+    {"opcode", "Triggers an invalid opcode exception", opcode_app},
+    {"tron", "Play the Tron game (WASD vs IJKL)", tron_app},
+    {"printmem", "Memory dump of 32 bytes from an address: printmem <hex>",
+     printmem_app},
+    {"benchmark", "Run performance benchmarks", benchmark_app},
+    {"help", "List all available commands", help_app},
+    {"man", "Show the manual for a command: man <command>", man_app},
+    {"time", "Show system and elapsed time", time_app},
+    {"clear", "Clear the screen", clear_app},
+    {"inforeg", "Show captured CPU registers (capture with Ctrl+R)",
+     inforeg_app},
+    {"history", "Show command history", history_app},
+    {"cursor", "Change cursor shape: cursor <block|hollow|line|underline>",
+     cursor_app},
+    {"textcolor", "Change text color: textcolor <color>", textcolor_app},
+    {"bgcolor", "Change background color: bgcolor <color>", bgcolor_app},
+    {"exit", "Inform that the shell cannot exit", exit_app},
 };
 
 const int app_registry_count = sizeof(app_registry) / sizeof(app_registry[0]);

@@ -68,14 +68,20 @@ configuración compartida de clangd está en `AresOS/.clangd`.
 | `wc` | — | Cuenta la cantidad de líneas del input. |
 | `filter` | — | Filtra las vocales del input. |
 | `mvar` | `<escritores> <lectores>` | Múltiples lectores/escritores sobre una variable global (estilo MVar de Haskell). |
+| `div` | `<a> <b>` | División entera de dos números (demuestra la excepción de división por cero de forma aislada). |
+| `opcode` | — | Dispara una excepción de opcode inválido (aislada al proceso). |
+| `tron` | — | Juego Tron de ciclos de luz (WASD vs IJKL). |
+| `printmem` | `<dir-hex>` | Dump de 32 bytes desde una dirección. |
+| `benchmark` | — | Corre benchmarks de rendimiento. |
 
-### Comandos built-in (corren dentro del proceso shell)
+La shell de usuario es el proceso `sh` (PID 0), siempre en ejecución.
+
+### Comandos built-in (corren dentro del proceso `sh`)
 
 `help` (lista comandos y tests), `man <cmd>` (ayuda de un comando), `time`,
-`clear`, `div <a> <b>`, `printmem <dir-hex>`, `inforeg` (registros capturados
-con Ctrl+R), `history` (historial de comandos), `cursor <forma>`
-(block/hollow/line/underline), `textcolor <color>`, `bgcolor <color>`, `tron`
-(juego), `benchmark`, `opcode` (dispara excepción de opcode inválido), `exit`.
+`clear`, `inforeg` (registros capturados con Ctrl+R), `history` (historial de
+comandos), `cursor <forma>` (block/hollow/line/underline), `textcolor <color>`,
+`bgcolor <color>`, `exit`.
 
 ### Tests de la cátedra (corren como procesos de usuario)
 

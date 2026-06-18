@@ -306,8 +306,11 @@ uint64_t sys_getpid(void) {
 }
 
 uint64_t sys_yield(void) {
-        scheduler_yield();
-        _hlt();
+        /* Immediate reschedule (no _hlt): the caller gives up the CPU now and
+         * is resumed as soon as the scheduler picks it again. Without the fixed
+         * one-tick floor that _hlt imposed, how fast a yielding process comes
+         * back is governed purely by its scheduling frequency (priority). */
+        _yield_now();
         return SYS_OK;
 }
 

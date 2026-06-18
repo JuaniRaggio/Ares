@@ -13,10 +13,15 @@
 
 #define MAX_PROCESSES 32
 #define PROCESS_NAME_LEN 32
-#define PROCESS_STACK_SIZE (4096 * 4)
+/* Per-process stacks are allocated separately: the kernel stack must hold the
+ * full interrupt/context-switch frame chain, while the user stack only backs
+ * the userland program, so it can be smaller. */
+#define KERNEL_STACK_SIZE (4096 * 4) /* 16 KiB */
+#define USER_STACK_SIZE   (4096 * 2) /* 8 KiB  */
 #define DEFAULT_PRIORITY 1
 #define MAX_PRIORITY 4
 
+/* NO_PID is defined in process_types.h (shared with userland). */
 #define KILLED_EXIT_CODE (-1)
 #define SHELL_PID        0
 
@@ -70,6 +75,8 @@ typedef struct {
         process_state_t state;
         uint8_t blocked_by_semaphore;
         uint64_t priority;
+        int64_t sched_credits;
+        uint64_t sleep_until_ms;
         int foreground;
         pid_t parent_pid;
         int exit_code;
@@ -77,9 +84,9 @@ typedef struct {
         int stdin_pipe;      /* NO_PIPE = keyboard, >= 0 = pipe index */
         int stdout_pipe;     /* NO_PIPE = console,  >= 0 = pipe index */
         int blocked_on_pipe; /* NO_PIPE if not blocked on a pipe      */
-        uint8_t blocked_on_keyboard; /* waiting for keyboard input    */
+        uint8_t blocked_on_keyboard;
         char **argv_copy; /* kernel-owned argv copy, freed on reap    */
-        uint8_t *fpu_area; /* FPU/SSE save area (fxsave), freed on reap */
+        uint8_t *fpu_area; /* FPU/SSE save area */
 } pcb_t;
 
 /**
@@ -233,3 +240,18 @@ int process_kill_foreground(void);
  * Called from the keyboard interrupt when new input or EOF arrives.
  */
 void process_wake_keyboard_readers(void);
+
+/**
+ * @brief Block the calling process for at least ms milliseconds.
+ *
+ * The process sleeps (BLOCKED) instead of busy-waiting; the timer wakes it
+ * once the deadline passes via process_wake_sleepers().
+ */
+void process_sleep_ms(uint64_t ms);
+
+/**
+ * @brief Wake every sleeping process whose deadline has passed.
+ *
+ * Called from the timer path each tick with the current time in ms.
+ */
+void process_wake_sleepers(uint64_t now_ms);

@@ -5,9 +5,9 @@
 
 #define TOTAL_PROCESSES 3
 
-#define LOWEST 0  // TODO: Change as required
-#define MEDIUM 1  // TODO: Change as required
-#define HIGHEST 2 // TODO: Change as required
+#define LOWEST 1  // valid priority range is [1, MAX_PRIORITY=4]
+#define MEDIUM 2
+#define HIGHEST 4
 
 int64_t prio[TOTAL_PROCESSES] = {
     LOWEST,

@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <drivers/time.h>
 #include <interrupts.h>
 #include <lib_common.h>
 #include <memory_manager.h>
@@ -122,7 +123,7 @@ static pcb_t *find_free_slot(void) {
 
 static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
                              uint64_t *out_rsp) {
-        uint64_t top = (uint64_t)ustack + PROCESS_STACK_SIZE;
+        uint64_t top = (uint64_t)ustack + USER_STACK_SIZE;
         top -= sizeof(uint64_t);
         *(uint64_t *)top = exit_handler;
         *out_rsp         = top;
@@ -131,7 +132,7 @@ static void setup_user_stack(uint8_t *ustack, uint64_t exit_handler,
 static void setup_kernel_stack(uint8_t *kstack, uint64_t entry, uint64_t argc,
                                char **argv, uint64_t user_rsp,
                                uint64_t *out_rsp) {
-        uint64_t top = (uint64_t)kstack + PROCESS_STACK_SIZE;
+        uint64_t top = (uint64_t)kstack + KERNEL_STACK_SIZE;
         top -= sizeof(context_frame_t);
         context_frame_t *frame = (context_frame_t *)top;
         memset(frame, 0, sizeof(context_frame_t));
@@ -163,6 +164,8 @@ void process_init(void) {
         shell->pid               = next_pid_to_assign++;
         shell->state             = PROCESS_RUNNING;
         shell->priority          = DEFAULT_PRIORITY;
+        shell->sched_credits     = 0;
+        shell->sleep_until_ms    = 0;
         shell->foreground        = 1;
         shell->parent_pid        = NO_PID;
         shell->waiting_for       = NO_PID;
@@ -174,7 +177,7 @@ void process_init(void) {
         shell->kernel_stack_base = NULL;
         shell->user_stack_base   = NULL;
         shell->fpu_area          = alloc_fpu_area();
-        strncpy(shell->name, "shell", PROCESS_NAME_LEN);
+        strncpy(shell->name, "sh", PROCESS_NAME_LEN);
 
         current_pid = shell->pid;
 }
@@ -220,8 +223,8 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                 return NO_PID;
         }
 
-        uint8_t *kstack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
-        uint8_t *ustack = (uint8_t *)mem_alloc(PROCESS_STACK_SIZE);
+        uint8_t *kstack = (uint8_t *)mem_alloc(KERNEL_STACK_SIZE);
+        uint8_t *ustack = (uint8_t *)mem_alloc(USER_STACK_SIZE);
         if (kstack == NULL || ustack == NULL) {
                 if (kstack)
                         mem_free(kstack);
@@ -253,6 +256,8 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->state                = PROCESS_READY;
         pcb->blocked_by_semaphore = 0;
         pcb->priority             = DEFAULT_PRIORITY;
+        pcb->sched_credits        = 0; /* refilled on the next scheduling round */
+        pcb->sleep_until_ms       = 0;
         pcb->foreground           = foreground;
         pcb->parent_pid           = current_pid;
         pcb->waiting_for          = NO_PID;
@@ -409,15 +414,24 @@ int process_wait(pid_t pid) {
         /* scheduler_yield() only drops the quantum: the actual switch
          * happens on the next timer tick, so loop until the child really
          * finished instead of checking once and returning early. */
-        while (target->pid == pid && target->state != PROCESS_ZOMBIE &&
-               target->state != PROCESS_DEAD) {
-                /* waiting_for must be set BEFORE blocking: if a timer tick
-                 * lands in between, wake_waiters would not match us and the
-                 * wakeup would be lost forever. */
+        for (;;) {
+                /* Test-and-block atomically with interrupts off: syscalls run
+                 * with IF on, so otherwise a tick could exit the child (and run
+                 * wake_waiters) after the test but before we block, losing the
+                 * wakeup. Same discipline as sem_wait. */
+                uint64_t flags = irq_save();
+                if (target->pid != pid || target->state == PROCESS_ZOMBIE ||
+                    target->state == PROCESS_DEAD) {
+                        irq_restore(flags);
+                        break;
+                }
                 current->waiting_for = pid;
                 current->state       = PROCESS_BLOCKED;
+                irq_restore(flags);
+
                 scheduler_yield();
-                _hlt();
+                while (current->state == PROCESS_BLOCKED)
+                        _hlt();
         }
 
         /* Done waiting: clear our claim so the scheduler may reap future
@@ -480,6 +494,34 @@ void process_wake_keyboard_readers(void) {
                     pcb->blocked_on_keyboard) {
                         pcb->blocked_on_keyboard = 0;
                         pcb->state               = PROCESS_READY;
+                }
+        }
+}
+
+void process_sleep_ms(uint64_t ms) {
+        pcb_t *self = process_get_current();
+        if (self == NULL || ms == 0)
+                return;
+
+        /* Set the deadline and block atomically (same discipline as
+         * process_wait) a timer tick must not wake us between the two. */
+        uint64_t flags = irq_save();
+        self->sleep_until_ms = get_time_ms() + ms;
+        self->state          = PROCESS_BLOCKED;
+        irq_restore(flags);
+
+        while (self->state == PROCESS_BLOCKED)
+                _hlt();
+        self->sleep_until_ms = 0;
+}
+
+void process_wake_sleepers(uint64_t now_ms) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                pcb_t *pcb = &process_table[i];
+                if (pcb->state == PROCESS_BLOCKED && pcb->sleep_until_ms != 0 &&
+                    now_ms >= pcb->sleep_until_ms) {
+                        pcb->sleep_until_ms = 0;
+                        pcb->state          = PROCESS_READY;
                 }
         }
 }

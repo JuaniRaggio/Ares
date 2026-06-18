@@ -52,6 +52,16 @@ void _irq00Handler(void);
 void _irq01Handler(void);
 
 /**
+ * Software vector 0x81 - cooperative yield (immediate reschedule).
+ */
+void _irq81Handler(void);
+
+/**
+ * Trigger an immediate reschedule from kernel code (issues int 0x81).
+ */
+void _yield_now(void);
+
+/**
  * IRQ 2 handler - Cascade PIC (never called)
  */
 void _irq02Handler(void);
