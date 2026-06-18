@@ -10,9 +10,20 @@
 #include <test_util.h>
 #include <tron.h>
 
-/* Implemented in commands.c; it depends on a file-static helper there, so it
- * stays put and is exposed here only as a spawnable app. */
+/* Command implementations live in commands.c (they touch shell-side state via
+ * shared globals); here they are wrapped as spawnable apps so every command is
+ * a process, with no built-in/process distinction. */
 uint8_t benchmark_cmd(void);
+uint8_t help(void);
+uint8_t man(char *command);
+uint8_t show_time(void);
+uint8_t clear_cmd(void);
+uint8_t print_info_reg(void);
+uint8_t history_cmd(void);
+uint8_t exit_cmd(void);
+uint8_t cursor_cmd(char *type);
+uint8_t textcolor_cmd(char *color);
+uint8_t bgcolor_cmd(char *color);
 
 #define MAX_SNAPSHOT 32
 #define DEFAULT_LOOP_SECONDS 2
@@ -415,6 +426,72 @@ uint64_t benchmark_app(uint64_t argc, char *argv[]) {
         return 0;
 }
 
+uint64_t help_app(uint64_t argc, char *argv[]) {
+        help();
+        return 0;
+}
+
+uint64_t man_app(uint64_t argc, char *argv[]) {
+        if (argc != 1) {
+                printf("Usage: man <command>\n");
+                return 1;
+        }
+        man(argv[0]);
+        return 0;
+}
+
+uint64_t time_app(uint64_t argc, char *argv[]) {
+        show_time();
+        return 0;
+}
+
+uint64_t clear_app(uint64_t argc, char *argv[]) {
+        clear_cmd();
+        return 0;
+}
+
+uint64_t inforeg_app(uint64_t argc, char *argv[]) {
+        print_info_reg();
+        return 0;
+}
+
+uint64_t history_app(uint64_t argc, char *argv[]) {
+        history_cmd();
+        return 0;
+}
+
+uint64_t exit_app(uint64_t argc, char *argv[]) {
+        exit_cmd();
+        return 0;
+}
+
+uint64_t cursor_app(uint64_t argc, char *argv[]) {
+        if (argc != 1) {
+                printf("Usage: cursor <block|hollow|line|underline>\n");
+                return 1;
+        }
+        cursor_cmd(argv[0]);
+        return 0;
+}
+
+uint64_t textcolor_app(uint64_t argc, char *argv[]) {
+        if (argc != 1) {
+                printf("Usage: textcolor <color>\n");
+                return 1;
+        }
+        textcolor_cmd(argv[0]);
+        return 0;
+}
+
+uint64_t bgcolor_app(uint64_t argc, char *argv[]) {
+        if (argc != 1) {
+                printf("Usage: bgcolor <color>\n");
+                return 1;
+        }
+        bgcolor_cmd(argv[0]);
+        return 0;
+}
+
 const app_t app_registry[] = {
     {"mem", "Print the memory manager state", mem_app},
     {"ps", "List every process and its properties", ps_app},
@@ -433,6 +510,18 @@ const app_t app_registry[] = {
     {"printmem", "Memory dump of 32 bytes from an address: printmem <hex>",
      printmem_app},
     {"benchmark", "Run performance benchmarks", benchmark_app},
+    {"help", "List all available commands", help_app},
+    {"man", "Show the manual for a command: man <command>", man_app},
+    {"time", "Show system and elapsed time", time_app},
+    {"clear", "Clear the screen", clear_app},
+    {"inforeg", "Show captured CPU registers (capture with Ctrl+R)",
+     inforeg_app},
+    {"history", "Show command history", history_app},
+    {"cursor", "Change cursor shape: cursor <block|hollow|line|underline>",
+     cursor_app},
+    {"textcolor", "Change text color: textcolor <color>", textcolor_app},
+    {"bgcolor", "Change background color: bgcolor <color>", bgcolor_app},
+    {"exit", "Inform that the shell cannot exit", exit_app},
 };
 
 const int app_registry_count = sizeof(app_registry) / sizeof(app_registry[0]);

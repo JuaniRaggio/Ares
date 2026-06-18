@@ -273,31 +273,6 @@ int shell_read_line(char input[][MAX_CHARS], int max_params) {
         }
 }
 
-/* Runs a shell built-in using the typed lambda dispatch. Built-ins execute
- * inside the shell process; everything else runs as a separate process. */
-static void run_builtin(int idx, uint32_t params) {
-        if (commands[idx]->lambda.ftype != (function_type)(params - 1)) {
-                printf(wrong_params);
-                printf(CHECK_MAN, shell_status.prompts.user_input[0]);
-                return;
-        }
-
-        /* user_input[0] is the command; [1] and [2] are its arguments. */
-        executable_t execute = commands[idx]->lambda.execute;
-        switch (params - 1) {
-        case supplier_t:
-                execute.supplier();
-                break;
-        case function_t:
-                execute.function(shell_status.prompts.user_input[1]);
-                break;
-        case bi_function_t:
-                execute.bi_function(shell_status.prompts.user_input[1],
-                                    shell_status.prompts.user_input[2]);
-                break;
-        }
-}
-
 /* Fills argv with the tokens in [from, to) and returns argc */
 static uint64_t collect_args(int from, int to, char *argv[]) {
         uint64_t argc = 0;
@@ -396,18 +371,9 @@ static int find_pipe_position(int tokens) {
         return NO_PIPE_TOKEN;
 }
 
-/* Resolves a single (non piped) command: built-in, application or error */
+/* Resolves a single (non piped) command: every command is a process now, so
+ * just spawn it by name (foreground or background). */
 static void run_single(int tokens, int background) {
-        int builtin = get_command_index(shell_status.prompts.user_input[0]);
-        if (builtin != INVALID_COMMAND_NAME) {
-                if (background) {
-                        printf("Built-in commands cannot run in background\n");
-                        return;
-                }
-                run_builtin(builtin, tokens);
-                return;
-        }
-
         if (process_is_registered(shell_status.prompts.user_input[0])) {
                 run_external(tokens, background);
                 return;

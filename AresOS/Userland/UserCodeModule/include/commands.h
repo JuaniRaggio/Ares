@@ -11,10 +11,7 @@
 #include <syscalls.h>
 #include <tron.h>
 
-#define INVALID_COMMAND_NAME -1
-
 static const char *const invalid_command = "Invalid command!\n";
-static const char *const wrong_params    = "Invalid number of parameters\n";
 
 /**
  * Displays list of available commands
@@ -54,13 +51,6 @@ uint8_t man(char *command);
 uint8_t history_cmd(void);
 
 /**
- * Gets the index of a command by name
- * @param command Command name
- * @return Command index or INVALID_COMMAND_NAME
- */
-int get_command_index(char *command);
-
-/**
  * Changes cursor shape
  * @param type Cursor type (block, hollow, line, underline)
  * @return 0 on success, -1 on error
@@ -86,127 +76,3 @@ uint8_t bgcolor_cmd(char *color);
  * @return: status code
  */
 uint8_t exit_cmd(void);
-
-typedef enum {
-        CMD_HELP,
-        CMD_MAN,
-        CMD_INFOREG,
-        CMD_TIME,
-        CMD_CLEAR,
-        CMD_HISTORY,
-        CMD_EXIT,
-        CMD_CURSOR,
-        CMD_TEXTCOLOR,
-        CMD_BGCOLOR,
-        QTY_COMMANDS
-} command_index;
-
-// Don't move to .c, shell.c depends of this
-static const command_t help_command = {
-    .name        = "help",
-    .description = "List all available commands",
-    .lambda =
-        {
-            .execute.supplier = &help,
-            .ftype            = supplier_t,
-        },
-};
-
-static const command_t man_command = {
-    .name        = "man",
-    .description = "Show manual for a specific command",
-    .lambda =
-        {
-            .execute.function = &man,
-            .ftype            = function_t,
-        },
-};
-
-static const command_t inforeg_command = {
-    .name        = "inforeg",
-    .description = "Display captured CPU registers, to capture regs: <C-R>",
-    .lambda =
-        {
-            .execute.supplier = &print_info_reg,
-            .ftype            = supplier_t,
-        },
-};
-
-static const command_t time_command = {
-    .name        = "time",
-    .description = "Show system elapsed time",
-    .lambda =
-        {
-            .execute.supplier = &show_time,
-            .ftype            = supplier_t,
-        },
-};
-
-static const command_t clear_command = {
-    .name        = "clear",
-    .description = "Clear the entire screen",
-    .lambda =
-        {
-            .execute.supplier = &clear_cmd,
-            .ftype            = supplier_t,
-        },
-};
-
-static const command_t history_command = {
-    .name        = "history",
-    .description = "Show command history",
-    .lambda =
-        {
-            .execute.supplier = &history_cmd,
-            .ftype            = supplier_t,
-        },
-};
-
-static const command_t exit_command = {
-    .name        = "exit",
-    .description = "Exit Ares OS",
-    .lambda =
-        {
-            .execute.supplier = &exit_cmd,
-            .ftype            = supplier_t,
-        },
-};
-
-static const command_t cursor_command = {
-    .name        = "cursor",
-    .description = "Change cursor shape (block, hollow, line, underline)",
-    .lambda =
-        {
-            .execute.function = &cursor_cmd,
-            .ftype            = function_t,
-        },
-};
-
-static const command_t textcolor_command = {
-    .name        = "textcolor",
-    .description = "Change text color (black, white, red, green, blue, yellow, "
-                   "cyan, magenta, gray)",
-    .lambda =
-        {
-            .ftype            = function_t,
-            .execute.function = &textcolor_cmd,
-        },
-};
-
-static const command_t bgcolor_command = {
-    .name        = "bgcolor",
-    .description = "Change background color (black, white, red, green, blue, "
-                   "yellow, cyan, magenta, gray)",
-    .lambda =
-        {
-            .ftype            = function_t,
-            .execute.function = &bgcolor_cmd,
-        },
-};
-
-static const command_t *const commands[QTY_COMMANDS] = {
-    &help_command,    &man_command,      &inforeg_command,
-    &time_command,    &clear_command,    &history_command,
-    &exit_command,    &cursor_command,   &textcolor_command,
-    &bgcolor_command,
-};

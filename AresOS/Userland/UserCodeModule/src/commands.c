@@ -54,23 +54,8 @@ uint8_t print_info_reg(void) {
         return ret;
 }
 
-int get_command_index(char *command) {
-        for (uint8_t idx = 0; idx < QTY_COMMANDS; idx++) {
-                if (commands[idx]->name &&
-                    !strcmp(commands[idx]->name, command))
-                        return idx;
-        }
-        return INVALID_COMMAND_NAME;
-}
-
 uint8_t help(void) {
-        printf("Shell built-ins:\n");
-        for (uint8_t i = 0; i < QTY_COMMANDS; i++) {
-                printf("  %s: %s\n", commands[i]->name,
-                       commands[i]->description);
-        }
-
-        printf("\nApplications (run as separate processes):\n");
+        printf("Applications (run as separate processes):\n");
         for (int i = 0; i < app_registry_count; i++) {
                 printf("  %s: %s\n", app_registry[i].name,
                        app_registry[i].description);
@@ -137,13 +122,6 @@ uint8_t clear_cmd(void) {
 }
 
 uint8_t man(char *command) {
-        int idx = get_command_index(command);
-        if (idx != -1) {
-                printf("Command: %s\n", commands[idx]->name);
-                printf("Description: %s\n", commands[idx]->description);
-                printf("Parameters: %d\n", commands[idx]->lambda.ftype);
-                return OK;
-        }
         for (int i = 0; i < app_registry_count; i++) {
                 if (strcmp(app_registry[i].name, command) == 0) {
                         printf("Application: %s\n", app_registry[i].name);
