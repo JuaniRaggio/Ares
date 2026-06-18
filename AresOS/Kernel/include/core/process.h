@@ -170,7 +170,7 @@ int process_unblock(pid_t pid);
 /**
  * @brief Change a process's scheduling priority.
  * @param pid PID of the target process.
- * @param new_priority New priority value (0 to MAX_PRIORITY).
+ * @param new_priority New priority value, clamped to [1, MAX_PRIORITY].
  * @return 0 on success, -1 on error.
  */
 int process_nice(pid_t pid, uint64_t new_priority);
