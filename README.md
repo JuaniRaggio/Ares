@@ -49,26 +49,34 @@ cd AresOS
 docker run -d -v ${PWD}:/root --security-opt seccomp:unconfined -it \
     --name ARES agodio/itba-so-multiarch:3.1
 
-# 3. Build
+# 3. Build (choose a memory manager)
 ./compile_in_container.sh ARES          # default memory manager (first-fit)
 ./compile_in_container.sh ARES buddy    # buddy system
+./compile_in_container.sh ARES both     # build BOTH, one image per manager
 ./compile_in_container.sh ARES clean    # clean
 
 # 4. Run in QEMU (on the host)
-./run.sh                                  # normal
+./run.sh                                  # default image (first-fit)
+./run.sh firstfit                         # the first-fit image from 'both'
+./run.sh buddy                            # the buddy image from 'both'
 ./run.sh -d                               # debug mode (GDB on port 1234)
 ```
 
 `make` rules (run inside the container):
 
-- `make` / `make all` — build with the default memory manager.
+- `make` / `make all` — build with the default memory manager (first-fit).
 - `make buddy` — build with the buddy system.
-- `make clean` — remove build artifacts.
+- `make both` — build with both managers, leaving one runnable image per manager
+  (`Image/x64BareBonesImage-firstfit.img` and `…-buddy.img`); the default image
+  stays first-fit.
+- `make clean` — remove build artifacts and the per-manager images.
 
 The memory manager is selected at **build time**: both implement the same
 interface (`mem_alloc`/`mem_free`/`mem_get_stats`, see
-`Kernel/include/lib/memory_manager.h`) and only one is linked. Building with
-`-Wall` reports no warnings.
+`Kernel/include/lib/memory_manager.h`) and only one is linked. `make both` builds
+each in turn so both can be run without rebuilding: pick which to boot with
+`./run.sh firstfit` or `./run.sh buddy`. Building with `-Wall` reports no
+warnings.
 
 ## IDE setup
 
