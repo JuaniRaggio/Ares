@@ -19,14 +19,23 @@ uint8_t benchmark_cmd(void);
 #define MVAR_EMPTY_SEM "mvar_empty"
 #define MVAR_FULL_SEM "mvar_full"
 #define MVAR_MAX_WRITERS 26
-#define MVAR_WAIT_RANGE 500000
+/* Writers use a short active wait so they re-queue on the empty slot in FIFO
+ * order and rotate cleanly (A,B,A,B / A,B,C...). Readers use a long, variable
+ * active wait so whichever finishes first consumes: reader selection is
+ * irregular and the same reader (color) can consume several values in a row.
+ * Priority is not meant to be demonstrated here -- the single-reader bottleneck
+ * and the large random variance mask it; test_prio is the test for that. */
+#define MVAR_WRITER_WAIT 500000
+#define MVAR_READER_WAIT 50000000
 
 static const char *const state_names[] = {
     "READY", "RUNNING", "BLOCKED", "DEAD", "ZOMBIE",
 };
 
+/* Order matches the statement's example (red, "black" -> white on our black
+ * background, green); the rest extend it for more readers. */
 static const uint32_t reader_colors[] = {
-    RED, GREEN, BLUE, YELLOW, CYAN, MAGENTA, GRAY, WHITE,
+    RED, WHITE, GREEN, BLUE, YELLOW, CYAN, MAGENTA, GRAY,
 };
 #define READER_COLORS_COUNT 8
 
@@ -240,7 +249,7 @@ static uint64_t mvar_writer(uint64_t argc, char *argv[]) {
         char letter = argv[0][0];
 
         for (;;) {
-                bussy_wait(GetUniform(MVAR_WAIT_RANGE));
+                bussy_wait(GetUniform(MVAR_WRITER_WAIT));
                 my_sem_wait(MVAR_EMPTY_SEM);
                 mvar_value = letter;
                 my_sem_post(MVAR_FULL_SEM);
@@ -254,7 +263,7 @@ static uint64_t mvar_reader(uint64_t argc, char *argv[]) {
         uint32_t color = reader_colors[satoi(argv[0]) % READER_COLORS_COUNT];
 
         for (;;) {
-                bussy_wait(GetUniform(MVAR_WAIT_RANGE));
+                bussy_wait(GetUniform(MVAR_READER_WAIT));
                 my_sem_wait(MVAR_FULL_SEM);
                 /* Print inside the critical section so the color of this
                  * reader cannot be clobbered by another reader. */
