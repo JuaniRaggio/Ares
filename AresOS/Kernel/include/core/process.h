@@ -65,6 +65,18 @@ void process_set_current_pid(pid_t pid);
  */
 void process_free_resources(pid_t pid);
 
+/**
+ * @brief Intrusive node for the per-process list of live `malloc` syscall
+ *        allocations. sys_malloc prepends one (16 bytes, keeps 16-byte
+ *        alignment of the returned pointer) to every user allocation and links
+ *        it here; on process death the remaining blocks are freed so a killed
+ *        process never leaks the heap it requested through `malloc`.
+ */
+typedef struct user_alloc_node {
+        struct user_alloc_node *next;
+        struct user_alloc_node *prev;
+} user_alloc_node_t;
+
 /** @brief Process Control Block. */
 typedef struct {
         pid_t pid;
@@ -87,6 +99,7 @@ typedef struct {
         uint8_t blocked_on_keyboard;
         char **argv_copy; /* kernel-owned argv copy, freed on reap    */
         uint8_t *fpu_area; /* FPU/SSE save area */
+        user_alloc_node_t user_allocs; /* sentinel of live user malloc blocks */
 } pcb_t;
 
 /**

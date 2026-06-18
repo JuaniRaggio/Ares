@@ -59,6 +59,17 @@ void process_free_resources(pid_t pid) {
                                 mem_free(pcb->fpu_area);
                                 pcb->fpu_area = NULL;
                         }
+                        /* Free any memory the process requested through the
+                         * malloc syscall and never freed, so a killed process
+                         * leaks nothing. */
+                        user_alloc_node_t *head = &pcb->user_allocs;
+                        user_alloc_node_t *node = head->next;
+                        while (node != NULL && node != head) {
+                                user_alloc_node_t *next = node->next;
+                                mem_free(node);
+                                node = next;
+                        }
+                        head->next = head->prev = head;
                         return;
                 }
         }
@@ -201,6 +212,7 @@ void process_init(void) {
         shell->kernel_stack_base = NULL;
         shell->user_stack_base   = NULL;
         shell->fpu_area          = alloc_fpu_area();
+        shell->user_allocs.next  = shell->user_allocs.prev = &shell->user_allocs;
         strncpy(shell->name, "sh", PROCESS_NAME_LEN);
 
         current_pid = shell->pid;
@@ -294,6 +306,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->fpu_area             = fpu_area;
         pcb->kernel_stack_base    = kstack;
         pcb->user_stack_base      = ustack;
+        pcb->user_allocs.next     = pcb->user_allocs.prev = &pcb->user_allocs;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
 
         if (stdout_pipe != NO_PIPE)
