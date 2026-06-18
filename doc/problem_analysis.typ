@@ -185,8 +185,7 @@ spawns it as a process. There are no built-ins left.
 Command logic that touches shell-private state (the command table, the history
 buffer, the cursor shape, the shell start time) lives in `commands.c` and is
 called by thin app wrappers in `apps.c`; because the whole userland shares one
-flat address space, a spawned process reads/writes those globals directly. This
-is the same approach the reference solutions use.
+flat address space, a spawned process reads/writes those globals directly.
 
 #table(
   columns: (auto, 1fr),
@@ -264,7 +263,7 @@ writer up makes its letter dominate the output (runs of `BBB`). The course tests
 `mvar` is a single-cell MVar: `empty`/`full` semaphores, writers do
 `wait(empty) / write / post(full)`, readers do `wait(full) / consume / post(empty)`.
 This matches the Haskell MVar semantics (one value at a time, single-consumer,
-FIFO fairness). Two refinements were made to align it with the reference:
+FIFO fairness). Two refinements were made to keep that behaviour faithful:
 
 - *Active wait by yielding*: the random active wait is a loop of `yield()` calls
   (cooperative) instead of a CPU busy-wait. It does not hog the CPU (so no
@@ -426,8 +425,9 @@ Of the three reported bugs, two were real (`A` and `B`) and were fixed with
 empirical validation; the third (`C`) was a false positive whose underlying
 concern was neutralized by making commands processes. On top of that, the
 scheduler was reworked so priority is observable for cooperative workloads, every
-command became a process, `mvar` was aligned with the reference, the last
-busy-wait (the sound driver) was removed, and process death now reaps orphan
+command became a process, `mvar` was refined to stay faithful to MVar semantics,
+the last busy-wait (the sound driver) was removed, and process death now reaps
+orphan
 zombies and re-parents living children so killing a process leaks no kernel
 resources. The system has no known deadlock in `wait`, isolates faults per
 process, reclaims a process's own memory whether it exits or is killed,

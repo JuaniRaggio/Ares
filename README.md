@@ -114,35 +114,47 @@ The tests only print on error (except `test_sync`'s final value).
 
 ## Examples by requirement
 
-```text
-# Memory
-mem                       # heap state
+These demonstrate each requirement with ordinary commands, separately from the
+course tests (which are listed last).
 
-# Processes and scheduling
+```text
+# Memory manager
+mem                       # heap state (total, used, free, blocks, allocs/frees)
+
+# Processes and scheduling (create / list / block / kill)
 loop &                    # one loop in the background
 loop &                    # another
-ps                        # both loops + shell + idle are listed
-nice 3 4                  # raise the priority of pid 3
-block 3                   # block it; block 3 again unblocks it
-kill 3                    # kill it
+ps                        # both loops + shell (sh) + idle are listed
+block <pid>               # block a loop; block <pid> again unblocks it
+kill <pid>                # kill it
 
-# Synchronization (final value 0 with semaphores)
-test_sync 100 1           # with semaphores -> "Final value: 0"
-test_sync 100 0           # without semaphores -> varying value (race condition)
+# Priority is observable (a higher-priority process gets the CPU more often)
+loop &                    # leave a loop running in the background
+nice <pid> 4              # raise its priority (1..4); it now prints far more often
 
 # IPC: pipes (terminal/pipe transparency)
 cat | wc                  # type lines, Ctrl+D -> "Lines: N"
 cat | filter              # type text, Ctrl+D -> text without vowels
+ps | wc                   # one command's output consumed by another
 
-# MVar
-mvar 2 2                  # 2 writers (A,B), 2 readers (colors); output looks
-                          # like ABAB with mixing due to the random waits
+# Synchronization with semaphores (non-test demonstration)
+mvar 2 2                  # writers/readers coordinate over a 1-slot cell using
+                          # two semaphores: never two values at once, no race.
+                          # 2 writers (A,B), 2 readers (colors); mixed output
 nice <writer_pid> 4       # that writer starts to dominate the output
 kill <writer_pid>         # its letter disappears; the other one dominates
 
-# Tests in the background
-test_mm 1000000 &
-test_proc 5 &
+# CPU exceptions (each faults in an isolated process; the kernel kills only that
+# process, prints which one faulted, and the shell keeps running)
+div 1 0                   # divide-by-zero (exception 0)
+opcode                    # invalid opcode (exception 6)
+
+# Running the course tests
+test_mm 1000000 &         # memory manager stress (background)
+test_proc 5 &             # process stress (background)
+test_prio 1000000000      # priority effect (use a large value so it is visible)
+test_sync 100 1           # with semaphores -> "Final value: 0"
+test_sync 100 0           # without semaphores -> varying value (race condition)
 ```
 
 ## Missing or partially implemented requirements
@@ -181,10 +193,12 @@ built-ins.
 - **Cooperative yield**: `yield()` triggers an immediate context switch (software
   vector `0x81`) instead of waiting for the next timer tick, so a yielding
   process comes back as soon as the scheduler picks it again.
-- The system is free of busy waiting (except where the assignment requires it:
-  `loop` and `test_sync` without semaphores). Every blocking path (pipes,
-  semaphores, waitpid, keyboard read, and the sound driver) sleeps with `_hlt`
-  and is woken by an event or by the timer.
+- The system is free of deadlocks, race conditions, and busy waiting, except for
+  the busy waiting the assignment explicitly allows (`loop` and `test_sync`
+  without semaphores). Every blocking path (pipes, semaphores, waitpid, keyboard
+  read, and the sound driver) sleeps with `_hlt` and is woken by an event or by
+  the timer; shared state is guarded by atomic spinlocks and interrupt-safe
+  critical sections.
 - **Exceptions** (divide-by-zero, invalid opcode) terminate the faulting process
   and hand control back to the scheduler, so the rest of the system keeps
   running; the shell survives instead of the system restarting.
@@ -218,11 +232,31 @@ implementation) and `UserManual.pdf` (end-user manual).
 The `.typ` sources sit next to each PDF; rebuild any of them with
 `typst compile <file>.typ`.
 
-## Use of artificial intelligence
+## Code citations and use of AI
+
+### Third-party and course-provided code
+
+This kernel is built on top of the Computer Architecture TP base project and
+retains a few external components, each kept with its own license/attribution:
+
+- **Pure64** (`AresOS/Bootloader/Pure64`) — third-party x86-64 bootloader used to
+  bring the CPU into long mode (see `Bootloader/Pure64/docs/LICENSE.TXT`).
+- **BMFS** (`AresOS/Bootloader/BMFS`) — third-party BareMetal File System used to
+  lay out the boot image (see `Bootloader/BMFS/README.md`).
+- The course-provided **test skeletons** `test_mm`, `test_proc` and the shared
+  `test_util` helpers (`AresOS/Userland/UserCodeModule/tests/`).
+
+Every kernel subsystem (scheduler, processes, semaphores, pipes, both memory
+managers, exceptions) and the whole userland (shell and applications) were
+written by the group. Any code fragment adapted from an external source is
+attributed in a comment at its use site.
+
+### Use of artificial intelligence
 
 AI (Claude, by Anthropic) was used during development as an assistant, mainly
 for:
 
+- Diagnosing low-level bugs.
 - Code review and quality suggestions.
 - Writing documentation.
 
