@@ -1,4 +1,5 @@
 #include <drivers/time.h>
+#include <process.h>
 #include <sound.h>
 #include <stdint.h>
 
@@ -26,18 +27,6 @@ static void disable_speaker(void) {
         outb(SPEAKER_PORT, tmp & 0xFC);
 }
 
-/**
- * Sets the PC Speaker frequency
- * TODO: Fix this, we can't use busy wait
- * @param frequency Frequency in Hz
- */
-static void busy_wait_ms(uint64_t duration_ms) {
-        uint64_t start_ms = get_time_ms();
-        uint64_t end_ms   = start_ms + duration_ms;
-        while (get_time_ms() < end_ms)
-                ;
-}
-
 #define PIT_SQUARE_WAVE_CH2 0xB6
 
 static void set_speaker_frequency(uint64_t frequency) {
@@ -63,7 +52,7 @@ void playSound(uint64_t frequency, uint64_t duration_ms) {
 
         set_speaker_frequency(frequency);
         enable_speaker();
-        busy_wait_ms(duration_ms);
+        process_sleep_ms(duration_ms); /* block, do not busy-wait */
         disable_speaker();
 }
 

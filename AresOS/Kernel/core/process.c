@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <drivers/time.h>
 #include <interrupts.h>
 #include <lib_common.h>
 #include <memory_manager.h>
@@ -164,6 +165,7 @@ void process_init(void) {
         shell->state             = PROCESS_RUNNING;
         shell->priority          = DEFAULT_PRIORITY;
         shell->sched_credits     = 0;
+        shell->sleep_until_ms    = 0;
         shell->foreground        = 1;
         shell->parent_pid        = NO_PID;
         shell->waiting_for       = NO_PID;
@@ -255,6 +257,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->blocked_by_semaphore = 0;
         pcb->priority             = DEFAULT_PRIORITY;
         pcb->sched_credits        = 0; /* refilled on the next scheduling round */
+        pcb->sleep_until_ms       = 0;
         pcb->foreground           = foreground;
         pcb->parent_pid           = current_pid;
         pcb->waiting_for          = NO_PID;
@@ -491,6 +494,34 @@ void process_wake_keyboard_readers(void) {
                     pcb->blocked_on_keyboard) {
                         pcb->blocked_on_keyboard = 0;
                         pcb->state               = PROCESS_READY;
+                }
+        }
+}
+
+void process_sleep_ms(uint64_t ms) {
+        pcb_t *self = process_get_current();
+        if (self == NULL || ms == 0)
+                return;
+
+        /* Set the deadline and block atomically (same discipline as
+         * process_wait) a timer tick must not wake us between the two. */
+        uint64_t flags = irq_save();
+        self->sleep_until_ms = get_time_ms() + ms;
+        self->state          = PROCESS_BLOCKED;
+        irq_restore(flags);
+
+        while (self->state == PROCESS_BLOCKED)
+                _hlt();
+        self->sleep_until_ms = 0;
+}
+
+void process_wake_sleepers(uint64_t now_ms) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                pcb_t *pcb = &process_table[i];
+                if (pcb->state == PROCESS_BLOCKED && pcb->sleep_until_ms != 0 &&
+                    now_ms >= pcb->sleep_until_ms) {
+                        pcb->sleep_until_ms = 0;
+                        pcb->state          = PROCESS_READY;
                 }
         }
 }

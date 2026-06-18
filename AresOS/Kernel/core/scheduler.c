@@ -134,9 +134,11 @@ static uint64_t do_schedule(uint64_t current_rsp) {
         return next_pcb->rsp;
 }
 
-/* Timer-driven entry: advance timekeeping, then reschedule. */
+/* Timer-driven entry: advance timekeeping, wake any sleepers whose deadline
+ * passed, then reschedule. */
 uint64_t schedule(uint64_t current_rsp) {
         timer_handler();
+        process_wake_sleepers(get_time_ms());
         return do_schedule(current_rsp);
 }
 
