@@ -100,6 +100,30 @@ static void wake_waiters(pid_t dead_pid) {
         }
 }
 
+/* Called when a process dies. Its still-living children are re-parented to the
+ * shell (init-style) so they are never orphaned, and any zombie that no longer
+ * has a waiter is reaped now: the scheduler only reaps the running process, so a
+ * zombie that loses its waiter (its parent died before reaping it) would
+ * otherwise leak its PCB and stacks forever. The running process is skipped; it
+ * cannot free its own stack here and the scheduler reaps it on the next tick. */
+static void reparent_and_reap_orphans(pid_t dead_pid) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                pcb_t *child = &process_table[i];
+                if (child->parent_pid == dead_pid && child->pid != dead_pid &&
+                    child->state != PROCESS_DEAD)
+                        child->parent_pid = SHELL_PID;
+        }
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                pcb_t *zombie = &process_table[i];
+                if (zombie->state == PROCESS_ZOMBIE &&
+                    zombie->pid != current_pid &&
+                    !process_has_waiter(zombie->pid)) {
+                        process_free_resources(zombie->pid);
+                        zombie->state = PROCESS_DEAD;
+                }
+        }
+}
+
 /* True if a live process is waiting on pid (so only the waiter should reap
  * it). ZOMBIE/DEAD processes are ignored: a waiter that itself died (e.g. was
  * killed mid-wait) leaves a stale waiting_for that must not pin the zombie. */
@@ -293,6 +317,7 @@ void process_exit(int code) {
         pcb->state           = PROCESS_ZOMBIE;
         pcb->exit_code       = code;
         wake_waiters(pcb->pid);
+        reparent_and_reap_orphans(pcb->pid);
         scheduler_yield();
         while (1)
                 _hlt();
@@ -314,15 +339,15 @@ int process_kill(pid_t pid) {
         pcb->exit_code       = KILLED_EXIT_CODE;
         wake_waiters(pid);
 
+        /* Re-parents the victim's children and reaps it (and any other orphan
+         * zombie) when nobody waits on it; if a waiter exists, it is left for
+         * the waiter to reap. */
+        reparent_and_reap_orphans(pid);
+
         if (pid == current_pid) {
                 /* Cannot free our own stack here; the scheduler reaps us on
                  * the next tick (current zombie, no waiter). */
                 scheduler_yield();
-        } else if (!process_has_waiter(pid)) {
-                /* Killed process nobody will wait on: reap now so its stacks
-                 * are not leaked (the scheduler only reaps the running one). */
-                process_free_resources(pid);
-                pcb->state = PROCESS_DEAD;
         }
 
         return SYS_OK;

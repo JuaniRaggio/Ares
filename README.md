@@ -1,212 +1,257 @@
 # ARES: A Recursive Experimental System
 
-TP2 de Sistemas Operativos (ITBA) — núcleo de un sistema operativo monolítico
-de 64 bits construido sobre el TP de Arquitectura de Computadoras. Implementa
-administración de memoria física (dos managers intercambiables), procesos con
-scheduling Round Robin por prioridades, semáforos, pipes y un conjunto de
-aplicaciones de usuario.
+Operating Systems TP2 (ITBA) — the kernel of a 64-bit monolithic operating
+system built on top of the Computer Architecture TP. It implements physical
+memory management (two interchangeable allocators), processes with
+priority-based Round Robin scheduling (priority sets how often a process is
+scheduled), semaphores, pipes, and a set of user applications that all run as
+processes.
 
-## Compilación y ejecución
+## Building and running
 
-La compilación es obligatoria dentro de la imagen provista por la cátedra:
+Building must happen inside the image provided by the course:
 
 ```bash
-# 1. Descargar la imagen (una sola vez)
+# 1. Pull the image (once)
 docker pull agodio/itba-so-multiarch:3.1
 
-# 2. Crear el contenedor montando el proyecto (desde Ares/AresOS)
+# 2. Create the container mounting the project (from Ares/AresOS)
 cd AresOS
 docker run -d -v ${PWD}:/root --security-opt seccomp:unconfined -it \
     --name ARES agodio/itba-so-multiarch:3.1
 
-# 3. Compilar
-./compile_in_container.sh ARES          # memory manager por defecto (first-fit)
+# 3. Build
+./compile_in_container.sh ARES          # default memory manager (first-fit)
 ./compile_in_container.sh ARES buddy    # buddy system
-./compile_in_container.sh ARES clean    # limpiar
+./compile_in_container.sh ARES clean    # clean
 
-# 4. Ejecutar en QEMU (en el host)
+# 4. Run in QEMU (on the host)
 ./run.sh                                  # normal
-./run.sh -d                               # modo debug (GDB en el puerto 1234)
+./run.sh -d                               # debug mode (GDB on port 1234)
 ```
 
-Reglas de `make` (a correr dentro del contenedor):
+`make` rules (run inside the container):
 
-- `make` / `make all` — compila con el memory manager por defecto.
-- `make buddy` — compila con el buddy system.
-- `make clean` — limpia los artefactos de compilación.
+- `make` / `make all` — build with the default memory manager.
+- `make buddy` — build with the buddy system.
+- `make clean` — remove build artifacts.
 
-La selección del memory manager es en **tiempo de compilación**: ambos
-implementan la misma interfaz (`mem_alloc`/`mem_free`/`mem_get_stats`, ver
-`Kernel/include/lib/memory_manager.h`) y solo uno se linkea. La compilación con
-`-Wall` no reporta warnings.
+The memory manager is selected at **build time**: both implement the same
+interface (`mem_alloc`/`mem_free`/`mem_get_stats`, see
+`Kernel/include/lib/memory_manager.h`) and only one is linked. Building with
+`-Wall` reports no warnings.
 
-## Configuración del entorno de desarrollo (IDE)
+## IDE setup
 
-`compile_commands.json` se genera en el **host** (no en docker) para que clangd
-resuelva las rutas locales:
+`compile_commands.json` is generated on the **host** (not in Docker) so clangd
+resolves local paths:
 
 ```bash
 cd AresOS && make compile_commands
 ```
 
-Re-ejecutar cuando se agregan, mueven o eliminan archivos fuente. La
-configuración compartida de clangd está en `AresOS/.clangd`.
+Re-run it when source files are added, moved, or removed. The shared clangd
+configuration lives in `AresOS/.clangd`.
 
-## Comandos y tests
+## Commands and tests
 
-### Aplicaciones (corren como procesos separados)
+### Commands (everything runs as a process)
 
-| Comando | Parámetros | Descripción |
+There is no built-in/process distinction: the user shell is the process `sh`
+(PID 0, always running) and resolves every command **by name**, spawning it as a
+separate process. That is why any command can run in the background (`&`) or be
+connected through a pipe (`|`) — for example `help | wc`.
+
+| Command | Parameters | Description |
 |---|---|---|
-| `mem` | — | Imprime el estado del memory manager (total, usado, libre, bloques). |
-| `ps` | — | Lista los procesos: PID, nombre, prioridad, estado, foreground, RSP, base del stack. |
-| `loop` | `[segundos]` | Imprime su PID cada N segundos mediante espera activa (default 2s). |
-| `kill` | `<pid>` | Mata el proceso con el PID dado. |
-| `nice` | `<pid> <prioridad>` | Cambia la prioridad (1 a 4) de un proceso. |
-| `block` | `<pid>` | Alterna un proceso entre bloqueado y listo. |
-| `cat` | — | Imprime su stdin tal como lo recibe. |
-| `wc` | — | Cuenta la cantidad de líneas del input. |
-| `filter` | — | Filtra las vocales del input. |
-| `mvar` | `<escritores> <lectores>` | Múltiples lectores/escritores sobre una variable global (estilo MVar de Haskell). |
-| `div` | `<a> <b>` | División entera de dos números (demuestra la excepción de división por cero de forma aislada). |
-| `opcode` | — | Dispara una excepción de opcode inválido (aislada al proceso). |
-| `tron` | — | Juego Tron de ciclos de luz (WASD vs IJKL). |
-| `printmem` | `<dir-hex>` | Dump de 32 bytes desde una dirección. |
-| `benchmark` | — | Corre benchmarks de rendimiento. |
+| `help` | — | List every command and the course tests. |
+| `man` | `<command>` | Show the help for a command. |
+| `mem` | — | Memory manager state (total, used, free, blocks, allocs/frees). |
+| `ps` | — | List processes: PID, name, priority, state, foreground, RSP, stack base. |
+| `loop` | `[seconds]` | Print its PID every N seconds via active wait (default 2s). |
+| `kill` | `<pid>` | Kill the process with the given PID. |
+| `nice` | `<pid> <priority>` | Change a process priority (1 to 4). |
+| `block` | `<pid>` | Toggle a process between blocked and ready. |
+| `cat` | — | Print stdin as it is received. |
+| `wc` | — | Count the number of lines in the input. |
+| `filter` | — | Filter the vowels out of the input. |
+| `mvar` | `<writers> <readers>` | Multiple readers/writers over a global variable (Haskell-style MVar). |
+| `time` | — | System time and elapsed time. |
+| `clear` | — | Clear the screen. |
+| `history` | — | Show the command history. |
+| `inforeg` | — | CPU registers captured with Ctrl+R. |
+| `cursor` | `<shape>` | Change the cursor shape (block/hollow/line/underline). |
+| `textcolor` | `<color>` | Change the text color. |
+| `bgcolor` | `<color>` | Change the background color. |
+| `div` | `<a> <b>` | Integer division (demonstrates the divide-by-zero exception, isolated). |
+| `opcode` | — | Trigger an invalid-opcode exception (isolated to the process). |
+| `printmem` | `<hex-addr>` | Dump 32 bytes from an address. |
+| `tron` | — | Tron light-cycles game (WASD vs IJKL). |
+| `benchmark` | — | Run performance benchmarks. |
+| `exit` | — | Report that the shell cannot exit (it keeps the system alive). |
 
-La shell de usuario es el proceso `sh` (PID 0), siempre en ejecución.
+### Course tests (run as user processes)
 
-### Comandos built-in (corren dentro del proceso `sh`)
-
-`help` (lista comandos y tests), `man <cmd>` (ayuda de un comando), `time`,
-`clear`, `inforeg` (registros capturados con Ctrl+R), `history` (historial de
-comandos), `cursor <forma>` (block/hollow/line/underline), `textcolor <color>`,
-`bgcolor <color>`, `exit`.
-
-### Tests de la cátedra (corren como procesos de usuario)
-
-| Test | Parámetros | Descripción |
+| Test | Parameters | Description |
 |---|---|---|
-| `test_mm` | `<bytes>` | Pide y libera bloques aleatorios verificando que no se solapen. |
-| `test_proc` | `<max_procesos>` | Crea, bloquea, desbloquea y mata procesos dummy aleatoriamente. |
-| `test_prio` | `<valor>` | 3 procesos que incrementan una variable; se ejecutan con igual y con distinta prioridad. |
-| `test_sync` | `<n> <use_sem>` | Pares de procesos que incrementan/decrementan una variable global; con semáforos el resultado final es 0. |
+| `test_mm` | `<bytes>` | Request and free random blocks, checking they do not overlap. |
+| `test_proc` | `<max_processes>` | Create, block, unblock, and kill dummy processes at random. |
+| `test_prio` | `<value>` | 3 processes incrementing a variable; run with equal and with different priorities. |
+| `test_sync` | `<n> <use_sem>` | Pairs of processes increment/decrement a global variable; with semaphores the final value is 0. |
 
-Los tests solo imprimen ante errores (salvo el resultado final de `test_sync`).
+The tests only print on error (except `test_sync`'s final value).
 
-## Caracteres especiales y atajos de teclado
+## Special characters and keyboard shortcuts
 
-- `comando &` — ejecuta `comando` en **background** (el `&` debe ir separado por
-  espacios). Sin `&`, el comando corre en foreground y la shell espera.
-- `p1 | p2` — conecta la salida de `p1` con la entrada de `p2` mediante un
-  **pipe** (el `|` debe ir separado por espacios). Ejemplo: `cat | wc`.
-- **Ctrl+C** — mata el/los proceso(s) en foreground (no afecta a la shell).
-- **Ctrl+D** — envía fin de archivo (EOF) al proceso que lee de teclado.
-- **Ctrl+R** — captura el snapshot de registros (ver con `inforeg`).
-- **Ctrl + / Ctrl -** — aumenta / reduce el tamaño de fuente.
+- `command &` — run `command` in the **background** (`&` must be separated by
+  spaces). Without `&`, the command runs in the foreground and the shell waits.
+- `p1 | p2` — connect the output of `p1` to the input of `p2` through a **pipe**
+  (`|` must be separated by spaces). Example: `cat | wc`.
+- **Ctrl+C** — kill the foreground process(es) (does not affect the shell).
+- **Ctrl+D** — send end of file (EOF) to the process reading from the keyboard.
+- **Ctrl+R** — capture the register snapshot (view it with `inforeg`).
+- **Ctrl + / Ctrl -** — increase / decrease the font size.
 
-## Ejemplos por requerimiento
+## Examples by requirement
 
 ```text
-# Memoria
-mem                       # estado del heap
+# Memory
+mem                       # heap state
 
-# Procesos y scheduling
-loop &                    # un loop en background
-loop &                    # otro
-ps                        # se ven ambos loops + shell + idle
-nice 3 4                  # sube la prioridad del pid 3
-block 3                   # lo bloquea; block 3 de nuevo lo desbloquea
-kill 3                    # lo mata
+# Processes and scheduling
+loop &                    # one loop in the background
+loop &                    # another
+ps                        # both loops + shell + idle are listed
+nice 3 4                  # raise the priority of pid 3
+block 3                   # block it; block 3 again unblocks it
+kill 3                    # kill it
 
-# Sincronizacion (resultado final 0 con semaforos)
-test_sync 100 1           # con semaforos -> "Final value: 0"
-test_sync 100 0           # sin semaforos -> valor variable (race condition)
+# Synchronization (final value 0 with semaphores)
+test_sync 100 1           # with semaphores -> "Final value: 0"
+test_sync 100 0           # without semaphores -> varying value (race condition)
 
-# IPC: pipes (transparencia terminal/pipe)
-cat | wc                  # escribir lineas, Ctrl+D -> "Lines: N"
-cat | filter              # escribir texto, Ctrl+D -> texto sin vocales
+# IPC: pipes (terminal/pipe transparency)
+cat | wc                  # type lines, Ctrl+D -> "Lines: N"
+cat | filter              # type text, Ctrl+D -> text without vowels
 
 # MVar
-mvar 2 2                  # imprime ABABAB... (2 escritores, 2 lectores)
+mvar 2 2                  # 2 writers (A,B), 2 readers (colors); output looks
+                          # like ABAB with mixing due to the random waits
+nice <writer_pid> 4       # that writer starts to dominate the output
+kill <writer_pid>         # its letter disappears; the other one dominates
 
-# Tests en background
+# Tests in the background
 test_mm 1000000 &
 test_proc 5 &
 ```
 
-## Requerimientos faltantes o parcialmente implementados
+## Missing or partially implemented requirements
 
-Todos los requerimientos de la consigna están implementados. Las aplicaciones
-heredadas del TP de Arquitectura (`tron`, `benchmark`, etc.) corren como
-built-ins dentro de la shell, no como procesos; no son requeridas por la
-consigna.
+All requirements in the assignment are implemented and verified. Every command
+— including the ones inherited from the Architecture TP (`tron`, `benchmark`, …)
+and the utilities (`help`, `time`, `clear`, …) — runs as a process; there are no
+built-ins.
 
-## Limitaciones
+## Limitations
 
-- **Memoria de procesos matados**: matar un proceso a mitad de ejecución filtra
-  los bloques de heap que tuviera reservados, porque el kernel no registra qué
-  bloques pertenecen a cada proceso. El ciclo de vida normal (crear/terminar) no
-  filtra: los stacks y el área de FPU se reciclan.
-- **Pipes**: un solo pipe por línea (`p1 | p2`, no `p1 | p2 | p3`); `|` y `&`
-  deben ir separados por espacios; no se soportan pipes en background.
-- La shell (PID 0) muestra `STACK BASE 0x0` en `ps` porque corre sobre el stack
-  estático del kernel, no sobre uno reservado del heap.
+- **Heap explicitly requested by a process**: a process's own blocks (stacks,
+  argv copy, FPU area) are always recycled, whether it exits normally or is
+  killed; when a process dies its zombie children are reaped and its living
+  children are re-parented to the shell, so neither leaks. The one case not
+  reclaimed is memory a process requested for itself through the `malloc`
+  syscall: the kernel does not track which heap blocks belong to which process,
+  so if such a process is killed mid-execution that memory is lost (no current
+  application uses the `malloc` syscall, so in practice this does not occur).
+- **Pipes**: a single pipe per line (`p1 | p2`, not `p1 | p2 | p3`); `|` and `&`
+  must be separated by spaces; pipes are not supported in the background.
+- **No scroll**: the text console clears the screen on overflow instead of
+  scrolling, so a very long dump can push earlier lines off the top.
+- The shell (PID 0) shows `STACK BASE 0x0` in `ps` because it runs on the
+  kernel's static stack, not on a heap-allocated one.
 
-## Consideraciones de diseño
+## Design notes
 
-- El único mecanismo de comunicación de los procesos con el kernel son las
-  system calls (instrucción `syscall`/`sysret`).
-- El sistema está libre de busy waiting (salvo donde la consigna lo requiere:
-  `loop` y `test_sync` sin semáforos). Los caminos bloqueantes (pipes,
-  semáforos, waitpid, lectura de teclado) duermen con `_hlt` y se despiertan por
-  evento.
-- La sincronización usa spinlocks con la instrucción atómica `xchg`. Los
-  semáforos llevan reference counting (solo se destruyen en el último `close`).
-- El context switch preserva los registros de propósito general y el estado
-  FPU/SSE (fxsave/fxrstor por proceso).
-- Los bugs encontrados durante el desarrollo y cómo se resolvieron están
-  documentados en `AresOS/bugfixes/` (ver `troubleshooting.md`).
+- The only way processes talk to the kernel is through system calls
+  (`syscall`/`sysret`).
+- **Priority as frequency**: the scheduler is a deficit round robin where a
+  process is eligible `priority` times per round, so a higher-priority process is
+  scheduled proportionally more often. This makes priority observable for both
+  CPU-bound (`test_prio`) and cooperative, yield-bound workloads (`mvar` with
+  `nice`), not only CPU-bound ones.
+- **Cooperative yield**: `yield()` triggers an immediate context switch (software
+  vector `0x81`) instead of waiting for the next timer tick, so a yielding
+  process comes back as soon as the scheduler picks it again.
+- The system is free of busy waiting (except where the assignment requires it:
+  `loop` and `test_sync` without semaphores). Every blocking path (pipes,
+  semaphores, waitpid, keyboard read, and the sound driver) sleeps with `_hlt`
+  and is woken by an event or by the timer.
+- **Exceptions** (divide-by-zero, invalid opcode) terminate the faulting process
+  and hand control back to the scheduler, so the rest of the system keeps
+  running; the shell survives instead of the system restarting.
+- Synchronization uses spinlocks with the atomic `xchg` instruction. Semaphores
+  are named (shared by unrelated processes via an agreed string id) and
+  reference-counted (destroyed only on the last `close`).
+- The context switch preserves the general-purpose registers and the FPU/SSE
+  state (per-process fxsave/fxrstor).
+- The reasoning behind these decisions, the bugs found, and the memory model are
+  written up in the documents listed in [Documentation](#documentation).
 
-## Uso de inteligencia artificial
+## Documentation
 
-Durante el desarrollo se utilizó IA (Claude, de Anthropic) como asistente,
-principalmente para:
+The main documentation for this TP are the two analyses we wrote for the
+Operating Systems work (Typst sources under `doc/`, with their compiled PDFs
+alongside):
 
-- Diagnóstico de bugs de bajo nivel (entre ellos: el problema de `sysret` con la
-  versión de NASM de la imagen de la cátedra, el orden de los selectores de la
-  GDT que provocaba triple faults, races de concurrencia en el heap y los pipes,
-  el reference counting de semáforos que hacía fallar `test_sync`, y la
-  construcción atómica del PCB que hacía fallar `test_proc`).
-- Revisión de código y sugerencias de mejora de calidad.
-- Redacción de documentación.
+| Document | Location | Contents |
+|---|---|---|
+| Problem analysis | `doc/problem_analysis.pdf` | Reported issues triaged into real bugs vs. false positives, the deficit-round-robin scheduler (priority as frequency), the cooperative yield, the all-process model, the `mvar` design, and the removal of the last busy-wait. |
+| Memory analysis | `doc/memory_analysis.pdf` | An exact per-process heap model (`Used(n) = 50848 + 25184·n`) derived from the code and validated to the byte against `mem`. |
 
-Las decisiones de diseño, la verificación y la integración fueron realizadas por
-el grupo. El detalle técnico de los problemas asistidos está en
-`AresOS/bugfixes/troubleshooting.md`.
+The low-level bugs found while building the kernel and how each was solved are
+logged in `AresOS/bugfixes/troubleshooting.md`.
 
-## Estructura del proyecto
+For background, the reports we wrote for the Computer Architecture TP this kernel
+extends also live in the repo:
+`doc/computer_architecture_documents/DevelopmentReport.pdf` (design and
+implementation) and `UserManual.pdf` (end-user manual).
+
+The `.typ` sources sit next to each PDF; rebuild any of them with
+`typst compile <file>.typ`.
+
+## Use of artificial intelligence
+
+AI (Claude, by Anthropic) was used during development as an assistant, mainly
+for:
+
+- Code review and quality suggestions.
+- Writing documentation.
+
+Design decisions, verification, and integration were done by the group. The
+technical detail of the assisted problems is in
+`AresOS/bugfixes/troubleshooting.md` and `doc/problem_analysis.pdf`.
+
+## Project structure
 
 ```
 Ares/
 ├── AresOS/
 │   ├── Bootloader/   # Pure64 + BMFS
-│   ├── Kernel/       # core (procesos, scheduler, semaforos, pipes),
+│   ├── Kernel/       # core (processes, scheduler, semaphores, pipes),
 │   │                 # lib (memory managers, slab), drivers, arch/x86_64
-│   ├── Userland/     # shell, aplicaciones, libc, tests de la catedra
+│   ├── Userland/     # shell, applications, libc, course tests
 │   ├── Toolchain/    # ModulePacker
-│   ├── Image/        # generacion de la imagen booteable
-│   └── bugfixes/     # documentacion de bugs resueltos
-└── doc/              # consigna y documentacion
+│   ├── Image/        # bootable image generation
+│   └── bugfixes/     # documentation of solved bugs
+└── doc/              # assignment and documentation
 ```
 
-## Setup de git hooks (opcional, para desarrollo)
+## Git hooks setup (optional, for development)
 
 ```bash
-./setup-hooks.sh    # configura core.hooksPath a .githooks/ (pre-commit: clang-format)
+./setup-hooks.sh    # sets core.hooksPath to .githooks/ (pre-commit: clang-format)
 ```
 
 ---
 
-Desarrollado como parte del trabajo académico en el ITBA (Instituto Tecnológico
-de Buenos Aires).
+Developed as part of academic work at ITBA (Instituto Tecnológico de Buenos
+Aires).

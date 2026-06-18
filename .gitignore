@@ -24,3 +24,7 @@ x64BareBones/Kernel/bin/
 *.qcow2
 *.vmdk
 !ConsignaSistemasOperativos.pdf
+!problem_analysis.pdf
+!memory_analysis.pdf
+!DevelopmentReport.pdf
+!UserManual.pdf
