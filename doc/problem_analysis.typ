@@ -318,6 +318,96 @@ processes whose deadline has passed. `playSound` now does
 running `tron`, whose start/collision/game-over melodies (sequences of timed
 notes) play through to completion without hanging.
 
+= Reaping orphans and re-parenting children on death
+
+== Diagnosis
+
+The scheduler reaps a finished process only when it is the *outgoing* one: in
+`do_schedule` it calls `reap_if_zombie(current)`, which frees a zombie's PCB and
+stacks once nobody waits on it. A zombie is never scheduled again, so this check
+only ever sees the process that just stopped running. That leaves a gap: a
+process that is left as a zombie *pending reap by a waiter*, whose waiter then
+dies before reaping it, is never re-evaluated and leaks its PCB and stacks
+forever.
+
+The sequence that exposes it, using `test_proc` (which creates dummy children and
+`wait`s on the ones it kills):
+
+#table(
+  columns: (auto, 1fr),
+  align: (left, left),
+  table.header([*Step*], [*Event*]),
+  [1], [`test_proc` kills a dummy child while waiting on it, so `process_has_waiter(child)` is true: the child is left `ZOMBIE` for `test_proc` to reap.],
+  [2], [`test_proc` itself is killed before it reaps the child.],
+  [3], [Now no live process waits on the child, but it is not the running process either, so nothing ever reaps it: it stays `ZOMBIE` and its memory is lost.],
+)
+
+The same shape appears with `mvar`: the launcher process spawns the writers and
+readers and exits immediately, so those workers were left *orphaned* (their
+parent PCB dead) the instant the launcher was reaped. They kept running and
+printing to the console -- output goes to stdout, which is independent of
+parenthood -- but the parent-child accounting was already inconsistent.
+
+This is a bounded scheduler bug, not a fundamental limitation: the cause is that
+reaping looks only at the outgoing process and never at zombies that become
+orphaned afterwards.
+
+== Fix
+
+A single helper, invoked from both `process_exit` and `process_kill` when a
+process dies, re-parents the survivors and reaps the orphans:
+
+```c
+static void reparent_and_reap_orphans(pid_t dead_pid) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {        // living children: init-style
+                pcb_t *child = &process_table[i];         // re-parent to the shell
+                if (child->parent_pid == dead_pid && child->pid != dead_pid &&
+                    child->state != PROCESS_DEAD)
+                        child->parent_pid = SHELL_PID;
+        }
+        for (int i = 0; i < MAX_PROCESSES; i++) {        // zombies nobody waits on:
+                pcb_t *zombie = &process_table[i];        // reap now (skip the running
+                if (zombie->state == PROCESS_ZOMBIE &&    // one, the scheduler reaps it)
+                    zombie->pid != current_pid &&
+                    !process_has_waiter(zombie->pid)) {
+                        process_free_resources(zombie->pid);
+                        zombie->state = PROCESS_DEAD;
+                }
+        }
+}
+```
+
+Living children are handed to the shell (`SHELL_PID`), the init of this system,
+so they are never orphaned: they keep running and remain waitable and killable.
+Any zombie that no longer has a waiter is reaped immediately, except the running
+process, which cannot free its own stack and is reaped by the scheduler on the
+next tick as before. The helper subsumes the previous "kill with no waiter,
+reap now" branch of `process_kill`.
+
+== Validation
+
+Running `test_proc 5 &`, then killing it mid-execution:
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, center, center),
+  table.header([*State*], [*`Used` (bytes)*], [*Stuck zombie?*]),
+  [Before the fix, after `kill`], [$184976$], [yes (a `ZOMBIE` child lingered)],
+  [After the fix, after `kill`],  [---],      [no (children re-parented to the shell)],
+  [After the fix, children also killed], [$50848$], [no (back to baseline)],
+)
+
+Killing the re-parented survivors brings `Used` back to the exact baseline of
+$50848$ bytes ($8$ live blocks), so nothing is leaked. The normal paths still
+hold: a divide-by-zero exception (which exits through `process_exit`) returns to
+baseline, and `test_sync` run repeatedly settles at a constant $50944$ bytes --
+the one-time growth of the semaphore slab cache, which retains freed slabs for
+reuse by design, not a leak.
+
+The only memory still not reclaimed on an abrupt kill is what a process requested
+for itself through the `malloc` syscall, which the kernel does not track per
+process; no current application uses it, so in practice it does not occur.
+
 = Deferred / out-of-scope items
 
 #table(
@@ -336,8 +426,10 @@ Of the three reported bugs, two were real (`A` and `B`) and were fixed with
 empirical validation; the third (`C`) was a false positive whose underlying
 concern was neutralized by making commands processes. On top of that, the
 scheduler was reworked so priority is observable for cooperative workloads, every
-command became a process, `mvar` was aligned with the reference, and the last
-busy-wait (the sound driver) was removed. The system has no known deadlock in
-`wait`, isolates faults per process, demonstrates priority in both CPU-bound and
-cooperative workloads, and is free of busy-waiting outside the cases the
-assignment allows.
+command became a process, `mvar` was aligned with the reference, the last
+busy-wait (the sound driver) was removed, and process death now reaps orphan
+zombies and re-parents living children so killing a process leaks no kernel
+resources. The system has no known deadlock in `wait`, isolates faults per
+process, reclaims a process's own memory whether it exits or is killed,
+demonstrates priority in both CPU-bound and cooperative workloads, and is free of
+busy-waiting outside the cases the assignment allows.
