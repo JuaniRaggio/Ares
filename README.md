@@ -154,10 +154,14 @@ built-ins.
 
 ## Limitations
 
-- **Memory of killed processes**: killing a process mid-execution leaks the heap
-  blocks it had reserved, because the kernel does not track which blocks belong
-  to each process. The normal lifecycle (create/exit) does not leak: stacks and
-  the FPU area are recycled.
+- **Heap explicitly requested by a process**: a process's own blocks (stacks,
+  argv copy, FPU area) are always recycled, whether it exits normally or is
+  killed; when a process dies its zombie children are reaped and its living
+  children are re-parented to the shell, so neither leaks. The one case not
+  reclaimed is memory a process requested for itself through the `malloc`
+  syscall: the kernel does not track which heap blocks belong to which process,
+  so if such a process is killed mid-execution that memory is lost (no current
+  application uses the `malloc` syscall, so in practice this does not occur).
 - **Pipes**: a single pipe per line (`p1 | p2`, not `p1 | p2 | p3`); `|` and `&`
   must be separated by spaces; pipes are not supported in the background.
 - **No scroll**: the text console clears the screen on overflow instead of
