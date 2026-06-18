@@ -7,6 +7,35 @@ priority-based Round Robin scheduling (priority sets how often a process is
 scheduled), semaphores, pipes, and a set of user applications that all run as
 processes.
 
+## Highlights
+
+Notable design choices, mapped to each required area:
+
+- **Memory management** — two interchangeable allocators (first-fit and buddy),
+  chosen at build time behind a single interface. `mem` reports live statistics
+  that match an analytic per-process model to the byte (see
+  `doc/memory_analysis.pdf`).
+- **Processes** — there are no built-ins: the shell spawns *every* command and
+  test as a real process, so all of them can be backgrounded (`&`) or piped
+  (`|`). When a process dies the kernel reaps any orphan zombie and re-parents
+  its living children to the shell, so no kernel resources are leaked.
+- **Scheduling / priority** — priority controls how *often* a process is selected
+  (deficit round robin), not how long it runs. Its effect is therefore observable
+  both for CPU-bound work (`test_prio`) and for cooperative, yield-bound work
+  (`mvar` with `nice`). `yield()` forces an immediate context switch (software
+  vector `0x81`) instead of waiting for the next timer tick.
+- **Synchronization** — named semaphores shareable by unrelated processes (via an
+  agreed string id) and reference-counted. The system has no deadlocks, race
+  conditions, or busy waiting except where the assignment allows it — the sound
+  driver included, which sleeps instead of spinning.
+- **IPC** — pipes with full terminal/pipe transparency: a command does not know
+  whether its stdin/stdout is the console or a pipe.
+- **Exceptions** — a divide-by-zero or invalid opcode terminates *only* the
+  faulting process (the kernel reports its name and pid), returns control to the
+  scheduler, and the rest of the system keeps running; nothing is restarted.
+- **Context switch** — saves and restores the FPU/SSE state per process
+  (`fxsave`/`fxrstor`), not only the general-purpose registers.
+
 ## Building and running
 
 Building must happen inside the image provided by the course:
