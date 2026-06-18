@@ -19,7 +19,7 @@ uint8_t benchmark_cmd(void);
 #define MVAR_EMPTY_SEM "mvar_empty"
 #define MVAR_FULL_SEM "mvar_full"
 #define MVAR_MAX_WRITERS 26
-#define MVAR_WAIT_RANGE 50000000
+#define MVAR_WAIT_RANGE 500000
 
 static const char *const state_names[] = {
     "READY", "RUNNING", "BLOCKED", "DEAD", "ZOMBIE",
