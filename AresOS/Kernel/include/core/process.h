@@ -75,6 +75,7 @@ typedef struct {
         process_state_t state;
         uint8_t blocked_by_semaphore;
         uint64_t priority;
+        int64_t sched_credits; /* remaining turns this scheduling round (DRR) */
         int foreground;
         pid_t parent_pid;
         int exit_code;

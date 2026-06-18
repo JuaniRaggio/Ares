@@ -163,6 +163,7 @@ void process_init(void) {
         shell->pid               = next_pid_to_assign++;
         shell->state             = PROCESS_RUNNING;
         shell->priority          = DEFAULT_PRIORITY;
+        shell->sched_credits     = 0;
         shell->foreground        = 1;
         shell->parent_pid        = NO_PID;
         shell->waiting_for       = NO_PID;
@@ -253,6 +254,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->state                = PROCESS_READY;
         pcb->blocked_by_semaphore = 0;
         pcb->priority             = DEFAULT_PRIORITY;
+        pcb->sched_credits        = 0; /* refilled on the next scheduling round */
         pcb->foreground           = foreground;
         pcb->parent_pid           = current_pid;
         pcb->waiting_for          = NO_PID;

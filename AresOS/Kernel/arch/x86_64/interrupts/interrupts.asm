@@ -20,10 +20,14 @@ GLOBAL _irq08Handler
 GLOBAL _exception0Handler
 GLOBAL _exception6Handler
 
+GLOBAL _irq81Handler
+GLOBAL _yield_now
+
 EXTERN irqDispatcher
 EXTERN exceptionDispatcher
 EXTERN getStackBase
 EXTERN schedule
+EXTERN do_yield_switch
 
 struc regs
         _r15: resq 1
@@ -208,6 +212,24 @@ _irq00Handler:
 
 	popState
 	iretq
+
+;Cooperative yield: software-triggered context switch (vector 0x81).
+;Same switch path as the timer but without timekeeping or PIC EOI, so a
+;process can give up the CPU immediately from inside a syscall. iretq adapts
+;to the saved frame (ring0 if the process parked here mid-syscall, ring3 if it
+;came from userland), so it composes with timer-driven switches.
+_irq81Handler:
+	pushState
+	mov rdi, rsp
+	call do_yield_switch
+	mov rsp, rax
+	popState
+	iretq
+
+;void _yield_now(void): trigger an immediate reschedule from kernel code.
+_yield_now:
+	int 81h
+	ret
 
 ;Keyboard
 _irq01Handler:
