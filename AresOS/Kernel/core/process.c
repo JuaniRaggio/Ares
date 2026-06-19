@@ -7,6 +7,7 @@
 #include <process.h>
 #include <semaphores.h>
 #include <status_codes.h>
+#include <stdint.h>
 
 /* GDT layout puts user data (0x18) before user code (0x20) as SYSRET
  * requires; both selectors carry RPL=3 */
@@ -327,10 +328,15 @@ void process_exit(int code) {
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
+
+        // Avoiding race conditions and leaving orphan processes
+        uint64_t flags = irq_save();
         pcb->state           = PROCESS_ZOMBIE;
         pcb->exit_code       = code;
         wake_waiters(pcb->pid);
         reparent_and_reap_orphans(pcb->pid);
+        irq_restore(flags);
+
         scheduler_yield();
         while (1)
                 _hlt();
@@ -348,24 +354,28 @@ int process_kill(pid_t pid) {
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
+
+        uint64_t flags = irq_save();
         pcb->state           = PROCESS_ZOMBIE;
         pcb->exit_code       = KILLED_EXIT_CODE;
         wake_waiters(pid);
-
-        /* Re-parents the victim's children and reaps it (and any other orphan
-         * zombie) when nobody waits on it; if a waiter exists, it is left for
-         * the waiter to reap. */
         reparent_and_reap_orphans(pid);
+        irq_restore(flags);
 
         if (pid == current_pid) {
-                /* Cannot free our own stack here; the scheduler reaps us on
-                 * the next tick (current zombie, no waiter). */
                 scheduler_yield();
         }
 
         return SYS_OK;
 }
 
+// - process_block
+// - process_unblock
+// - process_nice
+// - block_by_semaphore
+// - unblock_by_semaphore
+
+// Race conditions are covered because caller disables interrupts
 int block_by_semaphore(pid_t pid) {
         pcb_t *pcb = process_get(pid);
         if (pcb == NULL ||
@@ -380,11 +390,13 @@ int block_by_semaphore(pid_t pid) {
 
 int process_block(pid_t pid) {
         pcb_t *pcb = process_get(pid);
+        uint64_t flags = irq_save();
         if (pcb == NULL ||
             (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING))
                 return SYS_ERR;
 
         pcb->state = PROCESS_BLOCKED;
+        irq_restore(flags);
 
         if (pid == current_pid)
                 scheduler_yield();
@@ -449,9 +461,6 @@ int process_wait(pid_t pid) {
 
         pcb_t *current = process_get_current();
 
-        /* scheduler_yield() only drops the quantum: the actual switch
-         * happens on the next timer tick, so loop until the child really
-         * finished instead of checking once and returning early. */
         for (;;) {
                 /* Test-and-block atomically with interrupts off: syscalls run
                  * with IF on, so otherwise a tick could exit the child (and run
