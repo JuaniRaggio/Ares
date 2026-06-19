@@ -1,3 +1,4 @@
+#include "interrupts.h"
 #include <stddef.h>
 #include <drivers/time.h>
 #include <process.h>
@@ -37,6 +38,7 @@ void scheduler_init(void) {
  * The weighted scheduler has no quantum to drop, so this is a no-op kept for
  * call-site compatibility. */
 void scheduler_yield(void) {
+        _yield_now();
 }
 
 /*
