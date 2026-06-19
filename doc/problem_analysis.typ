@@ -185,8 +185,7 @@ spawns it as a process. There are no built-ins left.
 Command logic that touches shell-private state (the command table, the history
 buffer, the cursor shape, the shell start time) lives in `commands.c` and is
 called by thin app wrappers in `apps.c`; because the whole userland shares one
-flat address space, a spawned process reads/writes those globals directly. This
-is the same approach the reference solutions use.
+flat address space, a spawned process reads/writes those globals directly.
 
 #table(
   columns: (auto, 1fr),
@@ -264,7 +263,7 @@ writer up makes its letter dominate the output (runs of `BBB`). The course tests
 `mvar` is a single-cell MVar: `empty`/`full` semaphores, writers do
 `wait(empty) / write / post(full)`, readers do `wait(full) / consume / post(empty)`.
 This matches the Haskell MVar semantics (one value at a time, single-consumer,
-FIFO fairness). Two refinements were made to align it with the reference:
+FIFO fairness). Two refinements were made to keep that behaviour faithful:
 
 - *Active wait by yielding*: the random active wait is a loop of `yield()` calls
   (cooperative) instead of a CPU busy-wait. It does not hog the CPU (so no
@@ -404,9 +403,15 @@ baseline, and `test_sync` run repeatedly settles at a constant $50944$ bytes --
 the one-time growth of the semaphore slab cache, which retains freed slabs for
 reuse by design, not a leak.
 
-The only memory still not reclaimed on an abrupt kill is what a process requested
-for itself through the `malloc` syscall, which the kernel does not track per
-process; no current application uses it, so in practice it does not occur.
+Memory a process requests for itself through the `malloc` syscall is reclaimed
+too. `sys_malloc` prepends a 16-byte list node to every user allocation (so the
+returned pointer stays 16-byte aligned) and links it into a per-process list
+anchored in the PCB; `sys_free` unlinks and frees it, and `process_free_resources`
+frees whatever is left when the process dies. So killing `test_mm` -- the one
+application that exercises the `malloc` syscall -- mid-loop returns `Used` to the
+exact baseline instead of leaking the blocks it was holding, on both the
+first-fit and the buddy allocator (the tracking lives at the syscall layer, so it
+is allocator-agnostic).
 
 = Deferred / out-of-scope items
 
@@ -426,8 +431,9 @@ Of the three reported bugs, two were real (`A` and `B`) and were fixed with
 empirical validation; the third (`C`) was a false positive whose underlying
 concern was neutralized by making commands processes. On top of that, the
 scheduler was reworked so priority is observable for cooperative workloads, every
-command became a process, `mvar` was aligned with the reference, the last
-busy-wait (the sound driver) was removed, and process death now reaps orphan
+command became a process, `mvar` was refined to stay faithful to MVar semantics,
+the last busy-wait (the sound driver) was removed, and process death now reaps
+orphan
 zombies and re-parents living children so killing a process leaks no kernel
 resources. The system has no known deadlock in `wait`, isolates faults per
 process, reclaims a process's own memory whether it exits or is killed,

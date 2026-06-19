@@ -3,6 +3,10 @@ GREEN  := \033[0;32m
 YELLOW := \033[0;33m
 NC     := \033[0m
 
+IMG_DEFAULT  := Image/x64BareBonesImage.img
+IMG_FIRSTFIT := Image/x64BareBonesImage-firstfit.img
+IMG_BUDDY    := Image/x64BareBonesImage-buddy.img
+
 all: toolchain bootloader kernel userland image
 	@printf "$(GREEN)Build complete$(NC)\n"
 
@@ -39,7 +43,8 @@ b = json.load(open('Userland/UserCodeModule/compile_commands.json')); \
 json.dump(a + b, open('compile_commands.json', 'w'), indent=2)"
 	@printf "$(GREEN)compile_commands.json regenerated$(NC)\n"
 
-clean:
+# Clean only build artifacts (keeps the per-manager images from 'make both').
+clean-build:
 	@printf "$(YELLOW)Cleaning...$(NC)\n"
 	@cd Toolchain; make clean
 	@cd Bootloader; make clean
@@ -47,6 +52,10 @@ clean:
 	@cd Kernel; make clean
 	@cd Userland; make clean
 	@printf "$(GREEN)Clean complete$(NC)\n"
+
+# Full clean: build artifacts plus the per-manager images.
+clean: clean-build
+	@rm -f $(IMG_FIRSTFIT) $(IMG_BUDDY)
 
 buddy:
 	@printf "$(YELLOW)Building with buddy allocator...$(NC)\n"
@@ -57,4 +66,21 @@ buddy:
 	@cd Image; make all
 	@printf "$(GREEN)Buddy build complete$(NC)\n"
 
-.PHONY: toolchain bootloader image kernel userland all clean compile_commands buddy
+# Build BOTH memory managers and keep one runnable image per manager. The
+# default image (used by run.sh with no argument) is left as the first-fit one.
+# Run a specific manager with: ./run.sh firstfit   or   ./run.sh buddy
+both:
+	@printf "$(YELLOW)Building BOTH memory managers...$(NC)\n"
+	@$(MAKE) clean-build
+	@$(MAKE) all
+	@cp $(IMG_DEFAULT) $(IMG_FIRSTFIT)
+	@$(MAKE) clean-build
+	@$(MAKE) buddy
+	@cp $(IMG_DEFAULT) $(IMG_BUDDY)
+	@cp $(IMG_FIRSTFIT) $(IMG_DEFAULT)
+	@printf "$(GREEN)Both builds complete:$(NC)\n"
+	@printf "  $(IMG_FIRSTFIT) (first-fit)\n"
+	@printf "  $(IMG_BUDDY) (buddy)\n"
+	@printf "  $(IMG_DEFAULT) -> first-fit (default for run.sh)\n"
+
+.PHONY: toolchain bootloader image kernel userland all clean clean-build compile_commands buddy both

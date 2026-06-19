@@ -41,6 +41,7 @@ typedef enum {
         SYS_SEM_WAIT,
         SYS_SEM_CLOSE,
         SYS_PS,
+        SYS_HALT,
         SYS_MAX,
 } syscall_codes;
 

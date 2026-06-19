@@ -7,6 +7,37 @@ priority-based Round Robin scheduling (priority sets how often a process is
 scheduled), semaphores, pipes, and a set of user applications that all run as
 processes.
 
+## Highlights
+
+Notable design choices, mapped to each required area:
+
+- **Memory management** — two interchangeable allocators (first-fit and buddy),
+  chosen at build time behind a single interface. `mem` reports live statistics
+  that match an analytic per-process model to the byte (see
+  `doc/memory_analysis.pdf`).
+- **Processes** — there are no built-ins: the shell spawns *every* command and
+  test as a real process, so all of them can be backgrounded (`&`) or piped
+  (`|`). When a process dies the kernel frees its stacks, reaps any orphan
+  zombie, re-parents its living children to the shell, and reclaims any memory it
+  had requested through the `malloc` syscall, so killing a process — even mid-run
+  — leaks nothing.
+- **Scheduling / priority** — priority controls how *often* a process is selected
+  (deficit round robin), not how long it runs. Its effect is therefore observable
+  both for CPU-bound work (`test_prio`) and for cooperative, yield-bound work
+  (`mvar` with `nice`). `yield()` forces an immediate context switch (software
+  vector `0x81`) instead of waiting for the next timer tick.
+- **Synchronization** — named semaphores shareable by unrelated processes (via an
+  agreed string id) and reference-counted. The system has no deadlocks, race
+  conditions, or busy waiting except where the assignment allows it — the sound
+  driver included, which sleeps instead of spinning.
+- **IPC** — pipes with full terminal/pipe transparency: a command does not know
+  whether its stdin/stdout is the console or a pipe.
+- **Exceptions** — a divide-by-zero or invalid opcode terminates *only* the
+  faulting process (the kernel reports its name and pid), returns control to the
+  scheduler, and the rest of the system keeps running; nothing is restarted.
+- **Context switch** — saves and restores the FPU/SSE state per process
+  (`fxsave`/`fxrstor`), not only the general-purpose registers.
+
 ## Building and running
 
 Building must happen inside the image provided by the course:
@@ -20,26 +51,34 @@ cd AresOS
 docker run -d -v ${PWD}:/root --security-opt seccomp:unconfined -it \
     --name ARES agodio/itba-so-multiarch:3.1
 
-# 3. Build
+# 3. Build (choose a memory manager)
 ./compile_in_container.sh ARES          # default memory manager (first-fit)
 ./compile_in_container.sh ARES buddy    # buddy system
+./compile_in_container.sh ARES both     # build BOTH, one image per manager
 ./compile_in_container.sh ARES clean    # clean
 
 # 4. Run in QEMU (on the host)
-./run.sh                                  # normal
+./run.sh                                  # default image (first-fit)
+./run.sh firstfit                         # the first-fit image from 'both'
+./run.sh buddy                            # the buddy image from 'both'
 ./run.sh -d                               # debug mode (GDB on port 1234)
 ```
 
 `make` rules (run inside the container):
 
-- `make` / `make all` — build with the default memory manager.
+- `make` / `make all` — build with the default memory manager (first-fit).
 - `make buddy` — build with the buddy system.
-- `make clean` — remove build artifacts.
+- `make both` — build with both managers, leaving one runnable image per manager
+  (`Image/x64BareBonesImage-firstfit.img` and `...-buddy.img`); the default image
+  stays first-fit.
+- `make clean` — remove build artifacts and the per-manager images.
 
 The memory manager is selected at **build time**: both implement the same
 interface (`mem_alloc`/`mem_free`/`mem_get_stats`, see
-`Kernel/include/lib/memory_manager.h`) and only one is linked. Building with
-`-Wall` reports no warnings.
+`Kernel/include/lib/memory_manager.h`) and only one is linked. `make both` builds
+each in turn so both can be run without rebuilding: pick which to boot with
+`./run.sh firstfit` or `./run.sh buddy`. Building with `-Wall` reports no
+warnings.
 
 ## IDE setup
 
@@ -114,35 +153,47 @@ The tests only print on error (except `test_sync`'s final value).
 
 ## Examples by requirement
 
-```text
-# Memory
-mem                       # heap state
+These demonstrate each requirement with ordinary commands, separately from the
+course tests (which are listed last).
 
-# Processes and scheduling
+```text
+# Memory manager
+mem                       # heap state (total, used, free, blocks, allocs/frees)
+
+# Processes and scheduling (create / list / block / kill)
 loop &                    # one loop in the background
 loop &                    # another
-ps                        # both loops + shell + idle are listed
-nice 3 4                  # raise the priority of pid 3
-block 3                   # block it; block 3 again unblocks it
-kill 3                    # kill it
+ps                        # both loops + shell (sh) + idle are listed
+block <pid>               # block a loop; block <pid> again unblocks it
+kill <pid>                # kill it
 
-# Synchronization (final value 0 with semaphores)
-test_sync 100 1           # with semaphores -> "Final value: 0"
-test_sync 100 0           # without semaphores -> varying value (race condition)
+# Priority is observable (a higher-priority process gets the CPU more often)
+loop &                    # leave a loop running in the background
+nice <pid> 4              # raise its priority (1..4); it now prints far more often
 
 # IPC: pipes (terminal/pipe transparency)
 cat | wc                  # type lines, Ctrl+D -> "Lines: N"
 cat | filter              # type text, Ctrl+D -> text without vowels
+ps | wc                   # one command's output consumed by another
 
-# MVar
-mvar 2 2                  # 2 writers (A,B), 2 readers (colors); output looks
-                          # like ABAB with mixing due to the random waits
+# Synchronization with semaphores (non-test demonstration)
+mvar 2 2                  # writers/readers coordinate over a 1-slot cell using
+                          # two semaphores: never two values at once, no race.
+                          # 2 writers (A,B), 2 readers (colors); mixed output
 nice <writer_pid> 4       # that writer starts to dominate the output
 kill <writer_pid>         # its letter disappears; the other one dominates
 
-# Tests in the background
-test_mm 1000000 &
-test_proc 5 &
+# CPU exceptions (each faults in an isolated process; the kernel kills only that
+# process, prints which one faulted, and the shell keeps running)
+div 1 0                   # divide-by-zero (exception 0)
+opcode                    # invalid opcode (exception 6)
+
+# Running the course tests
+test_mm 1000000 &         # memory manager stress (background)
+test_proc 5 &             # process stress (background)
+test_prio 1000000000      # priority effect (use a large value so it is visible)
+test_sync 100 1           # with semaphores -> "Final value: 0"
+test_sync 100 0           # without semaphores -> varying value (race condition)
 ```
 
 ## Missing or partially implemented requirements
@@ -154,14 +205,6 @@ built-ins.
 
 ## Limitations
 
-- **Heap explicitly requested by a process**: a process's own blocks (stacks,
-  argv copy, FPU area) are always recycled, whether it exits normally or is
-  killed; when a process dies its zombie children are reaped and its living
-  children are re-parented to the shell, so neither leaks. The one case not
-  reclaimed is memory a process requested for itself through the `malloc`
-  syscall: the kernel does not track which heap blocks belong to which process,
-  so if such a process is killed mid-execution that memory is lost (no current
-  application uses the `malloc` syscall, so in practice this does not occur).
 - **Pipes**: a single pipe per line (`p1 | p2`, not `p1 | p2 | p3`); `|` and `&`
   must be separated by spaces; pipes are not supported in the background.
 - **No scroll**: the text console clears the screen on overflow instead of
@@ -181,10 +224,12 @@ built-ins.
 - **Cooperative yield**: `yield()` triggers an immediate context switch (software
   vector `0x81`) instead of waiting for the next timer tick, so a yielding
   process comes back as soon as the scheduler picks it again.
-- The system is free of busy waiting (except where the assignment requires it:
-  `loop` and `test_sync` without semaphores). Every blocking path (pipes,
-  semaphores, waitpid, keyboard read, and the sound driver) sleeps with `_hlt`
-  and is woken by an event or by the timer.
+- The system is free of deadlocks, race conditions, and busy waiting, except for
+  the busy waiting the assignment explicitly allows (`loop` and `test_sync`
+  without semaphores). Every blocking path (pipes, semaphores, waitpid, keyboard
+  read, and the sound driver) sleeps with `_hlt` and is woken by an event or by
+  the timer; shared state is guarded by atomic spinlocks and interrupt-safe
+  critical sections.
 - **Exceptions** (divide-by-zero, invalid opcode) terminate the faulting process
   and hand control back to the scheduler, so the rest of the system keeps
   running; the shell survives instead of the system restarting.
@@ -218,11 +263,31 @@ implementation) and `UserManual.pdf` (end-user manual).
 The `.typ` sources sit next to each PDF; rebuild any of them with
 `typst compile <file>.typ`.
 
-## Use of artificial intelligence
+## Code citations and use of AI
+
+### Third-party and course-provided code
+
+This kernel is built on top of the Computer Architecture TP base project and
+retains a few external components, each kept with its own license/attribution:
+
+- **Pure64** (`AresOS/Bootloader/Pure64`) — third-party x86-64 bootloader used to
+  bring the CPU into long mode (see `Bootloader/Pure64/docs/LICENSE.TXT`).
+- **BMFS** (`AresOS/Bootloader/BMFS`) — third-party BareMetal File System used to
+  lay out the boot image (see `Bootloader/BMFS/README.md`).
+- The course-provided **test skeletons** `test_mm`, `test_proc` and the shared
+  `test_util` helpers (`AresOS/Userland/UserCodeModule/tests/`).
+
+Every kernel subsystem (scheduler, processes, semaphores, pipes, both memory
+managers, exceptions) and the whole userland (shell and applications) were
+written by the group. Any code fragment adapted from an external source is
+attributed in a comment at its use site.
+
+### Use of artificial intelligence
 
 AI (Claude, by Anthropic) was used during development as an assistant, mainly
 for:
 
+- Diagnosing low-level bugs.
 - Code review and quality suggestions.
 - Writing documentation.
 

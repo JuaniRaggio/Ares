@@ -71,7 +71,7 @@ $(KERNEL_ELF): $(ALL_OBJECTS) | $(BIN_DIR)
 
 # Extraer binario plano del ELF
 $(KERNEL): $(KERNEL_ELF)
-	@objcopy -O binary $< $@
+	@$(OBJCOPY) -O binary $< $@
 
 # Compilación de loader (PRIMERO)
 $(LOADER_OBJ): $(LOADER_SRC) | $(BUILD_DIR)

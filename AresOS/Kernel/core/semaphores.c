@@ -8,6 +8,11 @@
 #include <spinlock.h>
 #include <status_codes.h>
 #include <stddef.h>
+#include <stdint.h>
+
+/* IMPORTANT: irq_save (not _cli/_sti): this also runs from the keyboard IRQ via
+ * process_kill_foreground (Ctrl+C), where interrupts are already off
+ * and a bare _sti would wrongly re-enable them inside the handler. */
 
 /* search_sem() returns a table index; this sentinel means "no such id". */
 #define SEM_NOT_FOUND (-1)
@@ -23,8 +28,7 @@ struct sem {
         spinlock_t lock;
         pNode_t *head;
         pNode_t *tail;
-        uint64_t
-            refs; /* open() count; destroyed when the last close() drops it */
+        uint64_t refs;
 };
 
 typedef struct sem sem_t;
@@ -116,15 +120,7 @@ static int remove_pid_from_queue(uint64_t sem_id, pid_t pid) {
         return 0;
 }
 
-/* Drops a (dying) process from every semaphore wait queue. Without this,
- * killing a process blocked in sem_wait leaves a stale node: a later
- * sem_post would dequeue the dead pid, fail to wake it, and swallow the
- * post -- starving the next real waiter. Undoing the dead process's
- * decrement (value++) keeps the counter consistent with the queue. */
 void sem_remove_from_queues(int64_t pid) {
-        /* irq_save (not _cli/_sti): this also runs from the keyboard IRQ via
-         * process_kill_foreground (Ctrl+C), where interrupts are already off
-         * and a bare _sti would wrongly re-enable them inside the handler. */
         uint64_t flags = irq_save();
         acquire_lock(&semaphores_lock);
         for (int i = 0; i < MAX_SEM; i++) {
@@ -151,7 +147,7 @@ int64_t sem_open(char *sem_id, uint64_t value) {
         if (strlen(sem_id) >= MAX_ID_LENGTH)
                 return SYS_ERR;
 
-        _cli();
+        uint64_t flags = irq_save();
         acquire_lock(&semaphores_lock);
 
         int64_t existing = search_sem(sem_id);
@@ -159,13 +155,13 @@ int64_t sem_open(char *sem_id, uint64_t value) {
                 /* Shared by another process: just take a reference. */
                 semaphores[existing].refs++;
                 release_lock(&semaphores_lock);
-                _sti();
+                irq_restore(flags);
                 return SYS_OK;
         }
 
         if (sem_count >= MAX_SEM) {
                 release_lock(&semaphores_lock);
-                _sti();
+                irq_restore(flags);
                 return SYS_ERR;
         }
 
@@ -177,12 +173,12 @@ int64_t sem_open(char *sem_id, uint64_t value) {
                         semaphores[i].refs  = 1;
                         sem_count++;
                         release_lock(&semaphores_lock);
-                        _sti();
+                        irq_restore(flags);
                         return SYS_OK;
                 }
         }
         release_lock(&semaphores_lock);
-        _sti();
+        irq_restore(flags);
         return SYS_ERR;
 }
 
@@ -190,14 +186,14 @@ int64_t sem_post(char *sem_id) {
         if (strlen(sem_id) >= MAX_ID_LENGTH)
                 return SYS_ERR;
 
-        _cli();
+        uint64_t flags = irq_save();
 
         acquire_lock(&semaphores_lock);
         int64_t sem_idx = search_sem(sem_id);
 
         if (sem_idx < 0) {
                 release_lock(&semaphores_lock);
-                _sti();
+                irq_restore(flags);
                 return SYS_ERR;
         }
 
@@ -212,7 +208,7 @@ int64_t sem_post(char *sem_id) {
         } else
                 release_lock(&semaphores[sem_idx].lock);
 
-        _sti();
+        irq_restore(flags);
         return SYS_OK;
 }
 
@@ -220,14 +216,14 @@ int64_t sem_wait(char *sem_id) {
         if (strlen(sem_id) >= MAX_ID_LENGTH)
                 return SYS_ERR;
 
-        _cli();
+        uint64_t flags = irq_save();
         acquire_lock(&semaphores_lock);
 
         int64_t sem_idx = search_sem(sem_id);
 
         if (sem_idx < 0) {
                 release_lock(&semaphores_lock);
-                _sti();
+                irq_restore(flags);
                 return SYS_ERR;
         }
 
@@ -240,7 +236,7 @@ int64_t sem_wait(char *sem_id) {
                         semaphores[sem_idx]
                             .value++; /* undo: could not enqueue */
                         release_lock(&semaphores[sem_idx].lock);
-                        _sti();
+                        irq_restore(flags);
                         return SYS_ERR;
                 }
 
@@ -248,25 +244,25 @@ int64_t sem_wait(char *sem_id) {
                         remove_pid_from_queue(sem_idx, pid);
                         semaphores[sem_idx].value++;
                         release_lock(&semaphores[sem_idx].lock);
-                        _sti();
+                        irq_restore(flags);
                         return SYS_ERR;
                 }
                 release_lock(&semaphores[sem_idx].lock);
-                _sti();
+                irq_restore(flags);
 
-                /* Block for real. scheduler_yield() only drops the quantum, so
-                 * the actual switch happens on the next tick; we must NOT
-                 * return to userland while still BLOCKED (the process would
-                 * keep running and could re-enter sem_wait, double-enqueueing
-                 * its pid). Sleep on _hlt() until sem_post (or a kill) clears
-                 * the BLOCKED state, the same pattern process_wait uses. */
+                /* Block for real. scheduler_yield() switches away immediately,
+                 * but we must NOT return to userland while still BLOCKED (the
+                 * process would keep running and could re-enter sem_wait,
+                 * double-enqueueing its pid). The _hlt() loop is the backstop:
+                 * stay parked until sem_post (or a kill) clears the BLOCKED
+                 * state, the same pattern process_wait uses. */
                 pcb_t *self = process_get_current();
                 scheduler_yield();
                 while (self->state == PROCESS_BLOCKED)
                         _hlt();
         } else {
                 release_lock(&semaphores[sem_idx].lock);
-                _sti();
+                irq_restore(flags);
         }
         return SYS_OK;
 }
@@ -275,13 +271,13 @@ int64_t sem_close(char *sem_id) {
         if (strlen(sem_id) >= MAX_ID_LENGTH)
                 return SYS_ERR;
 
-        _cli();
+        uint64_t flags = irq_save();
         acquire_lock(&semaphores_lock);
 
         int64_t sem_idx = search_sem(sem_id);
         if (sem_idx < 0) {
                 release_lock(&semaphores_lock);
-                _sti();
+                irq_restore(flags);
                 return SYS_ERR;
         }
 
@@ -296,7 +292,7 @@ int64_t sem_close(char *sem_id) {
         if (semaphores[sem_idx].refs > 0) {
                 release_lock(&semaphores[sem_idx].lock);
                 release_lock(&semaphores_lock);
-                _sti();
+                irq_restore(flags);
                 return SYS_OK;
         }
 
@@ -309,7 +305,7 @@ int64_t sem_close(char *sem_id) {
         release_lock(&semaphores[sem_idx].lock);
         sem_count--;
         release_lock(&semaphores_lock);
-        _sti();
+        irq_restore(flags);
 
         return SYS_OK;
 }

@@ -10,13 +10,29 @@ if ! command -v qemu-system-x86_64 &> /dev/null; then
     exit 1
 fi
 
-# Always boot the raw image: it is the direct output of the build, so it
-# can never be staler than the last compile
-IMAGE=Image/x64BareBonesImage.img
+# Boot the raw image: it is the direct output of the build, so it can never be
+# staler than the last compile.
+#
+# Usage: ./run.sh [firstfit|buddy] [-d]
+#   (no manager) -> default image (Image/x64BareBonesImage.img)
+#   firstfit     -> the first-fit image built by 'make both'
+#   buddy        -> the buddy image built by 'make both'
+#   -d           -> debug mode (GDB on port 1234)
 FORMAT=raw
+IMAGE=Image/x64BareBonesImage.img
+DEBUG=""
+for arg in "$@"; do
+    case "$arg" in
+        -d)       DEBUG=1 ;;
+        firstfit) IMAGE=Image/x64BareBonesImage-firstfit.img ;;
+        buddy)    IMAGE=Image/x64BareBonesImage-buddy.img ;;
+        *) echo -e "${RED}Unknown argument: $arg${NC}"; exit 1 ;;
+    esac
+done
+
 if [ ! -f "$IMAGE" ]; then
-    echo -e "${RED}Error: No bootable image found${NC}"
-    echo "Run ./compile_in_container.sh first"
+    echo -e "${RED}Error: image '$IMAGE' not found${NC}"
+    echo "Build it first: ./compile_in_container.sh ARES   (or 'make both' for the per-manager images)"
     exit 1
 fi
 
@@ -32,11 +48,11 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
     AUDIO_BACKEND="coreaudio"
 fi
 
-echo "Running AresOS ($FORMAT)"
-[ "$1" == "-d" ] && echo "Debug mode: waiting for GDB on port 1234"
+echo "Running AresOS ($FORMAT): $IMAGE"
+[ -n "$DEBUG" ] && echo "Debug mode: waiting for GDB on port 1234"
 
 # Run QEMU
-if [ "$1" == "-d" ]; then
+if [ -n "$DEBUG" ]; then
     qemu-system-x86_64 \
         -s -S \
         -drive file="$IMAGE",format="$FORMAT" \

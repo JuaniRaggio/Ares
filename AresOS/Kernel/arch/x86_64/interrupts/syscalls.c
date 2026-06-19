@@ -272,12 +272,32 @@ uint64_t sys_beep(uint64_t frequency) {
         return SYS_OK;
 }
 
+/* User allocations carry a 16-byte header (a list node) so the kernel can free
+ * them if the process dies without freeing. The header is 16 bytes, so the
+ * returned pointer stays 16-byte aligned. */
 uint64_t sys_malloc(uint64_t size) {
-        return (uint64_t)mem_alloc(size);
+        user_alloc_node_t *node =
+            (user_alloc_node_t *)mem_alloc(sizeof(user_alloc_node_t) + size);
+        if (node == NULL)
+                return 0;
+
+        pcb_t *self             = process_get_current();
+        user_alloc_node_t *head = &self->user_allocs;
+        node->next              = head->next;
+        node->prev              = head;
+        head->next->prev        = node;
+        head->next              = node;
+
+        return (uint64_t)(node + 1);
 }
 
 uint64_t sys_free(uint64_t ptr) {
-        mem_free((void *)ptr);
+        if (ptr == 0)
+                return SYS_OK;
+        user_alloc_node_t *node = (user_alloc_node_t *)ptr - 1;
+        node->prev->next        = node->next;
+        node->next->prev        = node->prev;
+        mem_free(node);
         return SYS_OK;
 }
 
@@ -306,10 +326,6 @@ uint64_t sys_getpid(void) {
 }
 
 uint64_t sys_yield(void) {
-        /* Immediate reschedule (no _hlt): the caller gives up the CPU now and
-         * is resumed as soon as the scheduler picks it again. Without the fixed
-         * one-tick floor that _hlt imposed, how fast a yielding process comes
-         * back is governed purely by its scheduling frequency (priority). */
         _yield_now();
         return SYS_OK;
 }
