@@ -417,24 +417,32 @@ int unblock_by_semaphore(pid_t pid) {
 }
 
 int process_unblock(pid_t pid) {
-        pcb_t *pcb = process_get(pid);
-        if (pcb == NULL || pcb->state != PROCESS_BLOCKED)
+        pcb_t *pcb     = process_get(pid);
+        uint64_t flags = irq_save();
+        if (pcb == NULL || pcb->state != PROCESS_BLOCKED) {
+                irq_restore(flags);
                 return SYS_ERR;
+        }
 
         pcb->state = PROCESS_READY;
+        irq_restore(flags);
         return SYS_OK;
 }
 
 int process_nice(pid_t pid, uint64_t new_priority) {
-        pcb_t *pcb = process_get(pid);
-        if (pcb == NULL || pcb->state == PROCESS_ZOMBIE)
+        pcb_t *pcb     = process_get(pid);
+        uint64_t flags = irq_save();
+        if (pcb == NULL || pcb->state == PROCESS_ZOMBIE) {
+                irq_restore(flags);
                 return SYS_ERR;
+        }
         if (new_priority > MAX_PRIORITY)
                 new_priority = MAX_PRIORITY;
         if (new_priority < 1)
                 new_priority = 1;
 
         pcb->priority = new_priority;
+        irq_restore(flags);
         return SYS_OK;
 }
 

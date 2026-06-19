@@ -250,12 +250,12 @@ int64_t sem_wait(char *sem_id) {
                 release_lock(&semaphores[sem_idx].lock);
                 irq_restore(flags);
 
-                /* Block for real. scheduler_yield() only drops the quantum, so
-                 * the actual switch happens on the next tick; we must NOT
-                 * return to userland while still BLOCKED (the process would
-                 * keep running and could re-enter sem_wait, double-enqueueing
-                 * its pid). Sleep on _hlt() until sem_post (or a kill) clears
-                 * the BLOCKED state, the same pattern process_wait uses. */
+                /* Block for real. scheduler_yield() switches away immediately,
+                 * but we must NOT return to userland while still BLOCKED (the
+                 * process would keep running and could re-enter sem_wait,
+                 * double-enqueueing its pid). The _hlt() loop is the backstop:
+                 * stay parked until sem_post (or a kill) clears the BLOCKED
+                 * state, the same pattern process_wait uses. */
                 pcb_t *self = process_get_current();
                 scheduler_yield();
                 while (self->state == PROCESS_BLOCKED)
