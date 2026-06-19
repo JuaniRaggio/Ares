@@ -76,13 +76,30 @@ static int scan_ready_with_credit(void) {
         return NO_READY_PROCESS;
 }
 
+/* First ready process ignoring credits, round-robin from current_index. Used as
+ * a last resort: it returns the idle process (priority 0, so it never has credit
+ * and is skipped by scan_ready_with_credit) only when nothing else is ready. */
+static int scan_any_ready(void) {
+        for (int i = 1; i <= MAX_PROCESSES; i++) {
+                int idx    = (current_index + i) % MAX_PROCESSES;
+                pcb_t *pcb = process_get_by_index(idx);
+                if (pcb != NULL && pcb->state == PROCESS_READY)
+                        return idx;
+        }
+        return NO_READY_PROCESS;
+}
+
 static int pick_next_ready(void) {
         int idx = scan_ready_with_credit();
         if (idx != NO_READY_PROCESS)
                 return idx;
         /* Every ready process spent its credits: start a new round. */
         refill_credits();
-        return scan_ready_with_credit();
+        idx = scan_ready_with_credit();
+        if (idx != NO_READY_PROCESS)
+                return idx;
+        /* Only the idle process (priority 0, no credit) is ready: run it. */
+        return scan_any_ready();
 }
 
 static void switch_to(int next_index) {
