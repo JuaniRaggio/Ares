@@ -314,11 +314,6 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->user_stack_base     = ustack;
         pcb->user_allocs.next = pcb->user_allocs.prev = &pcb->user_allocs;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
-        /* Idle runs only as a last resort: priority 0 means it never earns a
-         * scheduling credit, so the round-robin skips it and the no-credit
-         * fallback picks it only when nothing else is ready. */
-        if (name != NULL && strcmp(name, "idle") == 0)
-                pcb->priority = 0;
 
         if (stdout_pipe != NO_PIPE)
                 pipe_mark_writer(stdout_pipe);
