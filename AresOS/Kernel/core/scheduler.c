@@ -37,8 +37,12 @@ void scheduler_init(void) {
  * BLOCKED and then sleep on _hlt(); the next tick reschedules and skips them.
  * The weighted scheduler has no quantum to drop, so this is a no-op kept for
  * call-site compatibility. */
+/* No-op: blocking paths (process_wait, process_exit, sem_wait, process_sleep_ms)
+ * set their state and then sleep on _hlt() until the timer reschedules them.
+ * Routing this through _yield_now() (an immediate int 0x81 switch) is avoided on
+ * purpose: it cannot be called from the keyboard IRQ (Ctrl+C) without dropping
+ * the PIC EOI, and it removes the tick-pacing that makes mvar readable. */
 void scheduler_yield(void) {
-        _yield_now();
 }
 
 /*

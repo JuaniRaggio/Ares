@@ -105,8 +105,13 @@ int64_t my_list_processes(uint64_t *pids, int max) {
 }
 
 void idle_process(void) {
-        /* Sleep until the next interrupt instead of busy-waiting: idle runs in
-         * ring 3 and cannot hlt directly, so it asks the kernel to. */
-        while (1)
+        /* yield-then-halt: yield gives the CPU to any ready process immediately
+         * (responsive, no scheduling latency); if control comes back here there
+         * is nothing else ready, so halt until the next interrupt instead of
+         * busy-waiting. idle runs in ring 3 and cannot hlt directly, so the halt
+         * is a syscall. */
+        while (1) {
+                syscall_yield();
                 syscall_halt();
+        }
 }
