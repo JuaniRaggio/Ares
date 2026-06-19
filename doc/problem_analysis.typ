@@ -403,9 +403,15 @@ baseline, and `test_sync` run repeatedly settles at a constant $50944$ bytes --
 the one-time growth of the semaphore slab cache, which retains freed slabs for
 reuse by design, not a leak.
 
-The only memory still not reclaimed on an abrupt kill is what a process requested
-for itself through the `malloc` syscall, which the kernel does not track per
-process; no current application uses it, so in practice it does not occur.
+Memory a process requests for itself through the `malloc` syscall is reclaimed
+too. `sys_malloc` prepends a 16-byte list node to every user allocation (so the
+returned pointer stays 16-byte aligned) and links it into a per-process list
+anchored in the PCB; `sys_free` unlinks and frees it, and `process_free_resources`
+frees whatever is left when the process dies. So killing `test_mm` -- the one
+application that exercises the `malloc` syscall -- mid-loop returns `Used` to the
+exact baseline instead of leaking the blocks it was holding, on both the
+first-fit and the buddy allocator (the tracking lives at the syscall layer, so it
+is allocator-agnostic).
 
 = Deferred / out-of-scope items
 

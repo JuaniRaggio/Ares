@@ -17,8 +17,10 @@ Notable design choices, mapped to each required area:
   `doc/memory_analysis.pdf`).
 - **Processes** — there are no built-ins: the shell spawns *every* command and
   test as a real process, so all of them can be backgrounded (`&`) or piped
-  (`|`). When a process dies the kernel reaps any orphan zombie and re-parents
-  its living children to the shell, so no kernel resources are leaked.
+  (`|`). When a process dies the kernel frees its stacks, reaps any orphan
+  zombie, re-parents its living children to the shell, and reclaims any memory it
+  had requested through the `malloc` syscall, so killing a process — even mid-run
+  — leaks nothing.
 - **Scheduling / priority** — priority controls how *often* a process is selected
   (deficit round robin), not how long it runs. Its effect is therefore observable
   both for CPU-bound work (`test_prio`) and for cooperative, yield-bound work
@@ -67,7 +69,7 @@ docker run -d -v ${PWD}:/root --security-opt seccomp:unconfined -it \
 - `make` / `make all` — build with the default memory manager (first-fit).
 - `make buddy` — build with the buddy system.
 - `make both` — build with both managers, leaving one runnable image per manager
-  (`Image/x64BareBonesImage-firstfit.img` and `…-buddy.img`); the default image
+  (`Image/x64BareBonesImage-firstfit.img` and `...-buddy.img`); the default image
   stays first-fit.
 - `make clean` — remove build artifacts and the per-manager images.
 
@@ -203,14 +205,6 @@ built-ins.
 
 ## Limitations
 
-- **Heap explicitly requested by a process**: a process's own blocks (stacks,
-  argv copy, FPU area) are always recycled, whether it exits normally or is
-  killed; when a process dies its zombie children are reaped and its living
-  children are re-parented to the shell, so neither leaks. The one case not
-  reclaimed is memory a process requested for itself through the `malloc`
-  syscall: the kernel does not track which heap blocks belong to which process,
-  so if such a process is killed mid-execution that memory is lost (no current
-  application uses the `malloc` syscall, so in practice this does not occur).
 - **Pipes**: a single pipe per line (`p1 | p2`, not `p1 | p2 | p3`); `|` and `&`
   must be separated by spaces; pipes are not supported in the background.
 - **No scroll**: the text console clears the screen on overflow instead of
