@@ -37,8 +37,12 @@ void scheduler_init(void) {
  * BLOCKED and then sleep on _hlt(); the next tick reschedules and skips them.
  * The weighted scheduler has no quantum to drop, so this is a no-op kept for
  * call-site compatibility. */
+/* No-op: blocking paths (process_wait, process_exit, sem_wait, process_sleep_ms)
+ * set their state and then sleep on _hlt() until the timer reschedules them.
+ * Routing this through _yield_now() (an immediate int 0x81 switch) is avoided on
+ * purpose: it cannot be called from the keyboard IRQ (Ctrl+C) without dropping
+ * the PIC EOI, and it removes the tick-pacing that makes mvar readable. */
 void scheduler_yield(void) {
-        _yield_now();
 }
 
 /*
@@ -72,13 +76,30 @@ static int scan_ready_with_credit(void) {
         return NO_READY_PROCESS;
 }
 
+/* First ready process ignoring credits, round-robin from current_index. Used as
+ * a last resort: it returns the idle process (priority 0, so it never has credit
+ * and is skipped by scan_ready_with_credit) only when nothing else is ready. */
+static int scan_any_ready(void) {
+        for (int i = 1; i <= MAX_PROCESSES; i++) {
+                int idx    = (current_index + i) % MAX_PROCESSES;
+                pcb_t *pcb = process_get_by_index(idx);
+                if (pcb != NULL && pcb->state == PROCESS_READY)
+                        return idx;
+        }
+        return NO_READY_PROCESS;
+}
+
 static int pick_next_ready(void) {
         int idx = scan_ready_with_credit();
         if (idx != NO_READY_PROCESS)
                 return idx;
         /* Every ready process spent its credits: start a new round. */
         refill_credits();
-        return scan_ready_with_credit();
+        idx = scan_ready_with_credit();
+        if (idx != NO_READY_PROCESS)
+                return idx;
+        /* Only the idle process (priority 0, no credit) is ready: run it. */
+        return scan_any_ready();
 }
 
 static void switch_to(int next_index) {

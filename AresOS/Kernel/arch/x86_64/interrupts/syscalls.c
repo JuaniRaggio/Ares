@@ -330,6 +330,14 @@ uint64_t sys_yield(void) {
         return SYS_OK;
 }
 
+/* Halt the CPU until the next interrupt. Used by the idle process so it sleeps
+ * instead of busy-waiting (it cannot hlt itself from ring 3). Syscalls run with
+ * IF=1, so the timer (or any IRQ) wakes it. */
+uint64_t sys_halt(void) {
+        _hlt();
+        return SYS_OK;
+}
+
 uint64_t sys_kill(uint64_t pid) {
         return (uint64_t)process_kill((pid_t)pid);
 }

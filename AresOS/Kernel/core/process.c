@@ -314,6 +314,11 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->user_stack_base     = ustack;
         pcb->user_allocs.next = pcb->user_allocs.prev = &pcb->user_allocs;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
+        /* Idle runs only as a last resort: priority 0 means it never earns a
+         * scheduling credit, so the round-robin skips it and the no-credit
+         * fallback picks it only when nothing else is ready. */
+        if (name != NULL && strcmp(name, "idle") == 0)
+                pcb->priority = 0;
 
         if (stdout_pipe != NO_PIPE)
                 pipe_mark_writer(stdout_pipe);
@@ -367,10 +372,12 @@ int process_kill(pid_t pid) {
         reparent_and_reap_orphans(pid);
         irq_restore(flags);
 
-        if (pid == current_pid) {
-                scheduler_yield();
-        }
-
+        /* Do NOT force a context switch here even when killing the running
+         * process: process_kill runs from the keyboard IRQ (Ctrl+C via
+         * process_kill_foreground), and yielding from inside an IRQ handler
+         * (int 0x81) would abandon it before its PIC EOI, hanging the keyboard.
+         * The victim stays ZOMBIE and is reaped on the next timer tick (the
+         * waiter, if any, reaps it), which switches away cleanly. */
         return SYS_OK;
 }
 
