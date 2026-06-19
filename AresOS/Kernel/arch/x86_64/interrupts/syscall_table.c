@@ -44,6 +44,7 @@ static const syscall_handler_t syscalls_table[SYS_MAX] = {
     [SYS_CREATE_PROCESS]        = (syscall_handler_t)sys_create_process,
     [SYS_GETPID]                = (syscall_handler_t)sys_getpid,
     [SYS_YIELD]                 = (syscall_handler_t)sys_yield,
+    [SYS_HALT]                  = (syscall_handler_t)sys_halt,
     [SYS_KILL]                  = (syscall_handler_t)sys_kill,
     [SYS_BLOCK]                 = (syscall_handler_t)sys_block,
     [SYS_UNBLOCK]               = (syscall_handler_t)sys_unblock,

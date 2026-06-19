@@ -237,6 +237,10 @@ static inline uint64_t syscall_yield(void) {
         return _syscall3(SYS_YIELD, 0, 0, 0);
 }
 
+static inline uint64_t syscall_halt(void) {
+        return _syscall3(SYS_HALT, 0, 0, 0);
+}
+
 static inline int64_t syscall_kill(uint64_t pid) {
         return (int64_t)_syscall3(SYS_KILL, pid, 0, 0);
 }

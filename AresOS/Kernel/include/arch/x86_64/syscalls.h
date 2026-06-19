@@ -217,6 +217,12 @@ uint64_t sys_getpid(void);
 uint64_t sys_yield(void);
 
 /**
+ * @brief Halt the CPU until the next interrupt (used by the idle process).
+ * @return 0.
+ */
+uint64_t sys_halt(void);
+
+/**
  * Kills a process by PID.
  * @param pid PID of the process to kill.
  * @return 0 on success, -1 on error.

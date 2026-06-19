@@ -367,10 +367,12 @@ int process_kill(pid_t pid) {
         reparent_and_reap_orphans(pid);
         irq_restore(flags);
 
-        if (pid == current_pid) {
-                scheduler_yield();
-        }
-
+        /* Do NOT force a context switch here even when killing the running
+         * process: process_kill runs from the keyboard IRQ (Ctrl+C via
+         * process_kill_foreground), and yielding from inside an IRQ handler
+         * (int 0x81) would abandon it before its PIC EOI, hanging the keyboard.
+         * The victim stays ZOMBIE and is reaped on the next timer tick (the
+         * waiter, if any, reaps it), which switches away cleanly. */
         return SYS_OK;
 }
 
