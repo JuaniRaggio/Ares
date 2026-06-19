@@ -100,7 +100,6 @@ typedef struct {
         char **argv_copy; /* kernel-owned argv copy, freed on reap    */
         uint8_t *fpu_area; /* FPU/SSE save area */
         user_alloc_node_t user_allocs; /* sentinel of live user malloc blocks */
-        uint8_t is_idle; /* the idle process: scheduled only as last resort */
 } pcb_t;
 
 /**
