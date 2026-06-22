@@ -1,8 +1,8 @@
-#include <stddef.h>
+#include <lib_common.h>
 #include <process_api.h>
 #include <process_types.h>
+#include <stddef.h>
 #include <syscalls.h>
-#include <lib_common.h>
 
 #define MAX_REGISTERED_FUNCS 64
 
@@ -107,8 +107,6 @@ int64_t my_list_processes(uint64_t *pids, int max) {
 void idle_process(void) {
         // yield: any ready process => give them CPU
         // hlt: no ready processes => do not consume CPU
-        while (1) {
-                syscall_yield();
+        while (1)
                 syscall_halt();
-        }
 }

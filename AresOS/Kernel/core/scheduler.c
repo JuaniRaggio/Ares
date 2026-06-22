@@ -33,18 +33,6 @@ void scheduler_init(void) {
         set_tss_rsp0((uint64_t)kernel_stack_top);
 }
 
-/* Blocking call sites (process_wait, sem_wait, ...) set their own state to
- * BLOCKED and then sleep on _hlt(); the next tick reschedules and skips them.
- * The weighted scheduler has no quantum to drop, so this is a no-op kept for
- * call-site compatibility. */
-/* No-op: blocking paths (process_wait, process_exit, sem_wait, process_sleep_ms)
- * set their state and then sleep on _hlt() until the timer reschedules them.
- * Routing this through _yield_now() (an immediate int 0x81 switch) is avoided on
- * purpose: it cannot be called from the keyboard IRQ (Ctrl+C) without dropping
- * the PIC EOI, and it removes the tick-pacing that makes mvar readable. */
-void scheduler_yield(void) {
-}
-
 /*
  * Priority is implemented as scheduling FREQUENCY via deficit round robin:
  * each round a process may be picked `priority` times (sched_credits), so a

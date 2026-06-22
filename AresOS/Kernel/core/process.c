@@ -25,8 +25,6 @@ static pid_t next_pid_to_assign = 0;
  */
 static uint8_t fpu_template[FPU_AREA_SIZE] __attribute__((aligned(16)));
 
-extern void scheduler_yield(void);
-
 /* Allocate and initialize a process FPU save area from the clean template. */
 static uint8_t *alloc_fpu_area(void) {
         uint8_t *area = (uint8_t *)mem_alloc(FPU_AREA_SIZE);
@@ -342,7 +340,7 @@ void process_exit(int code) {
         reparent_and_reap_orphans(pcb->pid);
         irq_restore(flags);
 
-        scheduler_yield();
+        _yield_now();
         while (1)
                 _hlt();
 }
@@ -402,9 +400,22 @@ int process_block(pid_t pid) {
         irq_restore(flags);
 
         if (pid == current_pid)
-                scheduler_yield();
+                _yield_now();
 
         return SYS_OK;
+}
+
+/* True if any process other than the running one can run right now. The idle
+ * task uses this (via sys_halt) to choose between yielding to real work and
+ * sleeping: idle is the current/RUNNING process here, so it never counts
+ * itself. This keeps idle from halting (and wasting a timer tick) whenever the
+ * scheduler happens to pick it while real work is ready. */
+int process_any_ready(void) {
+        for (int i = 0; i < MAX_PROCESSES; i++) {
+                if (process_table[i].state == PROCESS_READY)
+                        return 1;
+        }
+        return 0;
 }
 
 int unblock_by_semaphore(pid_t pid) {
@@ -487,7 +498,7 @@ int process_wait(pid_t pid) {
                 current->state       = PROCESS_BLOCKED;
                 irq_restore(flags);
 
-                scheduler_yield();
+                _yield_now();
                 while (current->state == PROCESS_BLOCKED)
                         _hlt();
         }

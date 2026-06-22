@@ -248,6 +248,12 @@ int process_snapshot(process_info_t *info, int max);
 int process_kill_foreground(void);
 
 /**
+ * @brief True if any process other than the running one is READY.
+ * Used by the idle task to choose between yielding and halting.
+ */
+int process_any_ready(void);
+
+/**
  * @brief Wake processes blocked waiting for keyboard input.
  *
  * Called from the keyboard interrupt when new input or EOF arrives.
