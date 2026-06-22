@@ -1,80 +1,55 @@
 #!/bin/bash
-
-# Script to compile the project inside an existing Docker container
+# Compile the project inside a Docker container
 # Usage: ./compile_in_container.sh [CONTAINER_NAME] [TARGET]
-#   CONTAINER_NAME: container name (default: ARES)
-#   TARGET: make target (default: all)
 
 set -e
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m'
 
 CONTAINER_NAME="${1:-ARES}"
 MAKE_TARGET="${2:-all}"
 PROJECT_PATH="/root"
 
-echo "=========================================="
-echo "Compiling in container: $CONTAINER_NAME"
-echo "Target: $MAKE_TARGET"
-echo "=========================================="
-echo ""
-
 # Check if docker is available
 if ! command -v docker &> /dev/null; then
-    echo "ERROR: Docker is not installed or not in PATH"
-    echo "Please refer to Readme.txt for compilation prerequisites"
+    echo -e "${RED}Error: Docker not installed${NC}"
     exit 1
 fi
 
 # Check if the container exists
 if ! docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    echo "ERROR: Container '$CONTAINER_NAME' does not exist"
+    echo -e "${RED}Error: Container '$CONTAINER_NAME' not found${NC}"
     echo ""
     echo "Available containers:"
     docker ps -a --format "  - {{.Names}} ({{.Status}})"
-    echo ""
-    echo "Please refer to Readme.txt for instructions on how to set up the build environment"
     exit 1
 fi
 
 # Check if the container is running
 if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-    echo "WARNING: Container '$CONTAINER_NAME' is not running"
-    echo "Attempting to start it..."
-    docker start "$CONTAINER_NAME" || {
-        echo "ERROR: Could not start the container"
-        echo "Please refer to Readme.txt for troubleshooting instructions"
+    echo "Starting container $CONTAINER_NAME..."
+    docker start "$CONTAINER_NAME" > /dev/null || {
+        echo -e "${RED}Error: Could not start container${NC}"
         exit 1
     }
-    echo "Container started successfully"
     sleep 1
 fi
 
-echo "[*] Running make $MAKE_TARGET inside the container..."
-echo ""
+echo "Building in container $CONTAINER_NAME (target: $MAKE_TARGET)"
 
 # Execute make inside the container
 if docker exec -it "$CONTAINER_NAME" bash -c "cd $PROJECT_PATH && make $MAKE_TARGET"; then
-    echo ""
-    echo "=========================================="
-    echo "Compilation successful"
-    echo "=========================================="
+    echo -e "${GREEN}Build successful${NC}"
 
     # Fix permissions of generated files
-    echo ""
-    echo "[*] Fixing permissions of generated files..."
     sudo chown -R "$(id -u):$(id -g)" "$(pwd)/Kernel/build" 2>/dev/null || true
     sudo chown -R "$(id -u):$(id -g)" "$(pwd)/Kernel/bin" 2>/dev/null || true
     sudo chown -R "$(id -u):$(id -g)" "$(pwd)/Image" 2>/dev/null || true
     sudo chown -R "$(id -u):$(id -g)" "$(pwd)/Userland" 2>/dev/null || true
-
     exit 0
 else
-    echo ""
-    echo "=========================================="
-    echo "ERROR: Compilation failed"
-    echo "=========================================="
-    echo ""
-    echo "Please refer to Readme.txt for detailed compilation instructions"
-    echo "and make sure all prerequisites are properly installed."
-    echo ""
+    echo -e "${RED}Build failed${NC}"
     exit 1
 fi

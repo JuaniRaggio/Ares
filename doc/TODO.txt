@@ -8,12 +8,16 @@ Este archivo mantiene:
 
 Dudas para Fede
 -------------------------------------------------------------------------------
-- [ ] Que tenemos que hacer con lo que ya esta en el tp desde Arqui? Tenemos
+- [X] Que tenemos que hacer con lo que ya esta en el tp desde Arqui? Tenemos
       que pasar todo a procesos? El Tron por ejemplo seria un proceso? Nos
       conviene borrar todo esto?
+        Lo que piden desde el enunciado que sea un proceso, entiendo que
+        tiene que ser si o si un proceso
 
-- [ ] Modo Texto / Modo Video. Va en parte de la mano con la duda anterior,
+- [X] Modo Texto / Modo Video. Va en parte de la mano con la duda anterior,
       deberiamos mantener los drivers?
+        Los drivers se mantuvieron parcialmente, hicimos algunos cambios
+        en el driver de teclado por ejemplo
 
 - [ ] En caso de que sea mejor que el SO corra en modo texto y no hacer nada en
       modo video, podemos dejar el codigo muerto o tenemos que borrar lo que no
@@ -23,12 +27,12 @@ Dudas para Fede
 Importante
 -------------------------------------------------------------------------------
 - [ ] Semaforos => Victoria esta en esto
-        - [ ] estructuras
-        - [ ] manejo de atomicidad
-        - [ ] Syscalls
+        - [X] estructuras
+        - [X] manejo de atomicidad
+        - [X] Syscalls
                 - sem_open
                 - sem_close
-                - sem_wait => sem_aquire
+                - sem_wait => sem_acquire
                 - sem_post => sem_release
 
 - [ ] Shell

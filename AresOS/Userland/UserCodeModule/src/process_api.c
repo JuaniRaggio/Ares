@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <process_api.h>
 #include <process_types.h>
 #include <syscalls.h>
@@ -28,44 +29,39 @@ static process_entry_t lookup_function(const char *name) {
                 if (strcmp(registry[i].name, name) == 0)
                         return registry[i].func;
         }
-        return (process_entry_t)0;
+        return NULL;
 }
 
-int64_t my_create_process(char *name, uint64_t argc, char *argv[]) {
+int process_is_registered(const char *name) {
+        return lookup_function(name) != NULL;
+}
+
+int64_t my_spawn(char *name, uint64_t argc, char *argv[], int foreground,
+                 int stdin_pipe, int stdout_pipe) {
         process_entry_t func = lookup_function(name);
-        if (func == (process_entry_t)0)
-                return -1;
+        if (func == NULL)
+                return NO_PID;
 
         create_process_info_t info;
         info.entry        = (uint64_t)func;
         info.argc         = argc;
         info.argv         = argv;
         info.name         = name;
-        info.foreground   = 0;
-        info.exit_handler = (uint64_t)_process_exit_stub;
-        info.stdin_pipe   = NO_PIPE;
-        info.stdout_pipe  = NO_PIPE;
-
-        return syscall_create_process(&info);
-}
-
-int64_t my_create_process_piped(char *name, uint64_t argc, char *argv[],
-                                int stdin_pipe, int stdout_pipe) {
-        process_entry_t func = lookup_function(name);
-        if (func == (process_entry_t)0)
-                return -1;
-
-        create_process_info_t info;
-        info.entry        = (uint64_t)func;
-        info.argc         = argc;
-        info.argv         = argv;
-        info.name         = name;
-        info.foreground   = 0;
+        info.foreground   = foreground;
         info.exit_handler = (uint64_t)_process_exit_stub;
         info.stdin_pipe   = stdin_pipe;
         info.stdout_pipe  = stdout_pipe;
 
         return syscall_create_process(&info);
+}
+
+int64_t my_create_process(char *name, uint64_t argc, char *argv[]) {
+        return my_spawn(name, argc, argv, 0, NO_PIPE, NO_PIPE);
+}
+
+int64_t my_create_process_piped(char *name, uint64_t argc, char *argv[],
+                                int stdin_pipe, int stdout_pipe) {
+        return my_spawn(name, argc, argv, 0, stdin_pipe, stdout_pipe);
 }
 
 int my_pipe_open(const char *name) {
@@ -109,6 +105,13 @@ int64_t my_list_processes(uint64_t *pids, int max) {
 }
 
 void idle_process(void) {
-        while (1)
+        /* yield-then-halt: yield gives the CPU to any ready process immediately
+         * (responsive, no scheduling latency); if control comes back here there
+         * is nothing else ready, so halt until the next interrupt instead of
+         * busy-waiting. idle runs in ring 3 and cannot hlt directly, so the halt
+         * is a syscall. */
+        while (1) {
                 syscall_yield();
+                syscall_halt();
+        }
 }

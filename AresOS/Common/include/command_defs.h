@@ -27,8 +27,3 @@ typedef struct {
         const char *description;
         lambda_t lambda;
 } command_t;
-
-typedef struct {
-        const command_t *cmd;
-        char args[max_parameters - 1][MAX_CHARS];
-} composed_command_t;

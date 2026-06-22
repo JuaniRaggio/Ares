@@ -13,24 +13,45 @@
 
 #define MAX_PROCESSES 32
 #define PROCESS_NAME_LEN 32
-#define PROCESS_STACK_SIZE (4096 * 4)
+/* Per-process stacks are allocated separately: the kernel stack must hold the
+ * full interrupt/context-switch frame chain, while the user stack only backs
+ * the userland program, so it can be smaller. */
+#define KERNEL_STACK_SIZE (4096 * 4) /* 16 KiB */
+#define USER_STACK_SIZE   (4096 * 2) /* 8 KiB  */
 #define DEFAULT_PRIORITY 1
 #define MAX_PRIORITY 4
 
-#define NO_PID           (-1)
+/* NO_PID is defined in process_types.h (shared with userland). */
 #define KILLED_EXIT_CODE (-1)
+#define SHELL_PID        0
+
+/* Size of the per-process FPU/SSE save area used by fxsave/fxrstor. */
+#define FPU_AREA_SIZE 512
+
+/**
+ * @brief Save the current FPU/SSE state (x87 + XMM + MXCSR) into area.
+ * @param area 512-byte, 16-byte-aligned buffer.
+ */
+void fpu_save(void *area);
+
+/**
+ * @brief Restore FPU/SSE state previously saved with fpu_save.
+ * @param area 512-byte, 16-byte-aligned buffer.
+ */
+void fpu_restore(void *area);
+
+/**
+ * @brief Write a clean (post-fninit) FPU state into area, for use as the
+ *        initial state of new processes.
+ * @param area 512-byte, 16-byte-aligned buffer.
+ */
+void fpu_init_area(void *area);
 
 typedef int64_t pid_t;
 typedef uint64_t (*process_func_t)(uint64_t argc, char *argv[]);
 
-/** @brief Process states. */
-typedef enum {
-        PROCESS_READY   = 0,
-        PROCESS_RUNNING = 1,
-        PROCESS_BLOCKED = 2,
-        PROCESS_DEAD    = 3,
-        PROCESS_ZOMBIE  = 4
-} process_state_t;
+/* process_state_t lives in Common/include/process_types.h so userland can
+ * decode the SYS_PS snapshot with the same values. */
 
 /**
  * @brief Internal use by scheduler to update the current PID.
@@ -44,6 +65,18 @@ void process_set_current_pid(pid_t pid);
  */
 void process_free_resources(pid_t pid);
 
+/**
+ * @brief Intrusive node for the per-process list of live `malloc` syscall
+ *        allocations. sys_malloc prepends one (16 bytes, keeps 16-byte
+ *        alignment of the returned pointer) to every user allocation and links
+ *        it here; on process death the remaining blocks are freed so a killed
+ *        process never leaks the heap it requested through `malloc`.
+ */
+typedef struct user_alloc_node {
+        struct user_alloc_node *next;
+        struct user_alloc_node *prev;
+} user_alloc_node_t;
+
 /** @brief Process Control Block. */
 typedef struct {
         pid_t pid;
@@ -52,7 +85,10 @@ typedef struct {
         uint8_t *kernel_stack_base;
         uint8_t *user_stack_base;
         process_state_t state;
+        uint8_t blocked_by_semaphore;
         uint64_t priority;
+        int64_t sched_credits;
+        uint64_t sleep_until_ms;
         int foreground;
         pid_t parent_pid;
         int exit_code;
@@ -60,6 +96,10 @@ typedef struct {
         int stdin_pipe;      /* NO_PIPE = keyboard, >= 0 = pipe index */
         int stdout_pipe;     /* NO_PIPE = console,  >= 0 = pipe index */
         int blocked_on_pipe; /* NO_PIPE if not blocked on a pipe      */
+        uint8_t blocked_on_keyboard;
+        char **argv_copy; /* kernel-owned argv copy, freed on reap    */
+        uint8_t *fpu_area; /* FPU/SSE save area */
+        user_alloc_node_t user_allocs; /* sentinel of live user malloc blocks */
 } pcb_t;
 
 /**
@@ -113,11 +153,25 @@ pid_t process_getpid(void);
 int process_kill(pid_t pid);
 
 /**
- * @brief Block a process. If pid is the caller, blocks until unblocked.
+ * @brief Block a process by PID due to waiting on a semaphore.
+ * @param pid PID of the process to block.
+ * @return 0 on success, -1 on error.
+ */
+int block_by_semaphore(pid_t pid);
+
+/**
+ * @brief Block a process by PID.
  * @param pid PID of the process to block.
  * @return 0 on success, -1 on error.
  */
 int process_block(pid_t pid);
+
+/**
+ * @brief Unblock a process by PID that was blocked on a semaphore.
+ * @param pid PID of the process to unblock.
+ * @return 0 on success, -1 if not blocked.
+ */
+int unblock_by_semaphore(pid_t pid);
 
 /**
  * @brief Unblock a blocked process.
@@ -129,7 +183,7 @@ int process_unblock(pid_t pid);
 /**
  * @brief Change a process's scheduling priority.
  * @param pid PID of the target process.
- * @param new_priority New priority value (0 to MAX_PRIORITY).
+ * @param new_priority New priority value, clamped to [1, MAX_PRIORITY].
  * @return 0 on success, -1 on error.
  */
 int process_nice(pid_t pid, uint64_t new_priority);
@@ -162,9 +216,55 @@ pcb_t *process_get(pid_t pid);
 pcb_t *process_get_by_index(int idx);
 
 /**
+ * @brief Whether some process is waiting on the given pid.
+ *
+ * Used by the scheduler so it does not reap a zombie that a waiter still
+ * needs to read the exit code from (the waiter reaps it instead).
+ * @param pid PID to check.
+ * @return 1 if a waiter exists, 0 otherwise.
+ */
+int process_has_waiter(pid_t pid);
+
+/**
  * @brief Fill pids array with active process PIDs.
  * @param pids Array to fill with PIDs.
  * @param max Maximum entries to fill.
  * @return Number of PIDs written.
  */
 int process_list(uint64_t *pids, int max);
+
+/**
+ * @brief Fill an array with snapshots of every active process.
+ * @param info Array to fill with process information.
+ * @param max Maximum entries to fill.
+ * @return Number of entries written.
+ */
+int process_snapshot(process_info_t *info, int max);
+
+/**
+ * @brief Kill every foreground process except the shell (Ctrl+C).
+ * @return Number of processes killed.
+ */
+int process_kill_foreground(void);
+
+/**
+ * @brief Wake processes blocked waiting for keyboard input.
+ *
+ * Called from the keyboard interrupt when new input or EOF arrives.
+ */
+void process_wake_keyboard_readers(void);
+
+/**
+ * @brief Block the calling process for at least ms milliseconds.
+ *
+ * The process sleeps (BLOCKED) instead of busy-waiting; the timer wakes it
+ * once the deadline passes via process_wake_sleepers().
+ */
+void process_sleep_ms(uint64_t ms);
+
+/**
+ * @brief Wake every sleeping process whose deadline has passed.
+ *
+ * Called from the timer path each tick with the current time in ms.
+ */
+void process_wake_sleepers(uint64_t now_ms);

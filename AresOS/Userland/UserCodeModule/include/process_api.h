@@ -20,7 +20,27 @@ typedef void (*process_entry_t)();
 void process_register(const char *name, process_entry_t func);
 
 /**
- * @brief Create a new process by function name.
+ * @brief Check whether a function name is registered.
+ * @param name Function name to look up.
+ * @return 1 if registered, 0 otherwise.
+ */
+int process_is_registered(const char *name);
+
+/**
+ * @brief Create a new process with full control over its attributes.
+ * @param name Registered function name.
+ * @param argc Argument count for the process.
+ * @param argv Argument vector for the process.
+ * @param foreground 1 for foreground, 0 for background.
+ * @param stdin_pipe  Pipe index for stdin, or NO_PIPE for keyboard.
+ * @param stdout_pipe Pipe index for stdout, or NO_PIPE for console.
+ * @return PID of the new process, or -1 on failure.
+ */
+int64_t my_spawn(char *name, uint64_t argc, char *argv[], int foreground,
+                 int stdin_pipe, int stdout_pipe);
+
+/**
+ * @brief Create a new process by function name (background, no pipes).
  * @param name Registered function name.
  * @param argc Argument count for the process.
  * @param argv Argument vector for the process.

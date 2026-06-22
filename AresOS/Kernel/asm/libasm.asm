@@ -7,6 +7,9 @@ GLOBAL _load_idt_register
 GLOBAL read_tsc
 GLOBAL outb
 GLOBAL inb
+GLOBAL fpu_save
+GLOBAL fpu_restore
+GLOBAL fpu_init_area
 
 struc regs
         _r15: resq 1
@@ -192,4 +195,23 @@ inb:
     mov dx, di           ; Port number to DX
     xor rax, rax         ; Clear RAX
     in al, dx            ; Read from port DX into AL
+    ret
+
+; Save FPU/SSE state (x87 + XMM + MXCSR) to a 512-byte 16-aligned area.
+; RDI = area pointer
+fpu_save:
+    fxsave [rdi]
+    ret
+
+; Restore FPU/SSE state previously saved with fpu_save.
+; RDI = area pointer
+fpu_restore:
+    fxrstor [rdi]
+    ret
+
+; Initialize a clean FPU state into a 512-byte 16-aligned area (template).
+; RDI = area pointer
+fpu_init_area:
+    fninit
+    fxsave [rdi]
     ret

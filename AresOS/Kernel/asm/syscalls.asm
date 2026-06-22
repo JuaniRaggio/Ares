@@ -5,7 +5,7 @@ section .text
 
 global syscall_entry
 
-extern syscalls_table
+extern syscall_dispatch
 extern current_kernel_stack
 
 
@@ -14,6 +14,9 @@ extern current_kernel_stack
 ;  Entry point when user executes SYSCALL
 ;  Register convention (x86_64):
 ;    RAX = syscall number
+;    RDI, RSI, RDX = arguments
+;  Dispatch (table lookup + bounds check) is done in C by
+;  syscall_dispatch(number, arg1, arg2, arg3).
 ; -------------------------------------------
 
 syscall_entry:
@@ -32,28 +35,13 @@ syscall_entry:
     push r13
     push r14
 
-    ; syscall number is in RAX
-    mov rbx, rax
+    ; Shuffle into SysV order: dispatch(nr, a1, a2, a3)
+    mov rcx, rdx                ; a3 (user RIP was already saved)
+    mov rdx, rsi                ; a2
+    mov rsi, rdi                ; a1
+    mov rdi, rax                ; syscall number
+    call syscall_dispatch
 
-    ; Look up function in syscalls table
-    lea rcx, [rel syscalls_table]
-    shl rbx, 3                  ; rbx * 8 (each pointer is 8 bytes)
-    add rcx, rbx
-
-    mov rbx, [rcx]
-    test rbx, rbx
-    jz .unknown_syscall
-
-    ; Arguments are already in RDI, RSI, RDX correctly
-    ; Call syscall function
-    call rbx
-    jmp .done
-
-.unknown_syscall:
-    mov rax, -1                 ; return error
-    jmp .done
-
-.done:
     ; Restore registers in reverse order
     pop r14
     pop r13
@@ -65,4 +53,4 @@ syscall_entry:
     pop rsp                     ; restore user RSP
 
     swapgs
-    sysretq
+    o64 sysret

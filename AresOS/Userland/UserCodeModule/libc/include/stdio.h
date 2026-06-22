@@ -2,7 +2,6 @@
 
 #include <lib.h>
 #include <stdarg.h>
-#include <stdint.h>
 #include <syscalls.h>
 
 #define MAX_CHARS 256
@@ -36,7 +35,13 @@ int putchar(int c);
 int puts(const char *s);
 
 /**
- * Reads a character from stdin
- * @return Character read
+ * Reads a character from stdin (blocking)
+ * @return Character read, or EOF on end of input
  */
 int getchar(void);
+
+/**
+ * Reads a character from the keyboard without blocking
+ * @return Character read, or 0 if no data is available
+ */
+int getchar_nonblock(void);

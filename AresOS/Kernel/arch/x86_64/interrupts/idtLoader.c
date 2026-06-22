@@ -7,6 +7,7 @@
 #define ID_TIMER_TICK       0x20
 #define ID_KEYBOARD         0x21
 #define ID_SYSCALL          0x80
+#define ID_YIELD            0x81
 #define ID_DIVISION_BY_ZERO 0x00
 #define ID_INVALID_OPCODE   0x06
 
@@ -42,6 +43,7 @@ static void setup_IDT_entry(int index, uint64_t offset);
 void load_idt() {
         setup_IDT_entry(ID_TIMER_TICK, (uint64_t)&_irq00Handler);
         setup_IDT_entry(ID_KEYBOARD, (uint64_t)&_irq01Handler);
+        setup_IDT_entry(ID_YIELD, (uint64_t)&_irq81Handler);
         setup_IDT_entry(ID_DIVISION_BY_ZERO, (uint64_t)&_exception0Handler);
         setup_IDT_entry(ID_INVALID_OPCODE, (uint64_t)&_exception6Handler);
 

@@ -1,33 +1,29 @@
+#include <apps.h>
 #include <benchmarks.h>
 #include <commands.h>
 #include <shell.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <syscalls.h>
 
 extern shell_attributes shell_status;
 
 uint8_t history_cmd(void) {
-        printf("Command not supported yet! Sorry :(\n");
-        return INVALID_COMMAND_NAME;
-        // if (shell_status.prompts.lastest_prompt_idx == 0) {
-        //         printf("Empty history!\n");
-        //         return EMPTY;
-        // }
-        // printf("Command history:\n");
-        // for (uint8_t i = 0; i < shell_status.prompts.lastest_prompt_idx; i++)
-        // {
-        //         printf("%s", shell_status.prompts.prompt_history[i]);
-        //         for (uint8_t j = 0; j < max_parameters; ++j) {
-        //                 if (shell_status.prompts.prompt_history[i].args[j][0]
-        //                 !=
-        //                     0) {
-        //                         printf(" %s",
-        //                                shell_status.prompts.prompt_history[i]
-        //                                    .args[j]);
-        //                 }
-        //         }
-        //         putchar('\n');
-        // }
+        uint8_t count = shell_status.prompts.history_count;
+        if (count == 0) {
+                printf("Empty history!\n");
+                return OK;
+        }
+
+        /* Show up to the last HISTORY_SIZE lines, oldest first. */
+        uint8_t shown = (count < HISTORY_SIZE) ? count : HISTORY_SIZE;
+        uint8_t start = (count < HISTORY_SIZE) ? 0 : (count % HISTORY_SIZE);
+
+        printf("Command history:\n");
+        for (uint8_t i = 0; i < shown; i++) {
+                uint8_t idx = (start + i) % HISTORY_SIZE;
+                printf("  %d: %s\n", i + 1, shell_status.prompts.history[idx]);
+        }
         return OK;
 }
 
@@ -58,31 +54,27 @@ uint8_t print_info_reg(void) {
         return ret;
 }
 
-int get_command_index(char *command) {
-        for (uint8_t idx = 0; idx < QTY_COMMANDS; idx++) {
-                if (commands[idx]->name &&
-                    !strcmp(commands[idx]->name, command))
-                        return idx;
-        }
-        return INVALID_COMMAND_NAME;
-}
-
 uint8_t help(void) {
-        printf("Available commands:\n");
-        for (uint8_t i = 0; i < QTY_COMMANDS; i++) {
-                printf("  %s: %s\n", commands[i]->name,
-                       commands[i]->description);
+        printf("Applications (run as separate processes):\n");
+        for (int i = 0; i < app_registry_count; i++) {
+                printf("  %s: %s\n", app_registry[i].name,
+                       app_registry[i].description);
         }
-        return OK;
-}
 
-uint8_t div_cmd(char *num_str, char *div_str) {
-        uint8_t num = 0, div = 0;
-        for (uint8_t i = 0; num_str[i] >= '0' && num_str[i] <= '9'; i++)
-                num = num * 10 + (num_str[i] - '0');
-        for (uint8_t i = 0; div_str[i] >= '0' && div_str[i] <= '9'; i++)
-                div = div * 10 + (div_str[i] - '0');
-        printf("%d / %d = %d\n", num, div, num / div);
+        printf("\nCatedra tests:\n");
+        printf("  test_mm <max_bytes>: stress the memory manager\n");
+        printf("  test_proc <max_processes>: create, block and kill "
+               "processes\n");
+        printf("  test_prio <max_value>: show priority effect on "
+               "scheduling\n");
+        printf("  test_sync <n> <use_sem>: increment a shared variable with "
+               "or without semaphores\n");
+
+        printf("\nSpecial syntax:\n");
+        printf("  cmd args &  : run cmd in background\n");
+        printf("  p1 | p2     : connect p1 stdout with p2 stdin\n");
+        printf("  Ctrl+C      : kill the foreground process\n");
+        printf("  Ctrl+D      : send end of file\n");
         return OK;
 }
 
@@ -129,68 +121,35 @@ uint8_t clear_cmd(void) {
         return OK;
 }
 
-uint8_t print_mem(char *pos_str) {
-        uint64_t addr = 0;
-
-        if (pos_str[0] == '0' && (pos_str[1] == 'x' || pos_str[1] == 'X'))
-                pos_str += 2;
-
-        for (uint8_t i = 0; pos_str[i]; i++) {
-                char c = pos_str[i];
-                addr <<= 4;
-                if (c >= '0' && c <= '9')
-                        addr += c - '0';
-                else if (c >= 'a' && c <= 'f')
-                        addr += c - 'a' + 10;
-                else if (c >= 'A' && c <= 'F')
-                        addr += c - 'A' + 10;
-        }
-
-        uint8_t buffer[32];
-        syscall_get_memory(addr, buffer, 32);
-
-        printf("Memory at 0x%x:\n", addr);
-        for (uint8_t i = 0; i < 32; i++) {
-                printf("%x ", buffer[i]);
-                if ((i + 1) % 8 == 0)
-                        printf("\n");
-        }
-        return OK;
-}
-
 uint8_t man(char *command) {
-        int idx = get_command_index(command);
-        if (idx == -1) {
-                printf(invalid_command);
-                return INVALID_INPUT;
+        for (int i = 0; i < app_registry_count; i++) {
+                if (strcmp(app_registry[i].name, command) == 0) {
+                        printf("Application: %s\n", app_registry[i].name);
+                        printf("Description: %s\n",
+                               app_registry[i].description);
+                        return OK;
+                }
         }
-        printf("Command: %s\n", commands[idx]->name);
-        printf("Description: %s\n", commands[idx]->description);
-        printf("Parameters: %d\n", commands[idx]->lambda.ftype);
-        return OK;
+        printf(invalid_command);
+        return INVALID_INPUT;
 }
 
 uint8_t cursor_cmd(char *type) {
-        printf("Cursor not supported yet! Sorry :(\n");
-        // if (!strcmp(type, "block")) {
-        //         shell_status.cursor.shape = block;
-        //         printf("Cursor shape set to: block\n");
-        // } else if (!strcmp(type, "hollow")) {
-        //         shell_status.cursor.shape = hollow;
-        //         printf("Cursor shape set to: hollow\n");
-        // } else if (!strcmp(type, "line")) {
-        //         shell_status.cursor.shape = line;
-        //         printf("Cursor shape set to: line\n");
-        // } else if (!strcmp(type, "underline")) {
-        //         shell_status.cursor.shape = underline;
-        //         printf("Cursor shape set to: underline\n");
-        // } else {
-        //         printf("Invalid cursor type or not supported yet. Current "
-        //                "options: block, hollow, line, underline\nTo add a new
-        //                " "cursor type, contact support@ares.com");
-        //         return INVALID_INPUT;
-        // }
-        return INVALID_COMMAND_NAME;
+        if (!strcmp(type, "block")) {
+                shell_status.cursor.shape = block;
+        } else if (!strcmp(type, "hollow")) {
+                shell_status.cursor.shape = hollow;
+        } else if (!strcmp(type, "line")) {
+                shell_status.cursor.shape = line;
+        } else if (!strcmp(type, "underline")) {
+                shell_status.cursor.shape = underline;
+        } else {
+                printf("Invalid cursor type. Options: block, hollow, line, "
+                       "underline\n");
+                return INVALID_INPUT;
+        }
+        printf("Cursor shape set to: %s\n", type);
+        return OK;
 }
 
 static void wait(char *msg) {
@@ -229,18 +188,6 @@ uint8_t benchmark_cmd(void) {
         show_timer_benchmark(timer);
         show_keyboard_benchmark(keyboard);
         printf("%s\n", end_benchmark_msg);
-        return OK;
-}
-
-uint8_t tron_cmd(void) {
-        tron_game();
-        return OK;
-}
-
-extern void opcode_asm(void);
-
-uint8_t trigger_opcode_cmd(void) {
-        opcode_asm();
         return OK;
 }
 
@@ -309,5 +256,10 @@ uint8_t bgcolor_cmd(char *color) {
         shell_status.background_color = color_value;
         syscall_set_bg_color(color_value);
         printf("Background color changed\n");
+        return OK;
+}
+
+uint8_t exit_cmd(void) {
+        printf("The shell keeps the system alive and cannot exit.\n");
         return OK;
 }

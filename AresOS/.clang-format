@@ -3,13 +3,13 @@ UseTab: Never
 IndentWidth: 8
 ColumnLimit: 80
 
+# Solo claves soportadas por clang-format >= 17 (el de Xcode), las sub-claves
+# nuevas (AlignFunctionDeclarations/Pointers) rompen el parser y son default
 AlignConsecutiveAssignments:
   Enabled:         true
   AcrossEmptyLines: false
   AcrossComments:  false
   AlignCompound:   false
-  AlignFunctionDeclarations: false
-  AlignFunctionPointers: false
   PadOperators:    true
 
 BraceWrapping:

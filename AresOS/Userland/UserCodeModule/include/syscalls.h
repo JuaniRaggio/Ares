@@ -237,6 +237,10 @@ static inline uint64_t syscall_yield(void) {
         return _syscall3(SYS_YIELD, 0, 0, 0);
 }
 
+static inline uint64_t syscall_halt(void) {
+        return _syscall3(SYS_HALT, 0, 0, 0);
+}
+
 static inline int64_t syscall_kill(uint64_t pid) {
         return (int64_t)_syscall3(SYS_KILL, pid, 0, 0);
 }
@@ -261,10 +265,30 @@ static inline int64_t syscall_list_processes(uint64_t *pids, uint64_t max) {
         return (int64_t)_syscall3(SYS_LIST_PROCESSES, (uint64_t)pids, max, 0);
 }
 
+static inline int64_t syscall_ps(process_info_t *info, uint64_t max) {
+        return (int64_t)_syscall3(SYS_PS, (uint64_t)info, max, 0);
+}
+
 static inline int syscall_pipe_open(const char *name) {
         return (int)_syscall3(SYS_PIPE_OPEN, (uint64_t)name, 0, 0);
 }
 
 static inline int syscall_pipe_close(int pipe_id) {
         return (int)_syscall3(SYS_PIPE_CLOSE, (uint64_t)pipe_id, 0, 0);
+}
+
+static inline int64_t syscall_sem_open(char* sem_id, uint64_t value) {
+        return (int64_t)_syscall3(SYS_SEM_OPEN, (uint64_t)sem_id, value, 0);
+}
+
+static inline int64_t syscall_sem_post(char* sem_id) {
+        return (int64_t)_syscall3(SYS_SEM_POST, (uint64_t)sem_id, 0, 0);
+}
+
+static inline int64_t syscall_sem_wait(char* sem_id) {
+        return (int64_t)_syscall3(SYS_SEM_WAIT, (uint64_t)sem_id, 0, 0);
+}
+
+static inline int64_t syscall_sem_close(char* sem_id) {
+        return (int64_t)_syscall3(SYS_SEM_CLOSE, (uint64_t)sem_id, 0, 0);
 }

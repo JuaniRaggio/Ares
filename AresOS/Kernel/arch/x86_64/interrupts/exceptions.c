@@ -2,6 +2,7 @@
 #include "syscalls.h"
 #include <colors.h>
 #include <naiveConsole.h>
+#include <process.h>
 #include <regs.h>
 #include <stdint.h>
 
@@ -9,18 +10,53 @@ extern regs_snapshot_t saved_regs;
 
 static void zero_division(regs_snapshot_t *regs);
 static void invalid_opcode(regs_snapshot_t *regs);
+static void report_fault(pid_t pid);
 static void print_registers(regs_snapshot_t *regs);
 static void wait_for_keypress(void);
 
 void exceptionDispatcher(int exception, regs_snapshot_t *regs) {
         saved_regs = *regs;
 
+        pid_t pid = process_getpid();
+
         if (exception == ZERO_EXCEPTION_ID)
                 zero_division(regs);
         else if (exception == INVALID_OPCODE_ID)
                 invalid_opcode(regs);
 
+        /* Registers first (debugging detail), then the human-readable verdict
+         * last so it stays on screen even if the long dump scrolls the top off
+         * (the console clears on overflow). */
         print_registers(regs);
+        report_fault(pid);
+
+        ncPrint("\nPress any key to continue...", VGA_CYAN);
+        wait_for_keypress();
+
+        /* Kill the faulting process instead of resuming it. process_exit never
+         * returns, so the handler's tail (iretq to userland 0x400000) only runs
+         * for the shell, which is still restarted in place. */
+        if (pid != SHELL_PID)
+                process_exit(KILLED_EXIT_CODE);
+}
+
+/* Tells the user which process faulted and what the kernel did about it: feed-
+ * back for the operator and a debugging anchor for us. */
+static void report_fault(pid_t pid) {
+        pcb_t *pcb = process_get_current();
+
+        ncPrint("\nFaulting process: ", VGA_CYAN);
+        ncPrint(pcb != NULL ? pcb->name : "unknown", VGA_WHITE);
+        ncPrint(" (pid ", VGA_CYAN);
+        ncPrintDec((uint64_t)pid);
+        ncPrint(")\n", VGA_CYAN);
+
+        if (pid == SHELL_PID)
+                ncPrint("Action: shell recovered and restarted.\n", VGA_GREEN);
+        else
+                ncPrint("Action: process terminated by the kernel; "
+                        "the rest of the system keeps running.\n",
+                        VGA_GREEN);
 }
 
 static void zero_division(regs_snapshot_t *regs) {
@@ -107,9 +143,6 @@ static void print_registers(regs_snapshot_t *regs) {
         ncPrint("RFLAGS: 0x", VGA_WHITE);
         ncPrintHex(regs->rflags);
         ncPrint("\n", VGA_WHITE);
-
-        ncPrint("\nPress any key to continue...", VGA_CYAN);
-        wait_for_keypress();
 }
 
 static void wait_for_keypress(void) {

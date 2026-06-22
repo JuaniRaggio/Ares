@@ -1,30 +1,32 @@
+#include <stddef.h>
 #include <drivers/keyboard_driver.h>
 #include <drivers/sound.h>
-#include <lib.h>
-#include <multi_region_heap.h>
-#include <naiveConsole.h>
 #include <interrupts.h>
+#include <lib.h>
+#include <memory_manager.h>
+#include <naiveConsole.h>
 #include <pipe.h>
 #include <process.h>
 #include <process_types.h>
 #include <regs.h>
 #include <scheduler.h>
+#include <semaphores.h>
 #include <status_codes.h>
 #include <stdint.h>
 #include <syscalls.h>
 
-#define DEFAULT_BG_COLOR     0x000000
+#define DEFAULT_BG_COLOR 0x000000
 #define DEFAULT_STDOUT_COLOR 0xFFFFFF
 #define DEFAULT_STDERR_COLOR 0xFF0000
 
-regs_snapshot_t saved_regs = {0};
-uint32_t current_bg_color  = DEFAULT_BG_COLOR;
+regs_snapshot_t saved_regs               = {0};
+uint32_t current_bg_color                = DEFAULT_BG_COLOR;
 static uint32_t current_stdout_color_rgb = DEFAULT_STDOUT_COLOR;
 static uint32_t current_stderr_color_rgb = DEFAULT_STDERR_COLOR;
 
 static int try_write_to_pipe(const char *buf, uint64_t len) {
         pcb_t *current = process_get_current();
-        if (current == (void *)0 || current->stdout_pipe < 0)
+        if (current == NULL || current->stdout_pipe < 0)
                 return 0;
         int ret = pipe_write(current->stdout_pipe, buf, (int)len);
         return (ret < 0) ? 0 : ret;
@@ -32,7 +34,7 @@ static int try_write_to_pipe(const char *buf, uint64_t len) {
 
 static int stdout_is_piped(void) {
         pcb_t *current = process_get_current();
-        return current != (void *)0 && current->stdout_pipe >= 0;
+        return current != NULL && current->stdout_pipe >= 0;
 }
 
 uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
@@ -57,8 +59,42 @@ uint64_t sys_write(uint64_t fd, const char *buf, uint64_t len) {
         return len;
 }
 
+static uint64_t drain_keyboard_buffer(char *buf, uint64_t max_count) {
+        uint64_t i = 0;
+        while (buffer_has_next() && i < max_count) {
+                buf[i] = buffer_next();
+                i++;
+        }
+        return i;
+}
+
+/* Blocks until the keyboard IRQ delivers input or an EOF (Ctrl+D).
+ * Interrupts are disabled around the check to avoid losing a wakeup
+ * between testing the buffer and blocking.
+ * Returns 1 when there is data to read, 0 on end of file. */
+static int wait_for_keyboard_input(pcb_t *current) {
+        while (1) {
+                _cli();
+                if (buffer_has_next()) {
+                        _sti();
+                        return 1;
+                }
+                if (buffer_consume_eof()) {
+                        _sti();
+                        return 0;
+                }
+                if (current != NULL) {
+                        current->blocked_on_keyboard = 1;
+                        process_block(current->pid);
+                }
+                _sti();
+                _hlt();
+        }
+}
+
 uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
-        if (fd != 0 || count == NULL || buf == NULL) {
+        if ((fd != STDIN && fd != FD_KBD_NONBLOCK) || count == NULL ||
+            buf == NULL) {
                 if (count != NULL) {
                         *count = 0;
                 }
@@ -72,19 +108,29 @@ uint64_t sys_read(uint64_t fd, char *buf, uint64_t *count) {
         }
 
         pcb_t *current = process_get_current();
-        if (current != (void *)0 && current->stdin_pipe >= 0) {
+        if (fd == STDIN && current != NULL && current->stdin_pipe >= 0) {
                 int ret = pipe_read(current->stdin_pipe, buf, (int)max_count);
-                *count = (ret > 0) ? (uint64_t)ret : 0;
+                *count  = (ret > 0) ? (uint64_t)ret : 0;
                 return (ret >= 0) ? SYS_OK : SYS_BAD;
         }
 
-        uint64_t i = 0;
-        while (buffer_has_next() && i < max_count) {
-                buf[i] = buffer_next();
-                i++;
+        if (fd == FD_KBD_NONBLOCK) {
+                *count = drain_keyboard_buffer(buf, max_count);
+                return SYS_OK;
         }
 
-        *count = i;
+        /* Background processes get EOF instead of stealing keystrokes. */
+        if (current != NULL && !current->foreground) {
+                *count = 0;
+                return SYS_OK;
+        }
+
+        if (!wait_for_keyboard_input(current)) {
+                *count = 0; /* Ctrl+D: end of file */
+                return SYS_OK;
+        }
+
+        *count = drain_keyboard_buffer(buf, max_count);
         return SYS_OK;
 }
 
@@ -155,10 +201,8 @@ uint64_t sys_draw_rect(uint64_t packed_xy, uint64_t packed_wh, uint64_t color) {
         uint16_t width  = (packed_wh >> 16) & 0xFFFF;
         uint16_t height = packed_wh & 0xFFFF;
 
-        if (color == 0) {
-                color = 0xFFFFFF;
-        }
-
+        /* No remapping of color 0: black is a valid color (used to erase the
+         * cursor against a black background). */
         drawRect(x, y, width, height, (uint32_t)color);
         return SYS_OK;
 }
@@ -228,12 +272,32 @@ uint64_t sys_beep(uint64_t frequency) {
         return SYS_OK;
 }
 
+/* User allocations carry a 16-byte header (a list node) so the kernel can free
+ * them if the process dies without freeing. The header is 16 bytes, so the
+ * returned pointer stays 16-byte aligned. */
 uint64_t sys_malloc(uint64_t size) {
-        return (uint64_t)mem_alloc(size);
+        user_alloc_node_t *node =
+            (user_alloc_node_t *)mem_alloc(sizeof(user_alloc_node_t) + size);
+        if (node == NULL)
+                return 0;
+
+        pcb_t *self             = process_get_current();
+        user_alloc_node_t *head = &self->user_allocs;
+        node->next              = head->next;
+        node->prev              = head;
+        head->next->prev        = node;
+        head->next              = node;
+
+        return (uint64_t)(node + 1);
 }
 
 uint64_t sys_free(uint64_t ptr) {
-        mem_free((void *)ptr);
+        if (ptr == 0)
+                return SYS_OK;
+        user_alloc_node_t *node = (user_alloc_node_t *)ptr - 1;
+        node->prev->next        = node->next;
+        node->next->prev        = node->prev;
+        mem_free(node);
         return SYS_OK;
 }
 
@@ -252,10 +316,9 @@ uint64_t sys_create_process(uint64_t info_ptr) {
         if (info_ptr == 0)
                 return (uint64_t)NO_PID;
         create_process_info_t *info = (create_process_info_t *)info_ptr;
-        return (uint64_t)process_create(info->entry, info->argc, info->argv,
-                                        info->name, info->foreground,
-                                        info->exit_handler,
-                                        info->stdin_pipe, info->stdout_pipe);
+        return (uint64_t)process_create(
+            info->entry, info->argc, info->argv, info->name, info->foreground,
+            info->exit_handler, info->stdin_pipe, info->stdout_pipe);
 }
 
 uint64_t sys_getpid(void) {
@@ -263,7 +326,14 @@ uint64_t sys_getpid(void) {
 }
 
 uint64_t sys_yield(void) {
-        scheduler_yield();
+        _yield_now();
+        return SYS_OK;
+}
+
+/* Halt the CPU until the next interrupt. Used by the idle process so it sleeps
+ * instead of busy-waiting (it cannot hlt itself from ring 3). Syscalls run with
+ * IF=1, so the timer (or any IRQ) wakes it. */
+uint64_t sys_halt(void) {
         _hlt();
         return SYS_OK;
 }
@@ -294,6 +364,13 @@ uint64_t sys_list_processes(uint64_t pids_ptr, uint64_t max_count) {
         return (uint64_t)process_list((uint64_t *)pids_ptr, (int)max_count);
 }
 
+uint64_t sys_ps(uint64_t info_ptr, uint64_t max_count) {
+        if (info_ptr == 0)
+                return 0;
+        return (uint64_t)process_snapshot((process_info_t *)info_ptr,
+                                          (int)max_count);
+}
+
 uint64_t sys_pipe_open(uint64_t name_ptr) {
         if (name_ptr == 0)
                 return (uint64_t)PIPE_ERR;
@@ -302,4 +379,20 @@ uint64_t sys_pipe_open(uint64_t name_ptr) {
 
 uint64_t sys_pipe_close(uint64_t pipe_id) {
         return (uint64_t)pipe_close((int)pipe_id);
+}
+
+uint64_t sys_sem_open(char *sem_id, uint64_t value) {
+        return (uint64_t)sem_open(sem_id, value);
+}
+
+uint64_t sys_sem_post(char *sem_idx) {
+        return (uint64_t)sem_post(sem_idx);
+}
+
+uint64_t sys_sem_wait(char *sem_idx) {
+        return (uint64_t)sem_wait(sem_idx);
+}
+
+uint64_t sys_sem_close(char *sem_idx) {
+        return (uint64_t)sem_close(sem_idx);
 }

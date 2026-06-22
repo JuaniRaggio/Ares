@@ -1,6 +1,8 @@
 ;interrupts.asm
 GLOBAL _cli
 GLOBAL _sti
+GLOBAL irq_save
+GLOBAL irq_restore
 GLOBAL picMasterMask
 GLOBAL picSlaveMask
 GLOBAL haltcpu
@@ -18,10 +20,14 @@ GLOBAL _irq08Handler
 GLOBAL _exception0Handler
 GLOBAL _exception6Handler
 
+GLOBAL _irq81Handler
+GLOBAL _yield_now
+
 EXTERN irqDispatcher
 EXTERN exceptionDispatcher
 EXTERN getStackBase
 EXTERN schedule
+EXTERN do_yield_switch
 
 struc regs
         _r15: resq 1
@@ -158,6 +164,25 @@ _sti:
 	sti
 	ret
 
+; uint64_t irq_save(void)
+; Returns the current RFLAGS and disables interrupts. Pairs with
+; irq_restore to nest interrupt-off regions safely: an inner region
+; restores to "disabled" if the outer one already had them off, instead
+; of re-enabling early like a bare cli/sti would.
+irq_save:
+	pushfq
+	pop rax
+	cli
+	ret
+
+; void irq_restore(uint64_t flags)
+; Restores RFLAGS saved by irq_save (re-enables interrupts only if they
+; were enabled at save time).
+irq_restore:
+	push rdi
+	popfq
+	ret
+
 picMasterMask:
 	push rbp
     mov rbp, rsp
@@ -187,6 +212,24 @@ _irq00Handler:
 
 	popState
 	iretq
+
+;Cooperative yield: software-triggered context switch (vector 0x81).
+;Same switch path as the timer but without timekeeping or PIC EOI, so a
+;process can give up the CPU immediately from inside a syscall. iretq adapts
+;to the saved frame (ring0 if the process parked here mid-syscall, ring3 if it
+;came from userland), so it composes with timer-driven switches.
+_irq81Handler:
+	pushState
+	mov rdi, rsp
+	call do_yield_switch
+	mov rsp, rax
+	popState
+	iretq
+
+;void _yield_now(void): trigger an immediate reschedule from kernel code.
+_yield_now:
+	int 81h
+	ret
 
 ;Keyboard
 _irq01Handler:

@@ -1,14 +1,17 @@
 #include <colors.h>
+#include <stdint.h>
 #include <fontManager.h>
 #include <font_ubuntu_mono.h>
 #include <idtLoader.h>
 #include <interrupts.h>
 #include <lib.h>
+#include <memory_layout.h>
 #include <moduleLoader.h>
-#include <multi_region_heap.h>
+#include <memory_manager.h>
 #include <naiveConsole.h>
 #include <process.h>
 #include <scheduler.h>
+#include <semaphores.h>
 #include <time.h>
 #include <video_driver.h>
 
@@ -26,11 +29,11 @@ extern void setup_user_segments(void);
 extern void setup_tss(void);
 extern void jump_to_userland(void *entry_point);
 
-static const uint64_t PageSize           = 0x1000;
-static void *const userCodeModuleAddress = (void *)0x400000;
-static void *const userDataModuleAddress = (void *)0x500000;
-static void *const heapRegion2Start      = (void *)0x600000;
-static const uint64_t heapRegion2Size    = 0x2000000; // 32 MB
+static const uint64_t PageSize           = PAGE_SIZE;
+static void *const userCodeModuleAddress = (void *)USER_CODE_MODULE_ADDR;
+static void *const userDataModuleAddress = (void *)USER_DATA_MODULE_ADDR;
+static void *const heapRegion2Start      = (void *)HEAP_REGION2_START;
+static const uint64_t heapRegion2Size    = HEAP_REGION2_SIZE;
 
 typedef int (*EntryPoint)();
 
@@ -61,8 +64,6 @@ void *initializeKernelBinary() {
         loadModules(&endOfKernelBinary, moduleAddresses);
         ncPrintOld("[Done]");
         ncNewline();
-        ncNewline();
-
         clearBSS(&bss, &endOfKernel - &bss);
         return getStackBase();
 }
@@ -93,23 +94,36 @@ static void init_heap(void) {
 
 int main() {
         video_init();
+
         timer_init();
+
         load_idt();
+
         init_syscalls();
+
         setup_user_segments();
+
         setup_tss();
 
-        enable_interrupts();
         init_heap();
 
         process_init();
+
         scheduler_init();
 
+        sem_system_init();
+
         clearScreen(BLACK);
+
         bmp_font_t *font = &font_ubuntu_mono;
         setFont(font);
+
         restore_cursor();
+
+        enable_interrupts();
+
         jump_to_userland(userCodeModuleAddress);
+
         for_ever _hlt();
         return 0;
 }

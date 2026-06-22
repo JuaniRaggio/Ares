@@ -17,7 +17,7 @@ jump_to_userland:
     ; Guardar entry point
     mov r15, rdi
 
-    push 0x23               ; SS (User Data Segment, RPL=3)
+    push 0x1B               ; SS (User Data Segment 0x18, RPL=3)
     lea rax, [rel user_stack_top]
     push rax                ; RSP (user stack pointer)
 
@@ -27,7 +27,7 @@ jump_to_userland:
     or rax, 0x200           ; Set IF bit (bit 9)
     push rax                ; Push modified RFLAGS
 
-    push 0x1B               ; CS (User Code Segment, RPL=3)
+    push 0x23               ; CS (User Code Segment 0x20, RPL=3)
     push r15                ; RIP (entry point = 0x400000)
 
     ; IRETQ will switch to ring 3 and restore RFLAGS with IF=1

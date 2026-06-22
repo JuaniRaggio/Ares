@@ -52,6 +52,16 @@ void _irq00Handler(void);
 void _irq01Handler(void);
 
 /**
+ * Software vector 0x81 - cooperative yield (immediate reschedule).
+ */
+void _irq81Handler(void);
+
+/**
+ * Trigger an immediate reschedule from kernel code (issues int 0x81).
+ */
+void _yield_now(void);
+
+/**
  * IRQ 2 handler - Cascade PIC (never called)
  */
 void _irq02Handler(void);
@@ -90,6 +100,19 @@ void _cli(void);
  * Set interrupt flag (enable interrupts)
  */
 void _sti(void);
+
+/**
+ * Save RFLAGS and disable interrupts. Nestable: pair with irq_restore.
+ * @return RFLAGS prior to disabling interrupts.
+ */
+uint64_t irq_save(void);
+
+/**
+ * Restore RFLAGS saved by irq_save (re-enables interrupts only if they
+ * were enabled when irq_save ran).
+ * @param flags Value returned by irq_save.
+ */
+void irq_restore(uint64_t flags);
 
 /**
  * Halt the CPU until next interrupt
