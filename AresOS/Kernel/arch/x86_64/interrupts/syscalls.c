@@ -86,9 +86,10 @@ static int wait_for_keyboard_input(pcb_t *current) {
                 if (current != NULL) {
                         current->blocked_on_keyboard = 1;
                         process_block(current->pid);
+                } else {
+                        _sti();
+                        _hlt();
                 }
-                _sti();
-                _hlt();
         }
 }
 
