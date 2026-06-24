@@ -25,7 +25,10 @@ uint8_t cursor_cmd(char *type);
 uint8_t textcolor_cmd(char *color);
 uint8_t bgcolor_cmd(char *color);
 
-#define MAX_SNAPSHOT 32
+/* Keep in sync with the kernel's MAX_PROCESSES: a smaller value would make ps
+ * and block silently see only the first N processes. Bounded by the 8 KiB user
+ * stack (this array lives there): 64 * sizeof(process_info_t) ~= 4.6 KiB. */
+#define MAX_SNAPSHOT 64
 #define DEFAULT_LOOP_SECONDS 2
 #define MVAR_EMPTY_SEM "mvar_empty"
 #define MVAR_FULL_SEM "mvar_full"

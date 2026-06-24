@@ -11,7 +11,7 @@
 #include <stdint.h>
 #include <process_types.h>
 
-#define MAX_PROCESSES 32
+#define MAX_PROCESSES 64
 #define PROCESS_NAME_LEN 32
 /* Per-process stacks are allocated separately: the kernel stack must hold the
  * full interrupt/context-switch frame chain, while the user stack only backs
