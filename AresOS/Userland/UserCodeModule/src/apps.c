@@ -126,18 +126,20 @@ uint64_t loop_app(uint64_t argc, char *argv[]) {
 }
 
 uint64_t kill_app(uint64_t argc, char *argv[]) {
-        if (argc != 1) {
+        if (argc < 1) {
                 printf("Usage: kill <pid>\n");
                 return 1;
         }
-        int64_t pid = satoi(argv[0]);
-        if (my_kill(pid) == -1) {
-                printf("kill: could not kill process %d\n", (int)pid);
-                return 1;
+        for(int i = 0; i < argc; i++) {
+                int64_t pid = satoi(argv[i]);
+                if (my_kill(pid) == -1) {
+                        printf("kill: could not kill process %d\n", (int)pid);
+                        return 1;
+                }
+                /* Reap it: nobody else waits for an arbitrary killed process */
+                my_wait(pid);
+                printf("Process %d killed\n", (int)pid);
         }
-        /* Reap it: nobody else waits for an arbitrary killed process */
-        my_wait(pid);
-        printf("Process %d killed\n", (int)pid);
         return 0;
 }
 
