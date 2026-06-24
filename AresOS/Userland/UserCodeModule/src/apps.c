@@ -343,14 +343,19 @@ uint64_t mvar_app(uint64_t argc, char *argv[]) {
                 printf("Usage: mvar <writers> <readers>\n");
                 return 1;
         }
+
         int64_t writers = satoi(argv[0]);
         int64_t readers = satoi(argv[1]);
-        if(readers > READER_COLORS_COUNT){
-                printf("Warning: You have passed the limit of %d readers\n", READER_COLORS_COUNT);
-                printf("Usage: mvar <writers> <readers>\n");
+        
+        if(writers > MVAR_MAX_WRITERS){
+                printf("Warning: You have passed the limit of %d writers\n", MVAR_MAX_WRITERS);
                 return 1;
         }
-        if (writers <= 0 || readers <= 0 || writers > MVAR_MAX_WRITERS) {
+        else if(readers > READER_COLORS_COUNT){
+                printf("Warning: You have passed the limit of %d readers\n", READER_COLORS_COUNT);
+                return 1;
+        }
+        if (writers <= 0 || readers <= 0) {
                 printf("mvar: writers and readers must be positive\n");
                 return 1;
         }
