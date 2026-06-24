@@ -58,8 +58,10 @@ static void print_padded(const char *s, int width) {
         while (s[len])
                 len++;
         printf("%s", s);
-        for (; len < width; len++)
+        do {
                 putchar(' ');
+                len++;
+        } while (len < width);
 }
 
 uint64_t mem_app(uint64_t argc, char *argv[]) {
@@ -87,12 +89,12 @@ uint64_t ps_app(uint64_t argc, char *argv[]) {
         process_info_t info[MAX_SNAPSHOT];
         int count = syscall_ps(info, MAX_SNAPSHOT);
 
-        printf("PID   NAME                PRIO  STATE    FG  RSP              "
-               "STACK BASE\n");
+        printf("PID      NAME                PRIO  STATE    FG  RSP            "
+               "  STACK BASE\n");
         for (int i = 0; i < count; i++) {
                 char pid_str[24];
                 itoa(info[i].pid, pid_str, 10);
-                print_padded(pid_str, 6);
+                print_padded(pid_str, 9);
                 print_padded(info[i].name, 20);
                 char prio_str[24];
                 itoa(info[i].priority, prio_str, 10);
