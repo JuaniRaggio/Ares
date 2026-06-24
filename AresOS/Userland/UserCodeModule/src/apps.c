@@ -30,11 +30,13 @@ uint8_t bgcolor_cmd(char *color);
 #define MVAR_EMPTY_SEM "mvar_empty"
 #define MVAR_FULL_SEM "mvar_full"
 #define MVAR_MAX_WRITERS 26
-/* Active wait done by yielding the CPU a random number of times (cooperative):
- * it does not hog CPU, so no process is starved, and because a higher-priority
- * process is scheduled more often it counts its yields down faster and reaches
- * the variable more often -- that is what makes nice() observable here. */
-#define MVAR_YIELD_MAX 20
+/* Cooperative real-time pacing between MVar operations. We yield the CPU in a
+ * loop until a random wall-clock span elapses: yielding means it never hogs the
+ * core (no busy-wait, nothing is starved), and the real-time bound keeps the
+ * output readable -- necessary because semaphore handoffs are now immediate and
+ * no longer throttled by the timer tick (which is what used to pace this). */
+#define MVAR_PACE_MIN_MS 60
+#define MVAR_PACE_MAX_MS 240
 
 static const char *const state_names[] = {
     "READY", "RUNNING", "BLOCKED", "DEAD", "ZOMBIE",
@@ -126,18 +128,20 @@ uint64_t loop_app(uint64_t argc, char *argv[]) {
 }
 
 uint64_t kill_app(uint64_t argc, char *argv[]) {
-        if (argc != 1) {
+        if (argc < 1) {
                 printf("Usage: kill <pid>\n");
                 return 1;
         }
-        int64_t pid = satoi(argv[0]);
-        if (my_kill(pid) == -1) {
-                printf("kill: could not kill process %d\n", (int)pid);
-                return 1;
+        for(int i = 0; i < argc; i++) {
+                int64_t pid = satoi(argv[i]);
+                if (my_kill(pid) == -1) {
+                        printf("kill: could not kill process %d\n", (int)pid);
+                        return 1;
+                }
+                /* Reap it: nobody else waits for an arbitrary killed process */
+                my_wait(pid);
+                printf("Process %d killed\n", (int)pid);
         }
-        /* Reap it: nobody else waits for an arbitrary killed process */
-        my_wait(pid);
-        printf("Process %d killed\n", (int)pid);
         return 0;
 }
 
@@ -270,6 +274,17 @@ static uint32_t mvar_rand(mvar_rng_t *r, uint32_t max) {
         return ((r->z << 16) + r->w) % max;
 }
 
+static void mvar_pace(mvar_rng_t *rng) {
+        uint64_t span = MVAR_PACE_MIN_MS +
+                        mvar_rand(rng, MVAR_PACE_MAX_MS - MVAR_PACE_MIN_MS);
+        uint64_t start = 0, now = 0;
+        syscall_get_time_ms(&start);
+        do {
+                my_yield(); /* cooperative: let others run while we wait */
+                syscall_get_time_ms(&now);
+        } while (now - start < span);
+}
+
 static uint64_t mvar_writer(uint64_t argc, char *argv[]) {
         if (argc != 1)
                 return 1;
@@ -279,9 +294,7 @@ static uint64_t mvar_writer(uint64_t argc, char *argv[]) {
         mvar_srand(&rng, (uint32_t)my_getpid());
 
         for (;;) {
-                uint32_t spins = mvar_rand(&rng, MVAR_YIELD_MAX);
-                while (spins-- > 0)
-                        my_yield();
+                mvar_pace(&rng);
                 my_sem_wait(MVAR_EMPTY_SEM);
                 mvar_value = letter;
                 my_sem_post(MVAR_FULL_SEM);
@@ -298,9 +311,7 @@ static uint64_t mvar_reader(uint64_t argc, char *argv[]) {
         mvar_srand(&rng, (uint32_t)my_getpid());
 
         for (;;) {
-                uint32_t spins = mvar_rand(&rng, MVAR_YIELD_MAX);
-                while (spins-- > 0)
-                        my_yield();
+                mvar_pace(&rng);
                 my_sem_wait(MVAR_FULL_SEM);
                 /* Print inside the critical section so the color of this
                  * reader cannot be clobbered by another reader. */

@@ -86,9 +86,10 @@ static int wait_for_keyboard_input(pcb_t *current) {
                 if (current != NULL) {
                         current->blocked_on_keyboard = 1;
                         process_block(current->pid);
+                } else {
+                        _sti();
+                        _hlt();
                 }
-                _sti();
-                _hlt();
         }
 }
 
@@ -330,11 +331,18 @@ uint64_t sys_yield(void) {
         return SYS_OK;
 }
 
-/* Halt the CPU until the next interrupt. Used by the idle process so it sleeps
- * instead of busy-waiting (it cannot hlt itself from ring 3). Syscalls run with
- * IF=1, so the timer (or any IRQ) wakes it. */
+/* Idle primitive. Used only by the idle process (it cannot hlt itself from ring
+ * 3). If any real work is ready, hand the CPU to it immediately (_yield_now)
+ * instead of halting: otherwise the scheduler could pick idle in round-robin
+ * while a worker is ready, idle would hlt, and the worker would wait a whole
+ * timer tick to run -- which is exactly what made test_sync crawl. Only when
+ * nothing else is runnable do we hlt and sleep until the next interrupt
+ * (syscalls run with IF=1, so the timer or any IRQ wakes it). */
 uint64_t sys_halt(void) {
-        _hlt();
+        if (process_any_ready())
+                _yield_now();
+        else
+                _hlt();
         return SYS_OK;
 }
 
