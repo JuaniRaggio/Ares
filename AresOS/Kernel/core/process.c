@@ -260,7 +260,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb_t *pcb = find_free_slot();
         if (pcb == NULL) {
                 irq_restore(flags);
-                return NO_PID;
+                return PROC_ERR_FULL;
         }
 
         uint8_t *kstack = (uint8_t *)mem_alloc(KERNEL_STACK_SIZE);
@@ -271,7 +271,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                 if (ustack)
                         mem_free(ustack);
                 irq_restore(flags);
-                return NO_PID;
+                return PROC_ERR_NOMEM;
         }
 
         char **argv_copy = clone_argv(argc, argv);
@@ -279,7 +279,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                 mem_free(kstack);
                 mem_free(ustack);
                 irq_restore(flags);
-                return NO_PID;
+                return PROC_ERR_NOMEM;
         }
 
         uint8_t *fpu_area = alloc_fpu_area();
@@ -289,7 +289,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                 if (argv_copy)
                         mem_free(argv_copy);
                 irq_restore(flags);
-                return NO_PID;
+                return PROC_ERR_NOMEM;
         }
 
         pcb->pid                  = next_pid_to_assign++;

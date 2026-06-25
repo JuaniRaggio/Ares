@@ -35,9 +35,10 @@ int64_t test_processes(uint64_t argc, char *argv[]) {
                         p_rqs[rq].pid =
                             my_create_process("endless_loop", 0, argvAux);
 
-                        if (p_rqs[rq].pid == -1) {
-                                printf(
-                                    "test_processes: ERROR creating process\n");
+                        if (p_rqs[rq].pid < 0) {
+                                printf("test_processes: ERROR creating "
+                                       "process: %s\n",
+                                       create_error_message(p_rqs[rq].pid));
                                 return -1;
                         } else {
                                 p_rqs[rq].state = RUNNING;

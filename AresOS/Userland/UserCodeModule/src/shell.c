@@ -291,7 +291,8 @@ static void run_external(int tokens, int background) {
         int64_t pid = my_spawn(shell_status.prompts.user_input[0], argc, argv,
                                !background, NO_PIPE, NO_PIPE);
         if (pid < 0) {
-                printf("Could not create process\n");
+                printf("Could not create process: %s\n",
+                       create_error_message(pid));
                 return;
         }
 
@@ -331,14 +332,16 @@ static void run_piped(int pipe_pos, int tokens) {
 
         int64_t right_pid = my_spawn(right, rargc, rargv, 1, pipe_id, NO_PIPE);
         if (right_pid < 0) {
-                printf("Could not create process\n");
+                printf("Could not create process: %s\n",
+                       create_error_message(right_pid));
                 my_pipe_close(pipe_id);
                 return;
         }
 
         int64_t left_pid = my_spawn(left, largc, largv, 1, NO_PIPE, pipe_id);
         if (left_pid < 0) {
-                printf("Could not create process\n");
+                printf("Could not create process: %s\n",
+                       create_error_message(left_pid));
                 my_kill(right_pid);
                 my_pipe_close(pipe_id);
                 return;
