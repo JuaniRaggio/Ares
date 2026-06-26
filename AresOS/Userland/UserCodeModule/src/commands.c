@@ -67,7 +67,8 @@ uint8_t help(void) {
                "processes\n");
         printf("  test_prio <max_value>: show priority effect on "
                "scheduling\n");
-        printf("  test_sync <n> <use_sem>: increment a shared variable with "
+        printf("  test_sync <pairs> <n> <use_sem>: increment/decrement a shared "
+               "variable from <pairs> process pairs, each doing <n> ops, with "
                "or without semaphores\n");
 
         printf("\nSpecial syntax:\n");

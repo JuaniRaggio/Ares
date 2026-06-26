@@ -304,6 +304,11 @@ static uint64_t mvar_writer(uint64_t argc, char *argv[]) {
                 return 1;
         char letter = argv[0][0];
 
+        if (!my_sem_open(MVAR_EMPTY_SEM, 1) || !my_sem_open(MVAR_FULL_SEM, 0)) {
+                printf("mvar: writer could not open semaphores\n");
+                return 1;
+        }
+
         mvar_rng_t rng;
         mvar_srand(&rng, (uint32_t)my_getpid());
 
@@ -321,6 +326,12 @@ static uint64_t mvar_reader(uint64_t argc, char *argv[]) {
                 return 1;
         uint32_t color = reader_colors[satoi(argv[0]) % READER_COLORS_COUNT];
 
+        /* See mvar_writer: hold our own refs on both semaphores. */
+        if (!my_sem_open(MVAR_EMPTY_SEM, 1) || !my_sem_open(MVAR_FULL_SEM, 0)) {
+                printf("mvar: reader could not open semaphores\n");
+                return 1;
+        }
+
         mvar_rng_t rng;
         mvar_srand(&rng, (uint32_t)my_getpid());
 
@@ -337,19 +348,11 @@ static uint64_t mvar_reader(uint64_t argc, char *argv[]) {
         return 0;
 }
 
-/* Resets the mvar semaphores in case a previous run was killed mid-flight */
-static int reset_mvar_semaphores(void) {
-        my_sem_close(MVAR_EMPTY_SEM);
-        my_sem_close(MVAR_FULL_SEM);
-        return my_sem_open(MVAR_EMPTY_SEM, 1) && my_sem_open(MVAR_FULL_SEM, 0);
-}
-
-/* Each writer gets a unique letter: A, B, C... */
 static void spawn_mvar_writers(int64_t writers) {
         for (int64_t i = 0; i < writers; i++) {
                 char letter[2] = {(char)('A' + i), 0};
                 char *args[]   = {letter};
-                my_create_process("mvar_writer", 1, args);
+                my_spawn("mvar_writer", 1, args, 1, NO_PIPE, NO_PIPE);
         }
 }
 
@@ -359,7 +362,7 @@ static void spawn_mvar_readers(int64_t readers) {
                 char index[24];
                 itoa(i, index, 10);
                 char *args[] = {index};
-                my_create_process("mvar_reader", 1, args);
+                my_spawn("mvar_reader", 1, args, 1, NO_PIPE, NO_PIPE);
         }
 }
 
@@ -372,11 +375,6 @@ uint64_t mvar_app(uint64_t argc, char *argv[]) {
         int64_t readers = satoi(argv[1]);
         if (writers <= 0 || readers <= 0 || writers > MVAR_MAX_WRITERS) {
                 printf("mvar: writers and readers must be positive\n");
-                return 1;
-        }
-
-        if (!reset_mvar_semaphores()) {
-                printf("mvar: could not open semaphores\n");
                 return 1;
         }
 
