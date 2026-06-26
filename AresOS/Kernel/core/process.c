@@ -346,7 +346,7 @@ void process_exit(int code) {
 }
 
 int process_kill(pid_t pid) {
-        if (pid == SHELL_PID)
+        if (pid == SHELL_PID || pid == IDLE_PID)
                 return SYS_ERR;
         pcb_t *pcb = process_get(pid);
         if (pcb == NULL || pcb->state == PROCESS_ZOMBIE)
@@ -388,6 +388,9 @@ int block_by_semaphore(pid_t pid) {
 }
 
 int process_block(pid_t pid) {
+        if (pid == IDLE_PID)
+                return SYS_ERR;
+
         pcb_t *pcb     = process_get(pid);
         uint64_t flags = irq_save();
         if (pcb == NULL ||

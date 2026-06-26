@@ -24,6 +24,7 @@
 /* NO_PID is defined in process_types.h (shared with userland). */
 #define KILLED_EXIT_CODE (-1)
 #define SHELL_PID        0
+#define IDLE_PID         1
 
 /* Size of the per-process FPU/SSE save area used by fxsave/fxrstor. */
 #define FPU_AREA_SIZE 512
