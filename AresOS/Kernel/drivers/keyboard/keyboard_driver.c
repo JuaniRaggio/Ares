@@ -193,6 +193,10 @@ end:
 
 void update_buffer(uint8_t c) {
         keyboard.buffer[keyboard.write_pos++] = c;
+        /* Buffer full => drop the oldest byte, so pending
+         * input is never mistaken for "no input" */
+        if (keyboard.write_pos == keyboard.read_pos)
+                keyboard.read_pos++;
 }
 
 uint8_t buffer_has_next() {
@@ -201,7 +205,7 @@ uint8_t buffer_has_next() {
 
 uint8_t buffer_next() {
         if (!buffer_has_next()) {
-                return 0; // No char in buffer
+                return 0;
         }
 
         uint8_t aux = keyboard.buffer[keyboard.read_pos];
@@ -241,11 +245,11 @@ void capture_registers(uint64_t *stack_ptr) {
         saved_regs.rbx = stack_ptr[13];
         saved_regs.rax = stack_ptr[14];
 
-        saved_regs.rip    = stack_ptr[15]; // RIP
-        saved_regs.cs     = stack_ptr[16]; // CS
-        saved_regs.rflags = stack_ptr[17]; // RFLAGS
-        saved_regs.rsp    = stack_ptr[18]; // RSP
-        saved_regs.ss     = stack_ptr[19]; // SS
+        saved_regs.rip    = stack_ptr[15];
+        saved_regs.cs     = stack_ptr[16];
+        saved_regs.rflags = stack_ptr[17];
+        saved_regs.rsp    = stack_ptr[18];
+        saved_regs.ss     = stack_ptr[19];
 
         ncPrint("\n[Registers captured with Ctrl+R]\n", VGA_GREEN);
 }
