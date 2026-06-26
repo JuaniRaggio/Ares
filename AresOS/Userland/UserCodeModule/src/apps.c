@@ -373,8 +373,18 @@ uint64_t mvar_app(uint64_t argc, char *argv[]) {
         }
         int64_t writers = satoi(argv[0]);
         int64_t readers = satoi(argv[1]);
-        if (writers <= 0 || readers <= 0 || writers > MVAR_MAX_WRITERS) {
+        if (writers <= 0 || readers <= 0) {
                 printf("mvar: writers and readers must be positive\n");
+                return 1;
+        }
+        if (writers > MVAR_MAX_WRITERS) {
+                printf("mvar: at most %d writers (one letter A-Z each)\n",
+                       MVAR_MAX_WRITERS);
+                return 1;
+        }
+        if (readers > READER_COLORS_COUNT) {
+                printf("mvar: at most %d readers (one color each)\n",
+                       READER_COLORS_COUNT);
                 return 1;
         }
 
