@@ -171,6 +171,12 @@ int64_t sem_open(char *sem_id, uint64_t value) {
                         semaphores[i].value = value;
                         semaphores[i].lock  = 0;
                         semaphores[i].refs  = 1;
+
+                        // NULL head and tail cause maybe close
+                        // hasn't done it last time
+                        semaphores[i].head = NULL;
+                        semaphores[i].tail = NULL;
+
                         sem_count++;
                         release_lock(&semaphores_lock);
                         irq_restore(flags);
