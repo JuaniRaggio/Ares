@@ -70,6 +70,9 @@ void process_free_resources(pid_t pid) {
                                 node = next;
                         }
                         head->next = head->prev = head;
+                        /* Release any semaphores the process still had open, the
+                         * same way its heap allocations above are reclaimed. */
+                        sem_release_process_refs(pcb->open_sems);
                         return;
                 }
         }
@@ -307,6 +310,8 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->kernel_stack_base   = kstack;
         pcb->user_stack_base     = ustack;
         pcb->user_allocs.next = pcb->user_allocs.prev = &pcb->user_allocs;
+        for (int i = 0; i < MAX_SEM; i++)
+                pcb->open_sems[i] = 0;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
 
         if (stdout_pipe != NO_PIPE)

@@ -1,4 +1,5 @@
 // semaphores.h
+#pragma once
 #include <stdint.h>
 #include <lib_common.h>
 #define MAX_SEM 20
@@ -12,3 +13,10 @@ int64_t sem_close(char* sem_id);
 
 /* Remove a dying process (pid is a pid_t) from every semaphore wait queue. */
 void sem_remove_from_queues(int64_t pid);
+
+/* Release every semaphore reference a dying process still held open, freeing
+ * the per-process open counts (indexed by semaphore slot, MAX_SEM entries).
+ * Called from process_free_resources so a process that dies with semaphores
+ * open does not leak their reference counts, the same way its heap allocations
+ * and pipes are reclaimed. */
+void sem_release_process_refs(uint8_t *open_sems);

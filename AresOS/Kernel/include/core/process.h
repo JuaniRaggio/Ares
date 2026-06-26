@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 #include <process_types.h>
+#include <semaphores.h>
 
 #define MAX_PROCESSES 64
 #define PROCESS_NAME_LEN 32
@@ -99,8 +100,12 @@ typedef struct {
         int blocked_on_pipe; /* NO_PIPE if not blocked on a pipe      */
         uint8_t blocked_on_keyboard;
         char **argv_copy;
-        uint8_t *fpu_area; 
+        uint8_t *fpu_area;
         user_alloc_node_t user_allocs;
+        /* Count of still-open references this process holds on each semaphore
+         * slot, so process_free_resources can release them if it dies without
+         * closing them. */
+        uint8_t open_sems[MAX_SEM];
 } pcb_t;
 
 /**
