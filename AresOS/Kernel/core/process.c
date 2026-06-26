@@ -104,10 +104,6 @@ static void wake_waiters(pid_t dead_pid) {
                 if (process_table[i].state == PROCESS_BLOCKED &&
                     process_table[i].waiting_for == dead_pid) {
                         process_table[i].state = PROCESS_READY;
-                        /* Keep waiting_for set: process_has_waiter relies on it
-                         * so the scheduler does not reap this zombie before the
-                         * waiter reads its exit code. process_wait clears it.
-                         */
                 }
         }
 }
@@ -326,16 +322,18 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
 
 void process_exit(int code) {
         pcb_t *pcb = process_get_current();
-        pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
-        sem_remove_from_queues(pcb->pid);
+
+        uint64_t flags  = irq_save();
+        int stdin_pipe  = pcb->stdin_pipe;
+        int stdout_pipe = pcb->stdout_pipe;
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
+        pcb->state           = PROCESS_ZOMBIE;
+        pcb->exit_code       = code;
 
-        // Avoiding race conditions and leaving orphan processes
-        uint64_t flags = irq_save();
-        pcb->state     = PROCESS_ZOMBIE;
-        pcb->exit_code = code;
+        pipe_cleanup_process(stdin_pipe, stdout_pipe);
+        sem_remove_from_queues(pcb->pid);
         wake_waiters(pcb->pid);
         reparent_and_reap_orphans(pcb->pid);
         irq_restore(flags);
@@ -352,15 +350,20 @@ int process_kill(pid_t pid) {
         if (pcb == NULL || pcb->state == PROCESS_ZOMBIE)
                 return SYS_ERR;
 
-        pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
-        sem_remove_from_queues(pid);
+        /* One irq_save, and mark ZOMBIE + detach pipe fds BEFORE waking the pipe
+         * peer (same race as process_exit: a woken peer must see us gone so it
+         * detects EOF instead of re-blocking forever). */
+        uint64_t flags  = irq_save();
+        int stdin_pipe  = pcb->stdin_pipe;
+        int stdout_pipe = pcb->stdout_pipe;
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
+        pcb->state           = PROCESS_ZOMBIE;
+        pcb->exit_code       = KILLED_EXIT_CODE;
 
-        uint64_t flags = irq_save();
-        pcb->state     = PROCESS_ZOMBIE;
-        pcb->exit_code = KILLED_EXIT_CODE;
+        pipe_cleanup_process(stdin_pipe, stdout_pipe);
+        sem_remove_from_queues(pid);
         wake_waiters(pid);
         reparent_and_reap_orphans(pid);
         irq_restore(flags);
@@ -446,6 +449,9 @@ int process_unblock(pid_t pid) {
 }
 
 int process_nice(pid_t pid, uint64_t new_priority) {
+        if (pid == SHELL_PID || pid == IDLE_PID)
+                return SYS_ERR;
+
         pcb_t *pcb     = process_get(pid);
         uint64_t flags = irq_save();
         if (pcb == NULL || pcb->state == PROCESS_ZOMBIE) {
@@ -506,15 +512,13 @@ int process_wait(pid_t pid) {
                         _hlt();
         }
 
-        /* Done waiting: clear our claim so the scheduler may reap future
-         * orphan zombies, and so a stale waiting_for never lingers. */
         current->waiting_for = NO_PID;
 
         if (target->pid != pid)
-                return SYS_ERR; /* slot reused, child was already reaped */
+                return SYS_ERR;
         if (target->state == PROCESS_ZOMBIE)
                 return reap_zombie(target, pid);
-        return target->exit_code; /* scheduler/kill already reaped it */
+        return target->exit_code;
 }
 
 int process_list(uint64_t *pids, int max) {

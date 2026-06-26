@@ -157,8 +157,17 @@ uint64_t nice_app(uint64_t argc, char *argv[]) {
         }
         int64_t pid      = satoi(argv[0]);
         int64_t priority = satoi(argv[1]);
+
+        /* Mirror the kernel's [1, MAX_PRIORITY] range so the success message
+         * reports the value actually applied (the kernel clamps silently). */
+        if (priority < 1 || priority > 4) {
+                printf("nice: priority must be between 1 and 4\n");
+                return 1;
+        }
+
         if (my_nice(pid, priority) == -1) {
-                printf("nice: could not change priority of process %d\n",
+                printf("nice: could not change priority of process %d "
+                       "(no such process, or shell/idle)\n",
                        (int)pid);
                 return 1;
         }

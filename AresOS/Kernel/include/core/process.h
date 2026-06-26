@@ -98,9 +98,9 @@ typedef struct {
         int stdout_pipe;     /* NO_PIPE = console,  >= 0 = pipe index */
         int blocked_on_pipe; /* NO_PIPE if not blocked on a pipe      */
         uint8_t blocked_on_keyboard;
-        char **argv_copy; /* kernel-owned argv copy, freed on reap    */
-        uint8_t *fpu_area; /* FPU/SSE save area */
-        user_alloc_node_t user_allocs; /* sentinel of live user malloc blocks */
+        char **argv_copy;
+        uint8_t *fpu_area; 
+        user_alloc_node_t user_allocs;
 } pcb_t;
 
 /**
