@@ -77,17 +77,6 @@ uint64_t test_sync(uint64_t argc, char *argv[]) {
                 return -1;
         }
 
-        /* Reset the shared semaphore: drain any references leaked by a previous
-         * run that was Ctrl+C'd mid-critical-section, then (re)create it fresh at
-         * value 1, held by this launcher for the whole run (so-tp2's pattern). */
-        if (use_sem) {
-                while (my_sem_close(SEM_ID) == 0)
-                        ;
-                if (!my_sem_open(SEM_ID, 1)) {
-                        printf("test_sync: could not open semaphore\n");
-                        return -1;
-                }
-        }
 
         uint64_t total  = 2 * (uint64_t)pairs;
         uint64_t pids[total];
@@ -122,8 +111,5 @@ uint64_t test_sync(uint64_t argc, char *argv[]) {
                 my_wait(pids[i]);
 
         printf("Final value: %d\n", global);
-
-        if (use_sem)
-                my_sem_close(SEM_ID); /* release the launcher's reference */
         return 0;
 }
