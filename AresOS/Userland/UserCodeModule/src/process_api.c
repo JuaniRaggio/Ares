@@ -55,6 +55,19 @@ int64_t my_spawn(char *name, uint64_t argc, char *argv[], int foreground,
         return syscall_create_process(&info);
 }
 
+const char *create_error_message(int64_t ret) {
+        switch (ret) {
+        case PROC_ERR_FULL:
+                return "process table full (too many processes)";
+        case PROC_ERR_NOMEM:
+                return "out of memory";
+        case NO_PID:
+                return "no such program or invalid arguments";
+        default:
+                return "unknown error";
+        }
+}
+
 int64_t my_create_process(char *name, uint64_t argc, char *argv[]) {
         return my_spawn(name, argc, argv, 0, NO_PIPE, NO_PIPE);
 }

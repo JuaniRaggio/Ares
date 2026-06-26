@@ -127,8 +127,8 @@ void sem_remove_from_queues(int64_t pid) {
                 if (semaphores[i].id[0] == '\0')
                         continue;
                 acquire_lock(&semaphores[i].lock);
-                if (remove_pid_from_queue(i, (pid_t)pid))
-                        semaphores[i].value++;
+
+                remove_pid_from_queue(i, (pid_t)pid);
                 release_lock(&semaphores[i].lock);
         }
         release_lock(&semaphores_lock);
@@ -143,6 +143,23 @@ int64_t search_sem(char *sem_id) {
         return SEM_NOT_FOUND;
 }
 
+/* Per-process accounting of open semaphores: every successful sem_open by the
+ * running process bumps its count for that slot, every sem_close drops it. On
+ * death sem_release_process_refs replays the leftover opens so refs never leak.
+ */
+static void track_sem_open(int64_t sem_idx) {
+        pcb_t *cur = process_get_current();
+        if (cur != NULL && sem_idx >= 0 && sem_idx < MAX_SEM)
+                cur->open_sems[sem_idx]++;
+}
+
+static void track_sem_close(int64_t sem_idx) {
+        pcb_t *cur = process_get_current();
+        if (cur != NULL && sem_idx >= 0 && sem_idx < MAX_SEM &&
+            cur->open_sems[sem_idx] > 0)
+                cur->open_sems[sem_idx]--;
+}
+
 int64_t sem_open(char *sem_id, uint64_t value) {
         if (strlen(sem_id) >= MAX_ID_LENGTH)
                 return SYS_ERR;
@@ -154,6 +171,7 @@ int64_t sem_open(char *sem_id, uint64_t value) {
         if (existing >= 0) {
                 /* Shared by another process: just take a reference. */
                 semaphores[existing].refs++;
+                track_sem_open(existing);
                 release_lock(&semaphores_lock);
                 irq_restore(flags);
                 return SYS_OK;
@@ -171,7 +189,14 @@ int64_t sem_open(char *sem_id, uint64_t value) {
                         semaphores[i].value = value;
                         semaphores[i].lock  = 0;
                         semaphores[i].refs  = 1;
+
+                        // NULL head and tail cause maybe close
+                        // hasn't done it last time
+                        semaphores[i].head = NULL;
+                        semaphores[i].tail = NULL;
+
                         sem_count++;
+                        track_sem_open(i);
                         release_lock(&semaphores_lock);
                         irq_restore(flags);
                         return SYS_OK;
@@ -200,13 +225,11 @@ int64_t sem_post(char *sem_id) {
         acquire_lock(&semaphores[sem_idx].lock);
         release_lock(&semaphores_lock);
 
-        if (++semaphores[sem_idx].value <= 0) {
-                pid_t blocked_pid = dequeue_process(sem_idx);
-                release_lock(&semaphores[sem_idx].lock);
-                if (blocked_pid != NO_PID)
-                        unblock_by_semaphore(blocked_pid);
-        } else
-                release_lock(&semaphores[sem_idx].lock);
+        semaphores[sem_idx].value++;
+        pid_t blocked_pid = dequeue_process(sem_idx);
+        release_lock(&semaphores[sem_idx].lock);
+        if (blocked_pid != NO_PID)
+                unblock_by_semaphore(blocked_pid);
 
         irq_restore(flags);
         return SYS_OK;
@@ -230,19 +253,15 @@ int64_t sem_wait(char *sem_id) {
         acquire_lock(&semaphores[sem_idx].lock);
         release_lock(&semaphores_lock);
 
-        if (--semaphores[sem_idx].value < 0) {
+        while (semaphores[sem_idx].value == 0) {
                 pid_t pid = process_getpid();
                 if (enqueue_process(sem_idx, pid) != SYS_OK) {
-                        semaphores[sem_idx]
-                            .value++; /* undo: could not enqueue */
                         release_lock(&semaphores[sem_idx].lock);
                         irq_restore(flags);
                         return SYS_ERR;
                 }
-
                 if (block_by_semaphore(pid) == SYS_ERR) {
                         remove_pid_from_queue(sem_idx, pid);
-                        semaphores[sem_idx].value++;
                         release_lock(&semaphores[sem_idx].lock);
                         irq_restore(flags);
                         return SYS_ERR;
@@ -250,20 +269,21 @@ int64_t sem_wait(char *sem_id) {
                 release_lock(&semaphores[sem_idx].lock);
                 irq_restore(flags);
 
-                /* Block for real. _yield_now() switches away immediately, but
-                 * we must NOT return to userland while still BLOCKED (the
-                 * process would keep running and could re-enter sem_wait,
-                 * double-enqueueing its pid). The _hlt() loop is the backstop:
-                 * stay parked until sem_post (or a kill) clears the BLOCKED
-                 * state, the same pattern process_wait uses. */
+                /* Sleep until a sem_post wakes us; the _hlt() loop is the
+                 * backstop so we never return to userland while still BLOCKED. */
                 pcb_t *self = process_get_current();
                 _yield_now();
                 while (self->state == PROCESS_BLOCKED)
                         _hlt();
-        } else {
-                release_lock(&semaphores[sem_idx].lock);
-                irq_restore(flags);
+
+                /* Re-acquire the lock and loop to re-test the value. */
+                flags = irq_save();
+                acquire_lock(&semaphores[sem_idx].lock);
         }
+
+        semaphores[sem_idx].value--;
+        release_lock(&semaphores[sem_idx].lock);
+        irq_restore(flags);
         return SYS_OK;
 }
 
@@ -288,6 +308,7 @@ int64_t sem_close(char *sem_id) {
          */
         if (semaphores[sem_idx].refs > 0)
                 semaphores[sem_idx].refs--;
+        track_sem_close(sem_idx);
 
         if (semaphores[sem_idx].refs > 0) {
                 release_lock(&semaphores[sem_idx].lock);
@@ -309,3 +330,40 @@ int64_t sem_close(char *sem_id) {
 
         return SYS_OK;
 }
+
+void sem_release_process_refs(uint8_t *open_sems) {
+        if (open_sems == NULL)
+                return;
+
+        uint64_t flags = irq_save();
+        acquire_lock(&semaphores_lock);
+
+        for (int i = 0; i < MAX_SEM; i++) {
+                uint8_t cnt   = open_sems[i];
+                open_sems[i]  = 0;
+                if (cnt == 0 || semaphores[i].id[0] == '\0')
+                        continue;
+
+                acquire_lock(&semaphores[i].lock);
+
+                /* Drop the references this process never closed; the last one
+                 * destroys the semaphore exactly like sem_close would. */
+                while (cnt-- > 0 && semaphores[i].refs > 0)
+                        semaphores[i].refs--;
+
+                if (semaphores[i].refs == 0) {
+                        free_queue(i);
+                        semaphores[i].head  = NULL;
+                        semaphores[i].tail  = NULL;
+                        semaphores[i].value = 0;
+                        semaphores[i].id[0] = '\0';
+                        sem_count--;
+                }
+
+                release_lock(&semaphores[i].lock);
+        }
+
+        release_lock(&semaphores_lock);
+        irq_restore(flags);
+}
+

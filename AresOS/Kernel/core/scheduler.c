@@ -34,13 +34,14 @@ void scheduler_init(void) {
 }
 
 /*
- * Priority is implemented as scheduling FREQUENCY via deficit round robin:
- * each round a process may be picked `priority` times (sched_credits), so a
- * higher-priority process is selected proportionally more often. Unlike a
- * quantum-per-priority scheme, this makes priority observable for cooperative
- * (yield-bound) workloads too -- a process that yields comes back sooner the
- * higher its priority -- not only for CPU-bound ones. Credits refill once every
- * ready process has spent theirs.
+ * Priority drives BOTH which process runs next and how much CPU it gets. Each
+ * round a process gets `priority` credits (sched_credits); the scheduler always
+ * picks the READY process of HIGHEST priority that still has credit, breaking
+ * ties round-robin. A higher-priority process therefore runs first and more
+ * often, so priority is visible in the finish order even for very short jobs,
+ * not only over long ones. It still cannot starve lower priorities: once it
+ * spends its credits the scheduler drops to the next level, and credits refill
+ * only after every ready process has spent theirs.
  */
 static void refill_credits(void) {
         for (int i = 0; i < MAX_PROCESSES; i++) {
@@ -50,18 +51,23 @@ static void refill_credits(void) {
         }
 }
 
-/* Next ready process with credit left, round-robin from current_index. */
+/* Highest-priority READY process with credit left; ties broken round-robin from
+ * current_index so equal-priority processes share their level fairly. */
 static int scan_ready_with_credit(void) {
+        int best          = NO_READY_PROCESS;
+        int best_priority = 0;
         for (int i = 1; i <= MAX_PROCESSES; i++) {
                 int idx    = (current_index + i) % MAX_PROCESSES;
                 pcb_t *pcb = process_get_by_index(idx);
                 if (pcb != NULL && pcb->state == PROCESS_READY &&
-                    pcb->sched_credits > 0) {
-                        pcb->sched_credits--;
-                        return idx;
+                    pcb->sched_credits > 0 && pcb->priority > best_priority) {
+                        best          = idx;
+                        best_priority = pcb->priority;
                 }
         }
-        return NO_READY_PROCESS;
+        if (best != NO_READY_PROCESS)
+                process_get_by_index(best)->sched_credits--;
+        return best;
 }
 
 static int pick_next_ready(void) {

@@ -10,8 +10,9 @@
 
 #include <stdint.h>
 #include <process_types.h>
+#include <semaphores.h>
 
-#define MAX_PROCESSES 32
+#define MAX_PROCESSES 64
 #define PROCESS_NAME_LEN 32
 /* Per-process stacks are allocated separately: the kernel stack must hold the
  * full interrupt/context-switch frame chain, while the user stack only backs
@@ -24,6 +25,7 @@
 /* NO_PID is defined in process_types.h (shared with userland). */
 #define KILLED_EXIT_CODE (-1)
 #define SHELL_PID        0
+#define IDLE_PID         1
 
 /* Size of the per-process FPU/SSE save area used by fxsave/fxrstor. */
 #define FPU_AREA_SIZE 512
@@ -97,9 +99,13 @@ typedef struct {
         int stdout_pipe;     /* NO_PIPE = console,  >= 0 = pipe index */
         int blocked_on_pipe; /* NO_PIPE if not blocked on a pipe      */
         uint8_t blocked_on_keyboard;
-        char **argv_copy; /* kernel-owned argv copy, freed on reap    */
-        uint8_t *fpu_area; /* FPU/SSE save area */
-        user_alloc_node_t user_allocs; /* sentinel of live user malloc blocks */
+        char **argv_copy;
+        uint8_t *fpu_area;
+        user_alloc_node_t user_allocs;
+        /* Count of still-open references this process holds on each semaphore
+         * slot, so process_free_resources can release them if it dies without
+         * closing them. */
+        uint8_t open_sems[MAX_SEM];
 } pcb_t;
 
 /**

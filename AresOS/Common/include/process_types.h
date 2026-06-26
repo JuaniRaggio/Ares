@@ -12,6 +12,12 @@
 #define NO_PID  (-1)
 #define NO_PIPE (-1)
 
+/* process_create() failure reasons. All are negative so an existing `ret < 0`
+ * check still detects failure; userland maps them to a message. NO_PID stays the
+ * generic one (program not registered / invalid request). */
+#define PROC_ERR_FULL  (-2) /* process table full (MAX_PROCESSES reached) */
+#define PROC_ERR_NOMEM (-3) /* out of memory for the process's resources */
+
 #define PROCESS_INFO_NAME_LEN 32
 
 /** @brief Process states. Shared so userland can decode ps snapshots. */

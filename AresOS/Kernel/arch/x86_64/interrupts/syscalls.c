@@ -249,16 +249,22 @@ uint64_t sys_get_time(s_time *time) {
 }
 
 uint64_t sys_get_rdtsc(uint64_t *rdtsc) {
+        if (rdtsc == NULL)
+                return SYS_BAD;
         *rdtsc = read_tsc();
         return SYS_OK;
 }
 
 uint64_t sys_get_time_ms(uint64_t *time_ms) {
+        if (time_ms == NULL)
+                return SYS_BAD;
         *time_ms = get_time_ms();
         return SYS_OK;
 }
 
 uint64_t sys_get_fps(uint64_t *fps) {
+        if (fps == NULL)
+                return SYS_BAD;
         *fps = get_current_fps();
         return SYS_OK;
 }

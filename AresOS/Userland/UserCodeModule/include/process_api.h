@@ -48,6 +48,13 @@ int64_t my_spawn(char *name, uint64_t argc, char *argv[], int foreground,
  */
 int64_t my_create_process(char *name, uint64_t argc, char *argv[]);
 
+/**
+ * @brief Human-readable reason for a failed process creation.
+ * @param ret The negative value returned by my_spawn/my_create_process.
+ * @return A static string describing the failure (table full, no memory, ...).
+ */
+const char *create_error_message(int64_t ret);
+
 /** @brief Return the PID of the calling process. */
 int64_t my_getpid(void);
 

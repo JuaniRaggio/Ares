@@ -25,7 +25,10 @@ uint8_t cursor_cmd(char *type);
 uint8_t textcolor_cmd(char *color);
 uint8_t bgcolor_cmd(char *color);
 
-#define MAX_SNAPSHOT 32
+/* Keep in sync with the kernel's MAX_PROCESSES: a smaller value would make ps
+ * and block silently see only the first N processes. Bounded by the 8 KiB user
+ * stack (this array lives there): 64 * sizeof(process_info_t) ~= 4.6 KiB. */
+#define MAX_SNAPSHOT 64
 #define DEFAULT_LOOP_SECONDS 2
 #define MVAR_EMPTY_SEM "mvar_empty"
 #define MVAR_FULL_SEM "mvar_full"
@@ -58,8 +61,10 @@ static void print_padded(const char *s, int width) {
         while (s[len])
                 len++;
         printf("%s", s);
-        for (; len < width; len++)
+        do {
                 putchar(' ');
+                len++;
+        } while (len < width);
 }
 
 uint64_t mem_app(uint64_t argc, char *argv[]) {
@@ -87,12 +92,12 @@ uint64_t ps_app(uint64_t argc, char *argv[]) {
         process_info_t info[MAX_SNAPSHOT];
         int count = syscall_ps(info, MAX_SNAPSHOT);
 
-        printf("PID   NAME                PRIO  STATE    FG  RSP              "
-               "STACK BASE\n");
+        printf("PID      NAME                PRIO  STATE    FG  RSP            "
+               "  STACK BASE\n");
         for (int i = 0; i < count; i++) {
                 char pid_str[24];
                 itoa(info[i].pid, pid_str, 10);
-                print_padded(pid_str, 6);
+                print_padded(pid_str, 9);
                 print_padded(info[i].name, 20);
                 char prio_str[24];
                 itoa(info[i].priority, prio_str, 10);
@@ -152,8 +157,17 @@ uint64_t nice_app(uint64_t argc, char *argv[]) {
         }
         int64_t pid      = satoi(argv[0]);
         int64_t priority = satoi(argv[1]);
+
+        /* Mirror the kernel's [1, MAX_PRIORITY] range so the success message
+         * reports the value actually applied (the kernel clamps silently). */
+        if (priority < 1 || priority > 4) {
+                printf("nice: priority must be between 1 and 4\n");
+                return 1;
+        }
+
         if (my_nice(pid, priority) == -1) {
-                printf("nice: could not change priority of process %d\n",
+                printf("nice: could not change priority of process %d "
+                       "(no such process, or shell/idle)\n",
                        (int)pid);
                 return 1;
         }
@@ -290,6 +304,11 @@ static uint64_t mvar_writer(uint64_t argc, char *argv[]) {
                 return 1;
         char letter = argv[0][0];
 
+        if (!my_sem_open(MVAR_EMPTY_SEM, 1) || !my_sem_open(MVAR_FULL_SEM, 0)) {
+                printf("mvar: writer could not open semaphores\n");
+                return 1;
+        }
+
         mvar_rng_t rng;
         mvar_srand(&rng, (uint32_t)my_getpid());
 
@@ -307,6 +326,12 @@ static uint64_t mvar_reader(uint64_t argc, char *argv[]) {
                 return 1;
         uint32_t color = reader_colors[satoi(argv[0]) % READER_COLORS_COUNT];
 
+        /* See mvar_writer: hold our own refs on both semaphores. */
+        if (!my_sem_open(MVAR_EMPTY_SEM, 1) || !my_sem_open(MVAR_FULL_SEM, 0)) {
+                printf("mvar: reader could not open semaphores\n");
+                return 1;
+        }
+
         mvar_rng_t rng;
         mvar_srand(&rng, (uint32_t)my_getpid());
 
@@ -323,19 +348,11 @@ static uint64_t mvar_reader(uint64_t argc, char *argv[]) {
         return 0;
 }
 
-/* Resets the mvar semaphores in case a previous run was killed mid-flight */
-static int reset_mvar_semaphores(void) {
-        my_sem_close(MVAR_EMPTY_SEM);
-        my_sem_close(MVAR_FULL_SEM);
-        return my_sem_open(MVAR_EMPTY_SEM, 1) && my_sem_open(MVAR_FULL_SEM, 0);
-}
-
-/* Each writer gets a unique letter: A, B, C... */
 static void spawn_mvar_writers(int64_t writers) {
         for (int64_t i = 0; i < writers; i++) {
                 char letter[2] = {(char)('A' + i), 0};
                 char *args[]   = {letter};
-                my_create_process("mvar_writer", 1, args);
+                my_spawn("mvar_writer", 1, args, 1, NO_PIPE, NO_PIPE);
         }
 }
 
@@ -345,7 +362,7 @@ static void spawn_mvar_readers(int64_t readers) {
                 char index[24];
                 itoa(i, index, 10);
                 char *args[] = {index};
-                my_create_process("mvar_reader", 1, args);
+                my_spawn("mvar_reader", 1, args, 1, NO_PIPE, NO_PIPE);
         }
 }
 
@@ -357,22 +374,21 @@ uint64_t mvar_app(uint64_t argc, char *argv[]) {
 
         int64_t writers = satoi(argv[0]);
         int64_t readers = satoi(argv[1]);
-        
-        if(writers > MVAR_MAX_WRITERS){
-                printf("Warning: You have passed the limit of %d writers\n", MVAR_MAX_WRITERS);
-                return 1;
-        }
-        else if(readers > READER_COLORS_COUNT){
-                printf("Warning: You have passed the limit of %d readers\n", READER_COLORS_COUNT);
-                return 1;
-        }
+
         if (writers <= 0 || readers <= 0) {
                 printf("mvar: writers and readers must be positive\n");
                 return 1;
         }
 
-        if (!reset_mvar_semaphores()) {
-                printf("mvar: could not open semaphores\n");
+        if (writers > MVAR_MAX_WRITERS) {
+                printf("mvar: at most %d writers (one letter A-Z each)\n",
+                       MVAR_MAX_WRITERS);
+                return 1;
+        }
+
+        if (readers > READER_COLORS_COUNT) {
+                printf("mvar: at most %d readers (one color each)\n",
+                       READER_COLORS_COUNT);
                 return 1;
         }
 

@@ -70,6 +70,9 @@ void process_free_resources(pid_t pid) {
                                 node = next;
                         }
                         head->next = head->prev = head;
+                        /* Release any semaphores the process still had open, the
+                         * same way its heap allocations above are reclaimed. */
+                        sem_release_process_refs(pcb->open_sems);
                         return;
                 }
         }
@@ -104,10 +107,6 @@ static void wake_waiters(pid_t dead_pid) {
                 if (process_table[i].state == PROCESS_BLOCKED &&
                     process_table[i].waiting_for == dead_pid) {
                         process_table[i].state = PROCESS_READY;
-                        /* Keep waiting_for set: process_has_waiter relies on it
-                         * so the scheduler does not reap this zombie before the
-                         * waiter reads its exit code. process_wait clears it.
-                         */
                 }
         }
 }
@@ -260,7 +259,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb_t *pcb = find_free_slot();
         if (pcb == NULL) {
                 irq_restore(flags);
-                return NO_PID;
+                return PROC_ERR_FULL;
         }
 
         uint8_t *kstack = (uint8_t *)mem_alloc(KERNEL_STACK_SIZE);
@@ -271,7 +270,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                 if (ustack)
                         mem_free(ustack);
                 irq_restore(flags);
-                return NO_PID;
+                return PROC_ERR_NOMEM;
         }
 
         char **argv_copy = clone_argv(argc, argv);
@@ -279,7 +278,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                 mem_free(kstack);
                 mem_free(ustack);
                 irq_restore(flags);
-                return NO_PID;
+                return PROC_ERR_NOMEM;
         }
 
         uint8_t *fpu_area = alloc_fpu_area();
@@ -289,7 +288,7 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
                 if (argv_copy)
                         mem_free(argv_copy);
                 irq_restore(flags);
-                return NO_PID;
+                return PROC_ERR_NOMEM;
         }
 
         pcb->pid                  = next_pid_to_assign++;
@@ -311,6 +310,8 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
         pcb->kernel_stack_base   = kstack;
         pcb->user_stack_base     = ustack;
         pcb->user_allocs.next = pcb->user_allocs.prev = &pcb->user_allocs;
+        for (int i = 0; i < MAX_SEM; i++)
+                pcb->open_sems[i] = 0;
         strncpy(pcb->name, name ? name : "unknown", PROCESS_NAME_LEN);
 
         if (stdout_pipe != NO_PIPE)
@@ -326,16 +327,18 @@ pid_t process_create(uint64_t entry, uint64_t argc, char **argv,
 
 void process_exit(int code) {
         pcb_t *pcb = process_get_current();
-        pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
-        sem_remove_from_queues(pcb->pid);
+
+        uint64_t flags  = irq_save();
+        int stdin_pipe  = pcb->stdin_pipe;
+        int stdout_pipe = pcb->stdout_pipe;
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
+        pcb->state           = PROCESS_ZOMBIE;
+        pcb->exit_code       = code;
 
-        // Avoiding race conditions and leaving orphan processes
-        uint64_t flags = irq_save();
-        pcb->state     = PROCESS_ZOMBIE;
-        pcb->exit_code = code;
+        pipe_cleanup_process(stdin_pipe, stdout_pipe);
+        sem_remove_from_queues(pcb->pid);
         wake_waiters(pcb->pid);
         reparent_and_reap_orphans(pcb->pid);
         irq_restore(flags);
@@ -346,21 +349,26 @@ void process_exit(int code) {
 }
 
 int process_kill(pid_t pid) {
-        if (pid == SHELL_PID)
+        if (pid == SHELL_PID || pid == IDLE_PID)
                 return SYS_ERR;
         pcb_t *pcb = process_get(pid);
         if (pcb == NULL || pcb->state == PROCESS_ZOMBIE)
                 return SYS_ERR;
 
-        pipe_cleanup_process(pcb->stdin_pipe, pcb->stdout_pipe);
-        sem_remove_from_queues(pid);
+        /* One irq_save, and mark ZOMBIE + detach pipe fds BEFORE waking the pipe
+         * peer (same race as process_exit: a woken peer must see us gone so it
+         * detects EOF instead of re-blocking forever). */
+        uint64_t flags  = irq_save();
+        int stdin_pipe  = pcb->stdin_pipe;
+        int stdout_pipe = pcb->stdout_pipe;
         pcb->stdin_pipe      = NO_PIPE;
         pcb->stdout_pipe     = NO_PIPE;
         pcb->blocked_on_pipe = NO_PIPE;
+        pcb->state           = PROCESS_ZOMBIE;
+        pcb->exit_code       = KILLED_EXIT_CODE;
 
-        uint64_t flags = irq_save();
-        pcb->state     = PROCESS_ZOMBIE;
-        pcb->exit_code = KILLED_EXIT_CODE;
+        pipe_cleanup_process(stdin_pipe, stdout_pipe);
+        sem_remove_from_queues(pid);
         wake_waiters(pid);
         reparent_and_reap_orphans(pid);
         irq_restore(flags);
@@ -388,6 +396,9 @@ int block_by_semaphore(pid_t pid) {
 }
 
 int process_block(pid_t pid) {
+        if (pid == IDLE_PID)
+                return SYS_ERR;
+
         pcb_t *pcb     = process_get(pid);
         uint64_t flags = irq_save();
         if (pcb == NULL ||
@@ -443,6 +454,9 @@ int process_unblock(pid_t pid) {
 }
 
 int process_nice(pid_t pid, uint64_t new_priority) {
+        if (pid == SHELL_PID || pid == IDLE_PID)
+                return SYS_ERR;
+
         pcb_t *pcb     = process_get(pid);
         uint64_t flags = irq_save();
         if (pcb == NULL || pcb->state == PROCESS_ZOMBIE) {
@@ -503,15 +517,13 @@ int process_wait(pid_t pid) {
                         _hlt();
         }
 
-        /* Done waiting: clear our claim so the scheduler may reap future
-         * orphan zombies, and so a stale waiting_for never lingers. */
         current->waiting_for = NO_PID;
 
         if (target->pid != pid)
-                return SYS_ERR; /* slot reused, child was already reaped */
+                return SYS_ERR;
         if (target->state == PROCESS_ZOMBIE)
                 return reap_zombie(target, pid);
-        return target->exit_code; /* scheduler/kill already reaped it */
+        return target->exit_code;
 }
 
 int process_list(uint64_t *pids, int max) {
