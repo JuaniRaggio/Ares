@@ -307,11 +307,23 @@ int64_t sem_close(char *sem_id) {
 
         acquire_lock(&semaphores[sem_idx].lock);
 
-        /* Only the last close destroys the semaphore; otherwise processes still
-         * sharing it would lose their mutex (this is what made test_sync race).
+        /* Closing a semaphore the caller never opened must not touch the shared
+         * refcount: otherwise a process could drive refs to 0 and destroy a
+         * semaphore others are still using (the bug commit b5ddbff worked around
+         * in userland for test_sync). Reject it instead of trusting the caller.
          */
-        if (semaphores[sem_idx].refs > 0)
-                semaphores[sem_idx].refs--;
+        pcb_t *self = process_get_current();
+        if (self == NULL || self->open_sems[sem_idx] == 0) {
+                release_lock(&semaphores[sem_idx].lock);
+                release_lock(&semaphores_lock);
+                irq_restore(flags);
+                return SYS_ERR;
+        }
+
+        /* Only the last close destroys the semaphore; otherwise processes still
+         * sharing it would lose their mutex. The caller holds a ref (checked
+         * above), so refs is > 0 here. */
+        semaphores[sem_idx].refs--;
         track_sem_close(sem_idx);
 
         if (semaphores[sem_idx].refs > 0) {
