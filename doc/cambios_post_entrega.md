@@ -66,16 +66,12 @@ al usuario; no hay funcionalidad nueva. Resumen por subsistema.
   no lo hay (baja la latencia de teclado).
 
 ## Apps de usuario
-- mvar: pacing en tiempo real cooperativo (cede CPU en vez de espera activa, que
-  generaba lag y races); cada writer/reader abre sus propios semaforos y corre
-  en foreground (Ctrl+C los frena); validacion correcta (hasta 26 writers, una
-  letra A-Z cada uno; hasta 8 readers, un color cada uno) con mensajes precisos.
+- mvar: pacing en tiempo real cooperativo, cada writer/reader abre sus 
+  propios semaforos y corre en foreground (Ctrl+C los frena); 
+  feedback adecuado mostrando los limites.
 - ps: padding y alineacion de columnas, snapshot de 64 procesos.
 - nice: valida la prioridad en el rango [1, 4] con mensaje acorde.
 
 ## Tests
-- test_sync: parametrizado a `test_sync <pares> <n> <use_sem>`; los workers
-  corren en foreground (Ctrl+C los mata, ya no quedan huerfanos contaminando la
-  variable compartida en corridas posteriores); mejora grande de tiempo de
-  ejecucion.
+- `test_sync` agregamos la parametrizacion que solicitaba el enunciado
 - help: corregida la firma de `test_sync`.
