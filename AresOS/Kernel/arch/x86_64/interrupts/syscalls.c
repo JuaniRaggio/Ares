@@ -283,10 +283,18 @@ uint64_t sys_beep(uint64_t frequency) {
  * them if the process dies without freeing. The header is 16 bytes, so the
  * returned pointer stays 16-byte aligned. */
 uint64_t sys_malloc(uint64_t size) {
+        /* The allocation and its link into user_allocs must be atomic: otherwise
+         * a timer tick landing between them, on a process already marked ZOMBIE
+         * by a Ctrl+C, switches the process away for good (a zombie is never
+         * rescheduled) leaving the block reserved but unlinked -> reap cannot
+         * free it -> leak. Interrupts off closes that window. */
+        uint64_t flags          = irq_save();
         user_alloc_node_t *node =
             (user_alloc_node_t *)mem_alloc(sizeof(user_alloc_node_t) + size);
-        if (node == NULL)
+        if (node == NULL) {
+                irq_restore(flags);
                 return 0;
+        }
 
         pcb_t *self             = process_get_current();
         user_alloc_node_t *head = &self->user_allocs;
@@ -295,16 +303,21 @@ uint64_t sys_malloc(uint64_t size) {
         head->next->prev        = node;
         head->next              = node;
 
+        irq_restore(flags);
         return (uint64_t)(node + 1);
 }
 
 uint64_t sys_free(uint64_t ptr) {
         if (ptr == 0)
                 return SYS_OK;
+        /* Unlink + free atomically, same reason as sys_malloc: a tick in between
+         * on a ZOMBIE process would leave the node unlinked and unfreed. */
+        uint64_t flags          = irq_save();
         user_alloc_node_t *node = (user_alloc_node_t *)ptr - 1;
         node->prev->next        = node->next;
         node->next->prev        = node->prev;
         mem_free(node);
+        irq_restore(flags);
         return SYS_OK;
 }
 
