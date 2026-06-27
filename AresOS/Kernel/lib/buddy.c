@@ -15,7 +15,7 @@
 #define MIN_ORDER 5   /* 32 bytes - smallest allocatable block */
 #define MAX_ORDER 25  /* 32 MB - maximum block size */
 #define NUM_ORDERS (MAX_ORDER - MIN_ORDER + 1)
-#define MAX_POOLS (HEAP_REGION_COUNT * 2)
+#define MAX_POOLS (HEAP_REGION_COUNT * NUM_ORDERS)
 
 /* Block header stored at the start of every block (free or allocated). */
 typedef struct block_header {

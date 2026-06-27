@@ -161,7 +161,8 @@ static void track_sem_close(int64_t sem_idx) {
 }
 
 int64_t sem_open(char *sem_id, uint64_t value) {
-        if (strlen(sem_id) >= MAX_ID_LENGTH)
+        if (sem_id == NULL || sem_id[0] == '\0' ||
+            strlen(sem_id) >= MAX_ID_LENGTH)
                 return SYS_ERR;
 
         uint64_t flags = irq_save();
@@ -208,7 +209,8 @@ int64_t sem_open(char *sem_id, uint64_t value) {
 }
 
 int64_t sem_post(char *sem_id) {
-        if (strlen(sem_id) >= MAX_ID_LENGTH)
+        if (sem_id == NULL || sem_id[0] == '\0' ||
+            strlen(sem_id) >= MAX_ID_LENGTH)
                 return SYS_ERR;
 
         uint64_t flags = irq_save();
@@ -236,7 +238,8 @@ int64_t sem_post(char *sem_id) {
 }
 
 int64_t sem_wait(char *sem_id) {
-        if (strlen(sem_id) >= MAX_ID_LENGTH)
+        if (sem_id == NULL || sem_id[0] == '\0' ||
+            strlen(sem_id) >= MAX_ID_LENGTH)
                 return SYS_ERR;
 
         uint64_t flags = irq_save();
@@ -288,7 +291,8 @@ int64_t sem_wait(char *sem_id) {
 }
 
 int64_t sem_close(char *sem_id) {
-        if (strlen(sem_id) >= MAX_ID_LENGTH)
+        if (sem_id == NULL || sem_id[0] == '\0' ||
+            strlen(sem_id) >= MAX_ID_LENGTH)
                 return SYS_ERR;
 
         uint64_t flags = irq_save();

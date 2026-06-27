@@ -351,14 +351,13 @@ void process_exit(int code) {
 int process_kill(pid_t pid) {
         if (pid == SHELL_PID || pid == IDLE_PID)
                 return SYS_ERR;
-        pcb_t *pcb = process_get(pid);
-        if (pcb == NULL || pcb->state == PROCESS_ZOMBIE)
-                return SYS_ERR;
 
-        /* One irq_save, and mark ZOMBIE + detach pipe fds BEFORE waking the pipe
-         * peer (same race as process_exit: a woken peer must see us gone so it
-         * detects EOF instead of re-blocking forever). */
-        uint64_t flags  = irq_save();
+        uint64_t flags = irq_save();
+        pcb_t *pcb     = process_get(pid);
+        if (pcb == NULL || pcb->state == PROCESS_ZOMBIE) {
+                irq_restore(flags);
+                return SYS_ERR;
+        }
         int stdin_pipe  = pcb->stdin_pipe;
         int stdout_pipe = pcb->stdout_pipe;
         pcb->stdin_pipe      = NO_PIPE;
@@ -399,8 +398,8 @@ int process_block(pid_t pid) {
         if (pid == IDLE_PID)
                 return SYS_ERR;
 
-        pcb_t *pcb     = process_get(pid);
         uint64_t flags = irq_save();
+        pcb_t *pcb     = process_get(pid);
         if (pcb == NULL ||
             (pcb->state != PROCESS_READY && pcb->state != PROCESS_RUNNING)) {
                 irq_restore(flags);
@@ -441,8 +440,8 @@ int unblock_by_semaphore(pid_t pid) {
 }
 
 int process_unblock(pid_t pid) {
-        pcb_t *pcb     = process_get(pid);
         uint64_t flags = irq_save();
+        pcb_t *pcb     = process_get(pid);
         if (pcb == NULL || pcb->state != PROCESS_BLOCKED) {
                 irq_restore(flags);
                 return SYS_ERR;
@@ -457,8 +456,8 @@ int process_nice(pid_t pid, uint64_t new_priority) {
         if (pid == SHELL_PID || pid == IDLE_PID)
                 return SYS_ERR;
 
-        pcb_t *pcb     = process_get(pid);
         uint64_t flags = irq_save();
+        pcb_t *pcb     = process_get(pid);
         if (pcb == NULL || pcb->state == PROCESS_ZOMBIE) {
                 irq_restore(flags);
                 return SYS_ERR;
